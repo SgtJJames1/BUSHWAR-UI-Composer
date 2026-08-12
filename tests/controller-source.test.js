@@ -20,6 +20,7 @@ const source = sandbox.controllerSourceFor("TestLayout", "TestLayout", [
     rowLayoutPath: "UI/layouts/TestLayout-player-row.layout"
   },
   { name: "PlayerCount", binding: "player.count", functionId: "engine.context.refresh" },
+  { name: "SelectedPlayer", layerType: "player", binding: "player.name" },
   { name: "Refresh", functionId: "engine.context.refresh" }
 ]);
 
@@ -27,7 +28,10 @@ assert(source.includes("playerManager.GetPlayers(playerIds);"), "generated sourc
 assert(!source.includes("GetPlayers(out"), "generated source must not copy the API metadata out label into source syntax");
 assert(source.includes("RefreshRuntimeBindings();"), "live refresh callback must route to runtime bindings");
 assert(source.includes("runtimePlayerCount++"), "player.count must be computed from non-empty runtime names");
-assert(source.includes('w.GetName() == "Refresh"'), "named refresh widget route must be generated");
+assert(source.includes('IsWidgetNamedOrChild(w, "Refresh")'), "named refresh widget route must be generated");
+assert(source.includes('FindAnyWidget("SelectedPlayerText")'), "player.name on a Player row must target its generated Text child");
+assert(!source.includes('FindAnyWidget("SelectedPlayer"))'), "player.name must not cast the Button root as a TextWidget");
+assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
 
 console.log("controller-source.test.js: PASS");

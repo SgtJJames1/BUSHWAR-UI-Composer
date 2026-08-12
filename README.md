@@ -118,7 +118,8 @@ The **What's new** toolbar button remains available to reopen it.
   badge, or player widgets, connected player count is valid on text or badge,
   and GM editor state is valid on text or badge widgets. The generated
   controller re-queries the engine when the layout opens; the browser snapshot
-  is never runtime authority.
+  is never runtime authority. On a Player-row Button, the generated binding
+  targets that row's named `Text` child rather than casting the Button root.
 - A bound connected-player table also exports a runtime scaffold request with
   named count/scroll/list widgets and a row-layout path, so the generated
   Enfusion controller has concrete widget targets instead of a visual-only
@@ -132,7 +133,8 @@ The **What's new** toolbar button remains available to reopen it.
   plan exports callbacks separately from data bindings so visual design and
   runtime behavior cannot be confused. Unknown or server-authoritative actions
   export a review hook and are called out by validation; they are never treated
-  as already implemented.
+  as already implemented. Generated callback routes walk parent widgets so
+  nested WLib controls still reach the assigned route.
 
 ## Workbench boundary
 

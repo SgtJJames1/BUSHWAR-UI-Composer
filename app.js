@@ -733,6 +733,7 @@
     return {
       id: layer.id,
       name: widgetName,
+      layerType: layer.type,
       widgetType,
       nativeType: source ? "Layout prefab" : profile.layoutType,
       widgetProfile: profile.label,
@@ -749,6 +750,7 @@
         refreshEvents: binding?.updateEvents || callback?.updateEvents || [],
         rowIdentity: binding?.id === "player.list.connected" ? "PlayerManager playerId carried beside each native row" : undefined,
         nativePreviewShape: binding?.id === "player.list.connected" ? "Frame > count Text + selection Text + ScrollLayout > VerticalLayout > Button Row > Text NameText" : undefined,
+        valueWidgetName: binding && layer.type === "player" ? `${widgetName}Text` : widgetName,
         actualValuesOnly: binding ? true : undefined,
         preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values"
       } : undefined,
@@ -872,7 +874,7 @@
     let needsWidgetClickHook = false;
     let needsReviewHook = false;
     widgets.filter(widget => widget.functionId && widget.functionId !== "player.row.select").forEach(widget => {
-      callbackRoutes.push(`\t\tif (w && w.GetName() == "${widget.name}")`);
+      callbackRoutes.push(`\t\tif (IsWidgetNamedOrChild(w, "${widget.name}"))`);
       callbackRoutes.push("\t\t{");
       let directReturn = false;
       if (widget.functionId === "ui.layout.close") callbackRoutes.push("\t\t\tClose();");
@@ -941,6 +943,18 @@
       "\t\tTextWidget text = TextWidget.Cast(root.FindAnyWidget(widgetName));",
       "\t\tif (text)",
       "\t\t\ttext.SetExactFontSize(size);",
+      "\t}",
+      "",
+      "\tprotected bool IsWidgetNamedOrChild(Widget widget, string widgetName)",
+      "\t{",
+      "\t\tWidget current = widget;",
+      "\t\twhile (current)",
+      "\t\t{",
+      "\t\t\tif (current.GetName() == widgetName)",
+      "\t\t\t\treturn true;",
+      "\t\t\tcurrent = current.GetParent();",
+      "\t\t}",
+      "\t\treturn false;",
       "\t}",
       ""
     ];
@@ -1116,9 +1130,10 @@
         (needsPlayerName || needsPlayerCount) ? "\t\t\t}" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t}" : "",
         ...scalarBindings.map(widget => {
-          if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
-          if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerCount.ToString());`;
-          return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance() ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
+          const valueWidgetName = widget.layerType === "player" ? `${widget.name}Text` : widget.name;
+          if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
+          if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerCount.ToString());`;
+          return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance() ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
         }),
         "\t}",
         ""
