@@ -108,6 +108,11 @@ The **What's new** toolbar button remains available to reopen it.
   addon first, then inspect and resave the result in Layout Editor.
 - A Workbench handoff check that flags undersized canvases, unlocked or missing
   visual references, missing Reforger resource paths, and empty projects
+- The handoff check includes a per-layer runtime contract audit: it shows the
+  exported native widget/child target, engine source methods, callback,
+  authority boundary, and whether the generated route is READY, REVIEW, or
+  ERROR. Hidden runtime-bound layers are called out because they are omitted
+  from the Workbench export.
 - Engine binding contracts for runtime-backed compositions. The first live
   contract is Connected players (engine): it maps to
   PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId), filters

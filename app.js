@@ -1625,6 +1625,40 @@
     }).catch(() => setStatus("One or more visual references could not be read"));
   }
 
+  function runtimeContractAuditRows() {
+    const plan = makeWorkbenchPlan();
+    const widgetsById = new Map(plan.widgets.map(widget => [widget.id, widget]));
+    return state.layers.filter(layer => layer.binding || layer.functionId).map(layer => {
+      const binding = bindingFor(layer);
+      const callback = functionFor(layer);
+      const widget = widgetsById.get(layer.id);
+      const issues = [];
+      if (!widget) issues.push("hidden layer is not exported");
+      if (layer.binding && !binding) issues.push("unknown engine binding");
+      if (binding?.targetKinds && !binding.targetKinds.includes(layer.type)) issues.push("binding target mismatch");
+      if (layer.functionId && !callback) issues.push("unknown callback contract");
+      if (callback && !callback.targetKinds.includes(layer.type)) issues.push("callback target mismatch");
+      if (callback?.requiresBinding?.some(bindingId => layer.binding !== bindingId)) issues.push("required binding missing");
+      const status = issues.length ? "error" : callback?.implementation?.status === "review-required" ? "review" : "ready";
+      return {
+        layer: layer.name || layer.id,
+        target: widget?.runtimeContract?.valueWidgetName || widget?.name || "not exported",
+        source: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "Client UI event",
+        callback: callback?.label || "No callback assigned",
+        authority: callback?.authority || binding?.authority || "client-local",
+        status,
+        detail: issues.length ? issues.join(", ") : callback?.implementation?.status === "review-required" ? "Generated hook only; implement and review authority in the target addon." : "Generated route present"
+      };
+    });
+  }
+
+  function runtimeContractAuditMarkup() {
+    const rows = runtimeContractAuditRows();
+    if (!rows.length) return `<div class="contract-audit empty"><b>Runtime contract audit</b><span>No engine binding or callback assigned; this design remains visual-only.</span></div>`;
+    const body = rows.map(row => `<div class="contract-row"><span class="contract-status ${row.status}">${row.status.toUpperCase()}</span><span><b>${escapeHtml(row.layer)}</b><small>target: ${escapeHtml(row.target)}</small></span><span><b>Data</b><small>${escapeHtml(row.source)}</small></span><span><b>Action</b><small>${escapeHtml(row.callback)}</small></span><span><b>Authority</b><small>${escapeHtml(row.authority)} · ${escapeHtml(row.detail)}</small></span></div>`).join("");
+    return `<div class="contract-audit"><b>Runtime contract audit</b><span class="hint">This is the exact route the schema-3 handoff describes. READY means the Composer generated a route; REVIEW means the target addon still owns the implementation or authority decision.</span><div class="contract-rows">${body}</div></div>`;
+  }
+
   function validateHandoff() {
     const warnings = [];
     const references = state.layers.filter(layer => layer.type === "reference");
@@ -1656,6 +1690,7 @@
       if (layer.functionId && callback && !callback.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);
       if (callback?.requiresBinding?.some(bindingId => layer.binding !== bindingId)) warnings.push(`${layer.name || "A layer"} uses ${callback.label} without its required ${callback.requiresBinding.join(" / ")} engine binding.`);
       if (callback?.implementation?.status === "review-required") warnings.push(`${layer.name || "A layer"} uses ${callback.label}; the export includes a review hook, not server/admin authority.`);
+      if ((layer.binding || layer.functionId) && !layer.visible) warnings.push(`${layer.name || "A runtime layer"} is hidden and will not be exported into the Workbench layout.`);
       if (layer.functionId === "player.row.select" && layer.binding !== "player.list.connected") warnings.push(`${layer.name || "The player row"} needs the Connected players engine binding before its playerId callback can be wired.`);
       if (layer.binding === "player.list.connected" && !layer.functionId) warnings.push(`${layer.name || "Connected players"} reads real PlayerManager rows but has no row callback; add Connected-player row selected if clicking a player should carry its ID.`);
     });
@@ -1680,7 +1715,7 @@
       : "Engine context: no snapshot loaded; runtime-backed widgets will query Reforger when opened.";
     const report = $("#validationReport");
     report.className = "validation-report";
-    report.innerHTML = `<div class="validation-summary"><b>${warnings.length ? "Review before handoff" : "Ready for Workbench handoff"}</b><br>${state.layers.length} layer${state.layers.length === 1 ? "" : "s"} · ${importableLayers.length} importable UI widget${importableLayers.length === 1 ? "" : "s"} · ${refAssets} embedded reference board image${refAssets === 1 ? "" : "s"} · ${(assets.bytes / 1024 / 1024).toFixed(1)} MB portable bundle estimate.<br><span class="hint">${escapeHtml(contextSummary)}</span></div>${warnings.length ? `<ul class="validation-warnings">${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="validation-ok">Save the authoritative .bwui.json file, then export the Workbench import plan. Create the listed layout in Workbench Layout Editor, apply the plan, and run Live Preview at your target resolutions.</p>`}<p class="hint">Reference-board images stay in the .bwui bundle; the import plan contains only real UI widgets, sources, names, anchors, and pixel bounds. Composer does not write production .layout XML or replace Workbench Layout Editor.</p>`;
+    report.innerHTML = `<div class="validation-summary"><b>${warnings.length ? "Review before handoff" : "Ready for Workbench handoff"}</b><br>${state.layers.length} layer${state.layers.length === 1 ? "" : "s"} · ${importableLayers.length} importable UI widget${importableLayers.length === 1 ? "" : "s"} · ${refAssets} embedded reference board image${refAssets === 1 ? "" : "s"} · ${(assets.bytes / 1024 / 1024).toFixed(1)} MB portable bundle estimate.<br><span class="hint">${escapeHtml(contextSummary)}</span></div>${runtimeContractAuditMarkup()}${warnings.length ? `<ul class="validation-warnings">${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="validation-ok">Save the authoritative .bwui.json file, then export the Workbench import plan. Create the listed layout in Workbench Layout Editor, apply the plan, and run Live Preview at your target resolutions.</p>`}<p class="hint">Reference-board images stay in the .bwui bundle; the import plan contains only real UI widgets, sources, names, anchors, and pixel bounds. Composer does not write production .layout XML or replace Workbench Layout Editor.</p>`;
     $("#validationDialog").showModal();
   }
 

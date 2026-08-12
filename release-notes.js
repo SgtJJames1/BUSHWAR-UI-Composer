@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.8",
+  version: "0.10.9",
   published: "13 August 2026",
-  title: "Runtime target parity",
-  summary: "Generated runtime bindings now target the actual native child widgets and callback routes work through nested WLib controls.",
+  title: "Runtime contract audit",
+  summary: "Workbench handoff validation now shows the exact engine source, native target, callback, and authority boundary for every runtime-bound layer.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -38,6 +38,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "npm test now validates generated connected-player, player-count, and live-refresh source contracts and rejects accidental GetPlayers(out ...) emission before publishing.",
     "Validate Workbench handoff now inspects the generated controller source and warns if connected-player, player-count, or live-refresh routes are missing.",
     "Player display-name bindings on Player-row Buttons now target the generated Text child instead of casting the Button root as a TextWidget.",
-    "Generated callback routes walk the clicked widget's parent chain, so WLib buttons and nested source-backed controls reach the assigned Composer callback contract."
+    "Generated callback routes walk the clicked widget's parent chain, so WLib buttons and nested source-backed controls reach the assigned Composer callback contract.",
+    "Validate Workbench handoff now includes a per-layer runtime contract audit with native target widget, engine source, callback, authority, and READY/REVIEW/ERROR status.",
+    "Hidden runtime-bound layers are warned because hidden layers are intentionally omitted from the exported Workbench layout."
   ]
 };

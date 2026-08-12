@@ -283,6 +283,15 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
 .validation-summary { padding: 8px; border-left: 3px solid var(--accent-2); background: #102027; }
 .validation-warnings { margin: 0; padding-left: 18px; color: #ffd4aa; }
 .validation-ok { color: #8de4bd; }
+.contract-audit { display: grid; gap: 6px; padding: 8px; border: 1px solid #345564; background: #0d1b21; }
+.contract-audit.empty { color: #9eabb0; }
+.contract-rows { display: grid; gap: 5px; }
+.contract-row { display: grid; grid-template-columns: auto minmax(100px, 1fr) minmax(140px, 1.4fr) minmax(120px, 1.2fr) minmax(120px, 1.2fr); gap: 7px; align-items: start; padding: 6px; background: #12242b; border-left: 3px solid #4e6872; }
+.contract-row small { display: block; color: #a8bac0; font-size: 10px; line-height: 1.3; overflow-wrap: anywhere; }
+.contract-status { align-self: start; padding: 2px 4px; font: 700 9px Consolas, monospace; letter-spacing: .4px; }
+.contract-status.ready { color: #8de4bd; background: #17392f; }
+.contract-status.review { color: #ffd59c; background: #4a351e; }
+.contract-status.error { color: #ffaaa1; background: #4a2427; }
 .update-dialog { width: min(510px, calc(100vw - 32px)); }
 .update-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .update-badge { padding: 3px 7px; background: var(--accent); color: #17130f; font-size: 10px; font-weight: 800; letter-spacing: .8px; }
@@ -303,4 +312,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
   .app-shell { grid-template-columns: 210px minmax(300px, 1fr) 235px; }
   .brand small { display: none; }
   .toolbar button { font-size: 12px; padding: 5px; }
+}
+@media (max-width: 760px) {
+  .contract-row { grid-template-columns: auto 1fr; }
+  .contract-row > span:not(.contract-status) { grid-column: 2; }
 }
