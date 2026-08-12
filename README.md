@@ -49,6 +49,7 @@ The **What's new** toolbar button remains available to reopen it.
 - Named local templates: save the current canvas as a reusable template, reload it later, update it by saving with the same name, or remove it from the template list
 - A clear lock toggle in every layer row plus a lock badge beside the selected layer's pixel-bounds label; locked layers cannot be dragged, resized, or nudged
 - A searchable, categorized Reforger UI reference database: Widget Library (`WLib`) layout prefabs, HUD/Game Master layouts, and vanilla icon-atlas families, each carrying its exact resource path, native widget-class hint, and Workbench action for the handoff
+- An optional Workbench engine-context import (`bushwar-ui-composer-engine-context`, schema 1) for previewing a captured connected-player roster. Imported names/IDs are evidence for the browser preview only; generated controllers always re-query `PlayerManager` in Reforger.
 - A GM admin-panel template using the approved left 24 px / top 15% / width 360 px / bottom 80% bounds
 - Portable `.bwui.json` project and `.bwui-template.json` template bundles:
   they embed imported reference images and record a layer/asset manifest so a
@@ -67,8 +68,12 @@ The **What's new** toolbar button remains available to reopen it.
   EditBox/CheckBox/layout-container classes instead of every element collapsing
   to a generic Frame. Open and resave that scaffold in
   Workbench Layout Editor, then replace source-backed scaffold frames with the
-  listed WLib/vanilla layouts; never treat generated text serialization as a
-  finished production layout.
+  listed WLib/vanilla layouts; set the Layout Editor root to the exported
+  Composer canvas size before judging pixel bounds, and never treat generated
+  text serialization as a finished production layout.
+- A **complete Workbench handoff** export that packages the `.bwui` design,
+  schema-3 import plan, controller source, engine-context provenance, and the
+  exact next-step instructions into one transferable JSON file.
 - A schema 3 **EnforceScript controller scaffold** in every Workbench plan, plus
   a separate **Export EnforceScript controller scaffold** download. When a
   connected-player binding is present, the source reads `PlayerManager`, skips
@@ -80,6 +85,10 @@ The **What's new** toolbar button remains available to reopen it.
   by the scaffold. The disposable validation plug-in rejects a plan that omits
   this mapping, preventing an apparently valid visual handoff from silently
   becoming a generic Frame-only layout.
+- Runtime-backed widgets also carry `runtimeContract` metadata: engine source
+  methods, authority, refresh events, row identity, and callback implementation
+  status. Server-authoritative actions export reviewable hooks; the browser never
+  pretends to execute a server RPC.
 - A one-click **Copy layout scaffold request** helper for handing that native
   scaffold request to a Workbench/Codex import task; always target a disposable
   addon first, then inspect and resave the result in Layout Editor.
@@ -119,20 +128,24 @@ This is a design/prototyping tool, not a replacement for the Reforger Layout Edi
 3. For data-backed widgets, assign an **Engine data / function** binding in the
    inspector. The browser preview is deliberately truthful: it shows the
    runtime contract rather than inventing fake player rows.
-4. Assign an **Engine callback / action** in the inspector when the widget must
+4. If you have a captured Workbench context JSON, use **Import Workbench
+   context** to preview the actual roster from that session. Treat it as a
+   timestamped preview only; the generated controller must query the engine
+   again when the layout opens.
+5. Assign an **Engine callback / action** in the inspector when the widget must
    do something. For a connected-player table, keep `player.list.connected`
    paired with `player.row.select`; the exported controller must carry the
    engine player ID alongside each row instead of inferring identity from row
    order or display text.
-5. Use **Validate Workbench handoff** and fix any warnings. Then copy the
+6. Use **Validate Workbench handoff** and fix any warnings. Then copy the
    specification or use the exported PNG as a visual brief.
-6. If your addon includes the optional BUSHWAR validation plug-in, run
+7. If your addon includes the optional BUSHWAR validation plug-in, run
    **BUSHWAR UI Composer → Review import plan**. It accepts schema 3 plans,
    checks that the controller path/source is present, and confirms the
    binding/callback contract before authoring. Copy the controller source into
    the exported `controllerPath`, then compile it in the disposable addon
    before wiring it to a production menu.
-7. Recreate the finished UI in Workbench's **Layout Editor** using the listed
+ 8. Recreate the finished UI in Workbench's **Layout Editor** using the listed
    WLib resource paths and test the actual `.layout` with **Live Preview** at
    the resolutions you support. The bundle is a reliable design reference, not
    a runtime UI package.

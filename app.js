@@ -8,9 +8,11 @@
   const release = window.BUSHWAR_COMPOSER_RELEASE || { version: "0.5.1", published: "", title: "Latest improvements", summary: "", changes: [] };
   const APP_VERSION = release.version;
   const bundleFormat = "bushwar-ui-composer";
-  const bundleSchema = 5;
+  const bundleSchema = 6;
+  const engineContextFormat = "bushwar-ui-composer-engine-context";
   const workbenchPlanFormat = "bushwar-ui-composer-workbench-plan";
   const workbenchPlanSchema = 3;
+  const workbenchBundleFormat = "bushwar-ui-composer-workbench-bundle";
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const uid = () => `layer-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -71,6 +73,7 @@
       canvas: { width: 1920, height: 1080, baseScene: "blank", baseSceneVisible: true, baseSceneOpacity: 1, background: "", backgroundName: "", backgroundOpacity: 0.45 },
       settings: { grid: true, snap: true, gridSize: 10 },
       handoff: { target: "Menu", layoutName: "BUSHWAR_ComposerLayout" },
+      engineContext: { schema: 1, source: "none", capturedAt: "", engineVersion: "", players: [], note: "No Workbench context loaded; runtime data remains authoritative." },
       layers: []
     };
   }
@@ -84,6 +87,8 @@
     clean.canvas = { ...freshState().canvas, ...(value.canvas || {}) };
     clean.settings = { ...freshState().settings, ...(value.settings || {}) };
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
+    clean.engineContext = { ...freshState().engineContext, ...(value.engineContext || {}) };
+    clean.engineContext.players = Array.isArray(clean.engineContext.players) ? clean.engineContext.players.filter(player => player && Number.isFinite(Number(player.id)) && String(player.name || "").trim()) : [];
     clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", functionId: "", ...layer })) : [];
     return clean;
   }
@@ -106,12 +111,33 @@
 
   function widgetProfileFor(layer) {
     const profile = widgetProfileCatalog().forType(layer?.type || "panel");
-    if (layer?.type === "reforger" && layer.catalogNativeWidgetClass) return { ...profile, runtimeClass: layer.catalogNativeWidgetClass, label: `${profile.label} (${layer.catalogNativeWidgetClass})` };
+    if (layer?.type === "reforger" && layer.catalogNativeWidgetClass) {
+      const childHint = layer.catalogNativeChildHint ? ` · child hint ${layer.catalogNativeChildHint}` : "";
+      return { ...profile, runtimeClass: layer.catalogNativeWidgetClass, label: `${profile.label} (${layer.catalogNativeWidgetClass}${childHint})` };
+    }
     return profile;
   }
 
   function functionFor(layer) {
     return layer?.functionId ? functionCatalog().byId(layer.functionId) : null;
+  }
+
+  function enginePlayers() {
+    return Array.isArray(state.engineContext?.players) ? state.engineContext.players : [];
+  }
+
+  function engineContextLabel() {
+    const context = state.engineContext || {};
+    if (!enginePlayers().length) return "No Workbench snapshot loaded";
+    const version = context.engineVersion ? ` · WR ${context.engineVersion}` : "";
+    return `${enginePlayers().length} connected player${enginePlayers().length === 1 ? "" : "s"} imported${version}`;
+  }
+
+  function updateEngineContextStatus() {
+    const status = $("#engineContextStatus");
+    if (!status) return;
+    status.textContent = engineContextLabel();
+    status.className = `engine-context-status${enginePlayers().length ? " loaded" : " warn"}`;
   }
 
   function portableSnapshot() {
@@ -298,6 +324,7 @@
     renderInspector();
     updateStageScale();
     $("#canvasLabel").textContent = `${state.canvas.width} × ${state.canvas.height}`;
+    updateEngineContextStatus();
     persist();
   }
 
@@ -311,11 +338,15 @@
     } else if (layer.type === "player") {
       const binding = bindingFor(layer);
       const callback = functionFor(layer);
-      const displayText = binding?.id === "player.list.connected" ? "PLAYER NAME FROM ENGINE" : layer.text;
+      const runtimeBacked = binding?.id === "player.list.connected";
+      const importedPlayer = runtimeBacked ? enginePlayers()[0] : null;
+      const displayText = importedPlayer?.name || (runtimeBacked ? "NAME FROM WORKBENCH" : layer.text);
       const initial = (displayText || "P").trim().slice(0, 1).toUpperCase();
       const engineLabel = binding ? `<small class="binding-badge">${escapeHtml(binding.label)}</small>` : "";
       const callbackLabel = callback ? `<small class="binding-badge callback-badge">${escapeHtml(callback.label)}</small>` : "";
-      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${escapeHtml(displayText || "PLAYER NAME FROM ENGINE")}</span>${engineLabel}${callbackLabel}<span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
+      const playerId = importedPlayer ? `<small class="engine-player-id">ID ${escapeHtml(importedPlayer.id)}</small>` : "";
+      const emptyState = runtimeBacked && !importedPlayer ? `<small class="engine-preview-empty">Import a Workbench context to preview a real player row</small>` : "";
+      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${escapeHtml(displayText || "PLAYER NAME FROM WORKBENCH")}</span>${playerId}${engineLabel}${callbackLabel}${emptyState}`;
     } else if (layer.type === "window") {
       element.innerHTML = `<div class="comp-header"><span>${text}</span><span class="comp-close">×</span></div><div class="comp-body"><strong>Window content</strong>Place lists, controls, previews, and custom widgets inside this frame.</div><div class="comp-footer"><span class="comp-button">CLOSE</span><span class="comp-button primary">APPLY</span></div>`;
     } else if (layer.type === "dialog") {
@@ -333,11 +364,16 @@
     } else if (layer.type === "table") {
       const binding = bindingFor(layer);
       const callback = functionFor(layer);
-      const body = binding?.id === "player.list.connected"
-        ? `<tr><td colspan="4" class="engine-preview-empty">Workbench will populate valid connected players here; the browser does not invent rows.</td></tr>`
-        : `<tr><td colspan="4" class="engine-preview-empty">Design preview only — assign an engine binding to make this runtime-backed.</td></tr>`;
+      let body;
+      if (binding?.id === "player.list.connected") {
+        body = enginePlayers().length
+          ? enginePlayers().map(player => `<tr><td>${escapeHtml(player.name)}</td><td>PLAYER #${escapeHtml(player.id)}</td><td class="status-online">CONNECTED</td><td>ENGINE</td></tr>`).join("")
+          : `<tr><td colspan="4" class="engine-preview-empty">No Workbench context loaded — runtime will populate only valid connected players.</td></tr>`;
+      } else {
+        body = `<tr><td colspan="4" class="engine-preview-empty">Design preview only — assign an engine binding to make this runtime-backed.</td></tr>`;
+      }
       const callbackHint = callback ? `<div class="table-callback-hint">${escapeHtml(callback.label)}</div>` : "";
-      element.innerHTML = `${callbackHint}<table class="data-table"><thead><tr><th>${text}</th><th>Role</th><th>Status</th><th>Ping</th></tr></thead><tbody>${body}</tbody></table>`;
+      element.innerHTML = `${callbackHint}<table class="data-table"><thead><tr><th>${text}</th><th>Role</th><th>Status</th><th>Source</th></tr></thead><tbody>${body}</tbody></table>`;
     } else if (layer.type === "toolbar") {
       element.innerHTML = '<div class="toolbar-wrap"><span class="tool-item active">◆</span><span class="tool-item">✚</span><span class="tool-item">◉</span><span class="tool-item">▣</span><span class="tool-item">⌖</span><span class="tool-item">⚙</span><span class="tool-item">?</span></div>';
     } else if (layer.type === "progress") {
@@ -465,7 +501,7 @@
       select.innerHTML = `<option value="">No callback assigned (visual-only)</option>${entries.map(callback => `<option value="${escapeHtml(callback.id)}">${escapeHtml(callback.label)}</option>`).join("")}`;
       select.value = layer.functionId || "";
       const callback = functionFor(layer);
-      $("#functionContract").textContent = callback ? `${callback.callback} · ${callback.authority}. ${callback.runtime}` : "Choose a callback contract to tell Workbench what this widget should do when used.";
+      $("#functionContract").textContent = callback ? `${callback.callback} · ${callback.authority}. ${callback.runtime}${callback.implementation ? ` Implementation: ${callback.implementation.status} via ${callback.implementation.method}.` : ""}` : "Choose a callback contract to tell Workbench what this widget should do when used.";
     }
   }
 
@@ -616,6 +652,8 @@
     const profile = widgetProfileFor(layer);
     const source = layer.type === "reforger" && /\.layout$/i.test(layer.resourcePath || "") ? layer.resourcePath : "";
     const widgetType = source ? "Layout prefab" : (profile.runtimeClass || "FrameWidgetClass");
+    const binding = bindingFor(layer);
+    const callback = functionFor(layer);
     return {
       id: layer.id,
       name: `m_w${safeName(layer.name || `Widget${index + 1}`).replace(/-([a-z])/g, (_, character) => character.toUpperCase()) || `Widget${index + 1}`}`,
@@ -626,15 +664,23 @@
       source: source || undefined,
       importMode: source ? "Drag this WLib/vanilla layout into the root, then apply the bounds below." : "Create this native widget under the root FrameWidget.",
       binding: layer.binding || "",
-      bindingContract: bindingFor(layer) || undefined,
+      bindingContract: binding || undefined,
       functionId: layer.functionId || "",
-      functionContract: functionFor(layer) || undefined,
+      functionContract: callback || undefined,
+      runtimeContract: binding || callback ? {
+        dataSource: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "client UI event",
+        authority: callback?.authority || binding?.authority || "client-local",
+        refreshEvents: binding?.updateEvents || callback?.updateEvents || [],
+        rowIdentity: binding?.id === "player.list.connected" ? "PlayerManager playerId carried beside each native row" : undefined,
+        preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values"
+      } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
       anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
       geometry: { mode: "pixel-fixed", rootWidth: state.canvas.width, rootHeight: state.canvas.height },
       properties: { text: layer.text, fill: layer.fill, color: layer.color, borderColor: layer.borderColor, accent: layer.accent, opacity: layer.opacity, fontSize: layer.fontSize, visible: layer.visible },
       reforgerProfile: layer.type === "reforger" ? (layer.reforgerVisual || reforgerVisualFor(layer)) : undefined,
       resourceReference: layer.resourcePath || undefined,
+      sourceChildHint: layer.catalogNativeChildHint || undefined,
       resourceWorkbenchAction: layer.catalogWorkbenchAction || undefined
     };
   }
@@ -736,6 +782,17 @@
   function controllerSourceFor(classStem, layoutName, widgets) {
     const className = `BWUIC_${classStem}Controller`;
     const connected = widgets.find(widget => widget.binding === "player.list.connected");
+    const callbackIds = [...new Set(widgets.map(widget => widget.functionId).filter(Boolean))];
+    const callbackRoutes = [];
+    widgets.filter(widget => widget.functionId && widget.functionId !== "player.row.select").forEach(widget => {
+      callbackRoutes.push(`\t\tif (w && w.GetName() == "${widget.name}")`);
+      callbackRoutes.push("\t\t{");
+      if (widget.functionId === "ui.layout.close") callbackRoutes.push("\t\t\tClose();");
+      else if (widget.functionId === "player.row.teleport") callbackRoutes.push("\t\t\tRequestTeleportSelectedPlayer();");
+      else callbackRoutes.push(`\t\t\t// Callback contract '${widget.functionId}' is assigned to this named widget.`);
+      callbackRoutes.push("\t\t\treturn true;");
+      callbackRoutes.push("\t\t}");
+    });
     const lines = [
       "// Generated by BUSHWAR UI Composer.",
       "//",
@@ -749,6 +806,7 @@
       "{",
       `\tprotected static const ResourceName LAYOUT = \"UI/layouts/${layoutName}.layout\";`,
       "\tprotected ref Widget m_wRoot;",
+      "\tprotected int m_iSelectedPlayerId = -1;",
       "",
       "\tvoid Open()",
       "\t{",
@@ -778,6 +836,7 @@
       "\t\tm_wRoot.RemoveHandler(this);",
       "\t\tdelete m_wRoot;",
       "\t\tm_wRoot = null;",
+      "\t\tm_iSelectedPlayerId = -1;",
       "\t}",
       "",
       "\tprotected void SetReadableFont(Widget root, string widgetName, int size)",
@@ -822,6 +881,7 @@
         "\t\t}",
         "\t\tm_aPlayerRows.Clear();",
         "\t\tm_aPlayerRowIds.Clear();",
+        "\t\tm_iSelectedPlayerId = -1;",
         "",
         "\t\tPlayerManager playerManager = GetGame().GetPlayerManager();",
         "\t\tif (!playerManager)",
@@ -909,6 +969,7 @@
         "\t\t\treturn;",
         "",
         "\t\tstring playerName = playerManager.GetPlayerName(playerId);",
+        "\t\tm_iSelectedPlayerId = playerId;",
         `\t\tTextWidget selectionText = TextWidget.Cast(m_wRoot.FindAnyWidget(\"${names.selection}\"));`,
         "\t\tif (selectionText)",
         "\t\t{",
@@ -917,6 +978,21 @@
         "\t\t}",
         "\t\t// Bind the selected-player label or action target here using the",
         "\t\t// actual ID. Never infer identity from row order or display text.",
+        "\t}",
+        ""
+      );
+
+    }
+    if (callbackIds.includes("player.row.teleport")) {
+      lines.push(
+        "\tprotected void RequestTeleportSelectedPlayer()",
+        "\t{",
+        "\t\tif (m_iSelectedPlayerId < 0)",
+        "\t\t\treturn;",
+        "",
+        "\t\t// REVIEW REQUIRED: replace this hook with a server-authoritative RplRpc.",
+        "\t\t// Validate the local GM permission and the target playerId on the server",
+        "\t\t// before changing any entity transform. The Composer never grants authority.",
         "\t}",
         ""
       );
@@ -930,6 +1006,7 @@
       connected ? "\t\t\tOnPlayerRowClicked(m_aPlayerRowIds[rowIndex]);" : "",
       connected ? "\t\t\treturn true;" : "",
       connected ? "\t\t}" : "",
+      ...callbackRoutes,
       "\t\treturn false;",
       "\t}",
       "}",
@@ -991,6 +1068,17 @@
       widgets,
       nativeProfileSchema: 1,
       nativeWidgetClasses: [...new Set(widgets.map(widget => widget.widgetType))].join(","),
+      engineContext: {
+        format: engineContextFormat,
+        schema: 1,
+        source: state.engineContext?.source || "none",
+        capturedAt: state.engineContext?.capturedAt || "",
+        engineVersion: state.engineContext?.engineVersion || "",
+        playerCount: enginePlayers().length,
+        previewPlayers: enginePlayers().map(player => ({ id: player.id, name: player.name })),
+        runtimeAuthoritative: true,
+        note: "Preview values are optional evidence only. The generated controller must re-query PlayerManager in Reforger at runtime."
+      },
       bindings: widgets.filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
       callbacks: widgets.filter(widget => widget.functionId).map(widget => ({ id: widget.functionId, contract: widget.functionContract })),
       runtimeScaffolds,
@@ -998,6 +1086,7 @@
       layoutCreateRequest: {
         name: layoutName,
         description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
+        rootSize: { width: state.canvas.width, height: state.canvas.height, source: "Composer canvas; set the same root size in Layout Editor before judging pixel bounds." },
         root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
         note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container) and pixel-fixed slots preserve the Composer canvas at the exported root size. Open and resave in Workbench Layout Editor before production. For any widget with a source path, replace the native scaffold with the listed vanilla/WLib layout in Layout Editor."
       },
@@ -1006,7 +1095,7 @@
         visualReferences: "Reference-board images are intentionally excluded from this import plan. Keep them in the .bwui project bundle.",
         nextSteps: [
           "Use layoutCreateRequest with the Enfusion layout_create tool to generate a native-widget scaffold in an isolated addon, or create the target GUI layout manually at the listed layoutPath.",
-          "Open the scaffold in Layout Editor, set root size, and confirm each mapped native widget class before replacing source-backed scaffolds with their listed WLib/vanilla layout prefabs using the plan's names, anchors, and bounds.",
+          `Open the scaffold in Layout Editor, set root size to ${state.canvas.width} × ${state.canvas.height}, and confirm each mapped native widget class before replacing source-backed scaffolds with their listed WLib/vanilla layout prefabs using the plan's names, anchors, and bounds.`,
           "Use Workbench's Generate Class from Layout after naming script-bound widgets with m_w prefixes.",
           "Run Layout Editor Live Preview at supported resolutions, then wire gameplay behaviour in the generated controller using runtimeScaffolds.requiredWidgetNames."
         ]
@@ -1018,6 +1107,28 @@
     const plan = makeWorkbenchPlan();
     download(`${safeName(state.title)}-workbench-import-plan.json`, JSON.stringify(plan, null, 2), "application/json");
     setStatus(`Workbench import plan exported · ${plan.widgets.length} UI widget${plan.widgets.length === 1 ? "" : "s"}`);
+  }
+
+  function exportWorkbenchBundle() {
+    const plan = makeWorkbenchPlan();
+    const bundle = {
+      format: workbenchBundleFormat,
+      schema: 1,
+      createdAt: new Date().toISOString(),
+      appVersion: APP_VERSION,
+      design: makeBundle("project"),
+      plan,
+      controller: { path: plan.controllerPath, source: plan.controllerSource },
+      engineContext: plan.engineContext,
+      instructions: [
+        "Validate plan.format/schema in the disposable Workbench addon before production use.",
+        "Use plan.layoutCreateRequest with layout_create or author the final layout in Workbench Layout Editor.",
+        "Copy controller.source to controller.path, compile, and keep PlayerManager runtime reads authoritative.",
+        "Reference images stay in design; no vanilla Reforger assets are redistributed."
+      ]
+    };
+    download(`${safeName(state.title)}-workbench-handoff.json`, JSON.stringify(bundle, null, 2), "application/json");
+    setStatus(`Complete Workbench handoff exported · ${plan.widgets.length} widget${plan.widgets.length === 1 ? "" : "s"} + controller + context contract`);
   }
 
   function exportControllerScaffold() {
@@ -1044,6 +1155,14 @@
       canvas: `${state.canvas.width}x${state.canvas.height}`,
       baseScene: { name: state.canvas.baseScene, visible: state.canvas.baseSceneVisible, opacity: state.canvas.baseSceneOpacity },
       references: { embeddedAssets: assetSummary().count, note: "Reference images are preserved in .bwui project/template bundles; do not distribute vanilla game assets." },
+      engineContext: {
+        source: state.engineContext?.source || "none",
+        capturedAt: state.engineContext?.capturedAt || "",
+        engineVersion: state.engineContext?.engineVersion || "",
+        playerCount: enginePlayers().length,
+        previewPlayers: enginePlayers().map(player => ({ id: player.id, name: player.name })),
+        runtimeAuthoritative: true
+      },
       bindings: state.layers.filter(layer => layer.binding).map(layer => ({ id: layer.binding, contract: bindingFor(layer) })),
       callbacks: state.layers.filter(layer => layer.functionId).map(layer => ({ id: layer.functionId, contract: functionFor(layer) })),
       bundleIntegrity: bundleIntegrity(state),
@@ -1174,6 +1293,40 @@
   function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]); }
   function setStatus(message) { $("#statusText").textContent = message; }
 
+  function normalizeEngineContext(value) {
+    if (!value || value.format !== engineContextFormat || Number(value.schema) !== 1) throw new Error("Unsupported Workbench context format");
+    const players = Array.isArray(value.players) ? value.players.map(player => ({
+      id: Number(player?.id),
+      name: String(player?.name || "").trim(),
+      identity: String(player?.identity || ""),
+      controlledEntity: String(player?.controlledEntity || "")
+    })).filter(player => Number.isFinite(player.id) && player.name) : [];
+    return {
+      schema: 1,
+      source: "workbench",
+      capturedAt: String(value.capturedAt || new Date().toISOString()),
+      engineVersion: String(value.engineVersion || ""),
+      players,
+      note: String(value.note || "Imported from a trusted Workbench runtime snapshot.")
+    };
+  }
+
+  function importEngineContext(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        checkpoint();
+        state.engineContext = normalizeEngineContext(JSON.parse(reader.result));
+        render();
+        setStatus(`Workbench context imported · ${engineContextLabel()}`);
+      } catch (error) {
+        alert(`Could not import Workbench context: ${error.message}`);
+      }
+    };
+    reader.readAsText(file);
+  }
+
   function renderReforgerCatalog() {
     const catalog = window.BUSHWAR_REFORGER_CATALOG || { entries: [], disclaimer: "Catalogue unavailable." };
     const root = $("#reforgerCatalog");
@@ -1185,16 +1338,17 @@
       const haystack = `${item.name} ${item.path} ${item.category} ${item.kind}`.toLowerCase();
       const matchesFamily = family === "all" || item.category.startsWith(family);
       if (!matchesFamily || (query && !haystack.includes(query))) return;
-      visible += 1;
-      const button = document.createElement("button");
-      const visual = reforgerVisualFor(item);
-      button.className = "catalog-entry";
-       button.title = `Add ${item.nativeWidgetClass || "source-backed"} reference for ${item.path}`;
-       button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(item.nativeWidgetClass || "LayoutResource")}</small><small>${escapeHtml(item.path)}</small></span>`;
-      button.addEventListener("click", () => addLayer("reforger", {
+       visible += 1;
+       const button = document.createElement("button");
+       const visual = reforgerVisualFor(item);
+       const nativeLabel = [item.nativeWidgetClass || "LayoutResource", item.nativeChildHint ? `child hint: ${item.nativeChildHint}` : ""].filter(Boolean).join(" · ");
+       button.className = "catalog-entry";
+       button.title = `Add ${nativeLabel} reference for ${item.path}`;
+       button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(nativeLabel)}</small><small>${escapeHtml(item.path)}</small></span>`;
+       button.addEventListener("click", () => addLayer("reforger", {
        name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.path,
-         catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview, catalogNativeWidgetClass: item.nativeWidgetClass || "LayoutResource", catalogWorkbenchAction: item.workbenchAction || "Use this source in Workbench Layout Editor", reforgerVisual: visual, ...reforgerBoundsFor(visual)
-      }));
+         catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview, catalogNativeWidgetClass: item.nativeWidgetClass || "LayoutResource", catalogNativeChildHint: item.nativeChildHint || "", catalogWorkbenchAction: item.workbenchAction || "Use this source in Workbench Layout Editor", reforgerVisual: visual, ...reforgerBoundsFor(visual)
+       }));
       root.append(button);
     });
     $("#catalogCount").textContent = `(${visible}/${catalog.entries.length})`;
@@ -1240,9 +1394,12 @@
     if (!state.layers.length) warnings.push("Project has no UI layers.");
     if (!state.handoff.layoutName.trim()) warnings.push("Give the Workbench layout a name before exporting its import plan.");
     const assets = assetSummary();
+    const contextSummary = enginePlayers().length
+      ? `Engine context: ${engineContextLabel()}.`
+      : "Engine context: no snapshot loaded; runtime-backed widgets will query Reforger when opened.";
     const report = $("#validationReport");
     report.className = "validation-report";
-    report.innerHTML = `<div class="validation-summary"><b>${warnings.length ? "Review before handoff" : "Ready for Workbench handoff"}</b><br>${state.layers.length} layer${state.layers.length === 1 ? "" : "s"} · ${importableLayers.length} importable UI widget${importableLayers.length === 1 ? "" : "s"} · ${refAssets} embedded reference board image${refAssets === 1 ? "" : "s"} · ${(assets.bytes / 1024 / 1024).toFixed(1)} MB portable bundle estimate.</div>${warnings.length ? `<ul class="validation-warnings">${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="validation-ok">Save the authoritative .bwui.json file, then export the Workbench import plan. Create the listed layout in Workbench Layout Editor, apply the plan, and run Live Preview at your target resolutions.</p>`}<p class="hint">Reference-board images stay in the .bwui bundle; the import plan contains only real UI widgets, sources, names, anchors, and pixel bounds. Composer does not write production .layout XML or replace Workbench Layout Editor.</p>`;
+    report.innerHTML = `<div class="validation-summary"><b>${warnings.length ? "Review before handoff" : "Ready for Workbench handoff"}</b><br>${state.layers.length} layer${state.layers.length === 1 ? "" : "s"} · ${importableLayers.length} importable UI widget${importableLayers.length === 1 ? "" : "s"} · ${refAssets} embedded reference board image${refAssets === 1 ? "" : "s"} · ${(assets.bytes / 1024 / 1024).toFixed(1)} MB portable bundle estimate.<br><span class="hint">${escapeHtml(contextSummary)}</span></div>${warnings.length ? `<ul class="validation-warnings">${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="validation-ok">Save the authoritative .bwui.json file, then export the Workbench import plan. Create the listed layout in Workbench Layout Editor, apply the plan, and run Live Preview at your target resolutions.</p>`}<p class="hint">Reference-board images stay in the .bwui bundle; the import plan contains only real UI widgets, sources, names, anchors, and pixel bounds. Composer does not write production .layout XML or replace Workbench Layout Editor.</p>`;
     $("#validationDialog").showModal();
   }
 
@@ -1394,6 +1551,15 @@
   $("#backgroundBtn").addEventListener("click", () => $("#backgroundInput").click());
   $("#referenceBtn").addEventListener("click", () => $("#referenceInput").click());
   $("#referenceInput").addEventListener("change", event => { addReferenceFiles(event.target.files); event.target.value = ""; });
+  $("#engineContextBtn").addEventListener("click", () => $("#engineContextInput").click());
+  $("#engineContextInput").addEventListener("change", event => { importEngineContext(event.target.files[0]); event.target.value = ""; });
+  $("#clearEngineContextBtn").addEventListener("click", () => {
+    if (!enginePlayers().length) return;
+    checkpoint();
+    state.engineContext = { ...freshState().engineContext };
+    render();
+    setStatus("Workbench context cleared; runtime values remain authoritative");
+  });
   $("#backgroundInput").addEventListener("change", event => readImageFile(event.target.files[0], (data, name) => { checkpoint(); state.canvas.background = data; state.canvas.backgroundName = name; render(); setStatus(`Reference loaded: ${name}`); }));
   $("#clearBackgroundBtn").addEventListener("click", () => { checkpoint(); state.canvas.background = ""; state.canvas.backgroundName = ""; render(); });
   $("#backgroundOpacity").addEventListener("input", event => { state.canvas.backgroundOpacity = Number(event.target.value); render(); });
@@ -1427,6 +1593,7 @@
   $("#newBtn").addEventListener("click", () => { if (!confirm("Start a new design? Export the current design first if you want to keep it.")) return; checkpoint(); state = freshState(); selectedId = null; syncControls(); render(); });
   $("#pngBtn").addEventListener("click", exportPng);
   $("#exportWorkbenchPlanBtn").addEventListener("click", exportWorkbenchPlan);
+  $("#exportWorkbenchBundleBtn").addEventListener("click", exportWorkbenchBundle);
   $("#exportControllerBtn").addEventListener("click", exportControllerScaffold);
   $("#copyLayoutCreateBtn").addEventListener("click", copyLayoutCreateRequest);
   $("#workbenchTarget").addEventListener("change", event => { state.handoff.target = event.target.value; persist(); });

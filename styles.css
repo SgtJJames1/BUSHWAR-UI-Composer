@@ -159,6 +159,11 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
 .callback-badge { color: #f47b36; }
 .table-callback-hint { color: #f47b36; font-size: .68em; letter-spacing: .04em; text-transform: uppercase; padding: 7px 10px 0; }
 .engine-preview-empty { color: #8fa0a7; text-align: center !important; font-style: italic; padding: 24px 12px !important; }
+.engine-context-status { margin-top: 8px; padding: 8px 10px; border: 1px solid #344249; background: #151f23; color: #8fa0a7; font-size: 11px; line-height: 1.35; }
+.engine-context-status.loaded { color: #52d6a0; border-color: #2c6651; }
+.engine-context-status.warn { color: #e8ae43; border-color: #735a28; }
+.engine-preview-row { display: flex; align-items: center; gap: 8px; width: 100%; color: #eef5f7; }
+.engine-preview-row .engine-player-id { margin-left: auto; color: #8fa0a7; font-size: .78em; }
 #bindingControls { margin-top: 10px; padding-top: 10px; border-top: 1px solid #344249; }
 .layer.divider-layer { min-height: 1px; }
 .layer.badge-layer { justify-content: center; font-weight: 700; padding: 0 10px; }

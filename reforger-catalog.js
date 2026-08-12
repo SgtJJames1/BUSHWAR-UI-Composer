@@ -20,7 +20,11 @@
   };
   const entryFor = (category, kind, name, path, preview) => ({
     category, kind, name, path, preview,
-    nativeWidgetClass: nativeClassFor(name, kind),
+    // A source-backed .layout is always imported as a LayoutResource. The
+    // optional child hint is deliberately separate so a name heuristic can
+    // never masquerade as the prefab's authoritative root class.
+    nativeWidgetClass: kind === "Layout prefab" ? "LayoutResource" : nativeClassFor(name, kind),
+    nativeChildHint: kind === "Layout prefab" ? nativeClassFor(name, kind) : undefined,
     workbenchAction: kind === "Texture atlas" ? "Use as ImageWidget source in Layout Editor" : "Drag this registered layout prefab into the target layout, then preserve its named children"
   });
   const layouts = (category, directory, names, preview = "▣") => names.forEach(name => entries.push(entryFor(category, "Layout prefab", name, `UI/layouts/${directory}/${name}.layout`, preview)));

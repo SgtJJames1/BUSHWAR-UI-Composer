@@ -212,10 +212,19 @@
           <div class="field"><label for="workbenchLayoutName">Layout name</label><input id="workbenchLayoutName" maxlength="80" value="BUSHWAR_ComposerLayout"></div>
         </div>
         <button id="exportWorkbenchPlanBtn" class="wide workbench-export">Export Workbench import plan</button>
+        <button id="exportWorkbenchBundleBtn" class="wide ghost">Export complete Workbench handoff</button>
         <button id="exportControllerBtn" class="wide ghost">Export EnforceScript controller scaffold</button>
         <button id="copyLayoutCreateBtn" class="wide ghost">Copy layout scaffold request</button>
         <button id="copySpecBtn" class="wide">Copy design specification</button>
         <button id="validateBtn" class="wide handoff-validate">Validate Workbench handoff</button>
+      </section>
+
+      <section>
+        <div class="section-title">Engine context</div>
+        <p class="hint">Import a small runtime snapshot exported from Workbench to preview real connected players and other engine-backed values. Without a snapshot, the Composer shows an explicit runtime placeholder and never invents rows.</p>
+        <button id="engineContextBtn" class="wide ghost">Import Workbench context</button>
+        <button id="clearEngineContextBtn" class="wide ghost">Clear engine context</button>
+        <div id="engineContextStatus" class="engine-context-status">No Workbench context loaded</div>
       </section>
     </aside>
   </main>
@@ -226,6 +235,7 @@
   <input id="referenceInput" type="file" accept="image/*" multiple hidden>
   <input id="designInput" type="file" accept="application/json,.json,.bwui.json" hidden>
   <input id="templateInput" type="file" accept="application/json,.json,.bwui-template.json" hidden>
+  <input id="engineContextInput" type="file" accept="application/json,.json" hidden>
   <input id="layerImageInput" type="file" accept="image/*" hidden>
   <dialog id="validationDialog" class="template-dialog validation-dialog">
     <form method="dialog"><h2>Workbench handoff check</h2><div id="validationReport"></div><div class="dialog-actions"><button class="accent" value="close">Close</button></div></form>
@@ -249,11 +259,11 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260812-native-profiles"></script>
-  <script src="reforger-catalog.js?v=20260812-native-profiles"></script>
-  <script src="reforger-widget-profiles.js?v=20260812-native-profiles"></script>
-  <script src="reforger-bindings.js?v=20260812-native-profiles"></script>
-  <script src="reforger-functions.js?v=20260812-native-profiles"></script>
-  <script src="app.js?v=20260812-native-profiles"></script>
+  <script src="release-notes.js?v=20260812-engine-context"></script>
+  <script src="reforger-catalog.js?v=20260812-engine-context"></script>
+  <script src="reforger-widget-profiles.js?v=20260812-engine-context"></script>
+  <script src="reforger-bindings.js?v=20260812-engine-context"></script>
+  <script src="reforger-functions.js?v=20260812-engine-context"></script>
+  <script src="app.js?v=20260812-engine-context"></script>
 </body>
 </html>

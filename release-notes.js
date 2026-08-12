@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.9.2",
+  version: "0.10.0",
   published: "12 August 2026",
-  title: "Native widget handoff profiles",
-  summary: "Composer elements now carry the actual Workbench widget class and scaffold native controls instead of flattening every element into a Frame.",
+  title: "Engine-context handoff",
+  summary: "Runtime-backed widgets can now preview an imported Workbench context while the generated handoff keeps Reforger authoritative at runtime.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -19,6 +19,11 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The widget profile database maps palette elements to native Frame, Text, Button, Image, ProgressBar, EditBox, CheckBox, and layout-container classes.",
     "Reforger catalogue cards now show their native widget-class hint and the Workbench action required to use the source-backed prefab or atlas.",
     "Schema 3 plans carry nativeProfileSchema/nativeWidgetClasses, and the disposable Workbench review plug-in rejects handoffs that omit the mapping.",
+    "Import Workbench context JSON to preview the real connected-player roster; without it, the browser shows an explicit runtime placeholder instead of fake rows.",
+    "Generated plans now carry engine-context provenance, runtime authority, refresh events, row identity, and callback implementation status.",
+    "Player-row callback scaffolds retain the actual PlayerManager ID and emit a compile-safe review hook for server-authoritative actions such as teleport.",
+    "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
+    "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract."
   ]
 };
