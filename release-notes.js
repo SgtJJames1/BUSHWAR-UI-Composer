@@ -1,12 +1,12 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.5.1",
+  version: "0.5.2",
   published: "12 August 2026",
-  title: "Reforger reference update",
-  summary: "A clearer, safer starting point for turning a visual idea into a Workbench handoff.",
+  title: "Workbench import-plan update",
+  summary: "Reforger reference layers now behave like visual UI compositions, and your design can be handed to Workbench with structured implementation data.",
   changes: [
-    "Reforger reference cards now use distinct previews for controls, HUD, Game Master, map, chat, and icon-atlas families.",
-    "The Reforger category filter now sits directly below the catalogue description.",
-    "Selected layers have a lock or unlock button beside their on-canvas pixel dimensions.",
-    "The Workbench handoff checker now makes it easier to review a design before implementation."
+    "Reforger database layers no longer sit inside one generic reference card; each renders as its own UI composition.",
+    "Added Export Workbench import plan with target type, layout name, widget sources, root data, anchors, bounds, and script-safe widget names.",
+    "The exported plan preserves real vanilla layout paths while keeping reference-board images out of a game import.",
+    "Workbench authoring remains Layout Editor-owned so widget GUIDs and serialization stay valid."
   ]
 };

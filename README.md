@@ -58,6 +58,10 @@ The **What's new** toolbar button remains available to reopen it.
   sharing, clearing browser data, or moving to another computer
 - PNG preview export
 - A copied implementation specification containing both pixel bounds and normalized anchors
+- A structured **Workbench import plan** export with target kind, layout path,
+  root/widget instructions, resource sources, anchors, and reusable widget
+  names. It is deliberately consumed through Workbench Layout Editor rather
+  than unsafe handwritten `.layout` XML.
 - A Workbench handoff check that flags undersized canvases, unlocked or missing
   visual references, missing Reforger resource paths, and empty projects
 

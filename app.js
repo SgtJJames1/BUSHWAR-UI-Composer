@@ -9,6 +9,8 @@
   const APP_VERSION = release.version;
   const bundleFormat = "bushwar-ui-composer";
   const bundleSchema = 3;
+  const workbenchPlanFormat = "bushwar-ui-composer-workbench-plan";
+  const workbenchPlanSchema = 1;
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const uid = () => `layer-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -68,6 +70,7 @@
       title: "Untitled BUSHWAR UI",
       canvas: { width: 1920, height: 1080, baseScene: "blank", baseSceneVisible: true, baseSceneOpacity: 1, background: "", backgroundName: "", backgroundOpacity: 0.45 },
       settings: { grid: true, snap: true, gridSize: 10 },
+      handoff: { target: "Menu", layoutName: "BUSHWAR_ComposerLayout" },
       layers: []
     };
   }
@@ -80,6 +83,7 @@
     const clean = { ...freshState(), ...value };
     clean.canvas = { ...freshState().canvas, ...(value.canvas || {}) };
     clean.settings = { ...freshState().settings, ...(value.settings || {}) };
+    clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
     clean.layers = Array.isArray(value.layers) ? value.layers : [];
     return clean;
   }
@@ -240,8 +244,8 @@
       element.dataset.size = `${Math.round(layer.w)} × ${Math.round(layer.h)}`;
       Object.assign(element.style, {
         left: `${layer.x}px`, top: `${layer.y}px`, width: `${layer.w}px`, height: `${layer.h}px`,
-        backgroundColor: layer.type === "text" ? "transparent" : layer.fill,
-        color: layer.color, border: `${layer.type === "divider" ? 0 : 1}px solid ${layer.borderColor}`,
+        backgroundColor: ["text", "reforger"].includes(layer.type) ? "transparent" : layer.fill,
+        color: layer.color, border: `${["divider", "reforger"].includes(layer.type) ? 0 : 1}px solid ${layer.borderColor}`,
         borderRadius: `${layer.radius}px`, fontSize: `${layer.fontSize}px`, opacity: layer.opacity,
         zIndex: index + 2,
         "--comp-accent": layer.accent
@@ -348,12 +352,11 @@
   function renderReforgerReference(layer, element, text) {
     const visual = layer.reforgerVisual || reforgerVisualFor(layer);
     element.classList.add(`reforger-${visual}`);
-    const path = escapeHtml(layer.resourcePath || "Reforger resource reference");
     const title = text || "Reforger reference";
     const body = {
       button: `<span class="rr-button">${title}<i>›</i></span>`, checkbox: `<span class="rr-check checked">✓</span><span class="rr-label">${title}</span>`, slider: `<span class="rr-label">${title}</span><span class="rr-slider"><i></i></span>`, progress: `<span class="rr-label">${title}</span><span class="rr-progress"><i></i></span>`, selector: `<span class="rr-select">${title}<b>⌄</b></span>`, input: `<span class="rr-input"><b>${title}</b><i>Search / enter value</i></span>`, tabs: `<span class="rr-tabs"><b>${title}</b><i>DETAILS</i><i>OPTIONS</i></span>`, list: `<span class="rr-list"><b>${title}</b><i></i><i></i><i></i></span>`, "vehicle-hud": `<span class="rr-gauge">62</span><span class="rr-vehicle"><b>${title}</b><i>GEAR 3 · 48 km/h</i><em></em></span>`, map: `<span class="rr-map"><i>⌖</i><b>${title}</b><em></em></span>`, chat: `<span class="rr-chat"><b>${title}</b><i>PLAYER: Ready on your mark.</i><i>GM: Entity placed.</i></span>`, action: `<span class="rr-action"><b>F</b><span>${title}<i>Hold to interact</i></span></span>`, "gm-hud": `<span class="rr-gm"><b>◆</b><span>${title}<i>GAME MASTER / EDITOR</i></span><em>⌘</em></span>`, "icon-atlas": `<span class="rr-atlas"><i>⌁</i><i>⚙</i><i>◇</i><i>⌖</i><i>◉</i><i>▣</i></span>`, "map-marker": `<span class="rr-marker">⌖</span><span class="rr-label">${title}</span>`, text: `<span class="rr-text">${title}</span>`, panel: `<span class="rr-panel"><b>${title}</b><i>Workbench layout reference</i></span>`
     }[visual] || `<span class="rr-panel"><b>${title}</b></span>`;
-    element.innerHTML = `<div class="reforger-reference"><span class="ref-badge">${escapeHtml(layer.catalogPreview || "REF")}</span><span class="rr-content">${body}<small>${path}</small></span></div>`;
+    element.innerHTML = `<div class="reforger-reference rf-${visual}" role="img" aria-label="${escapeHtml(title)} Reforger UI reference">${body}</div>`;
   }
 
   function renderLayers() {
@@ -540,6 +543,67 @@
     setStatus(`Template bundle exported · ${assets.count} embedded reference asset${assets.count === 1 ? "" : "s"}`);
   }
 
+  function workbenchWidgetFor(layer, index) {
+    const base = {
+      panel: "FrameWidget", text: "TextWidget", button: "ButtonWidget", icon: "ImageWidget", image: "ImageWidget",
+      player: "FrameWidget", divider: "FrameWidget", badge: "TextWidget", window: "FrameWidget", dialog: "FrameWidget",
+      prompt: "FrameWidget", toast: "FrameWidget", context: "FrameWidget", tooltip: "FrameWidget", tabs: "FrameWidget",
+      table: "FrameWidget", toolbar: "FrameWidget", progress: "FrameWidget", input: "FrameWidget", toggle: "FrameWidget",
+      assetcard: "FrameWidget", squadtile: "FrameWidget", inventory: "FrameWidget", categorybar: "FrameWidget"
+    };
+    const source = layer.type === "reforger" && /\.layout$/i.test(layer.resourcePath || "") ? layer.resourcePath : "";
+    const widgetType = source ? "Layout prefab" : (base[layer.type] || "FrameWidget");
+    return {
+      id: layer.id,
+      name: `m_w${safeName(layer.name || `Widget${index + 1}`).replace(/-([a-z])/g, (_, character) => character.toUpperCase()) || `Widget${index + 1}`}`,
+      widgetType,
+      source: source || undefined,
+      importMode: source ? "Drag this WLib/vanilla layout into the root, then apply the bounds below." : "Create this native widget under the root FrameWidget.",
+      boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
+      anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
+      properties: { text: layer.text, fill: layer.fill, color: layer.color, borderColor: layer.borderColor, accent: layer.accent, opacity: layer.opacity, fontSize: layer.fontSize, visible: layer.visible },
+      reforgerProfile: layer.type === "reforger" ? (layer.reforgerVisual || reforgerVisualFor(layer)) : undefined,
+      resourceReference: layer.resourcePath || undefined
+    };
+  }
+
+  function makeWorkbenchPlan() {
+    const layoutName = safeName(state.handoff.layoutName) || "bushwar-composer-layout";
+    const classStem = layoutName.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("") || "BushwarComposerLayout";
+    const visibleLayers = state.layers.filter(layer => layer.type !== "reference");
+    return {
+      format: workbenchPlanFormat,
+      schema: workbenchPlanSchema,
+      generatedAt: new Date().toISOString(),
+      appVersion: APP_VERSION,
+      target: {
+        kind: state.handoff.target,
+        layoutPath: `UI/layouts/${layoutName}.layout`,
+        rootWidget: "m_wRoot",
+        controllerClass: `BWUIC_${classStem}Controller`
+      },
+      root: { width: state.canvas.width, height: state.canvas.height, widgetType: "FrameWidget", name: "m_wRoot" },
+      widgets: visibleLayers.map(workbenchWidgetFor),
+      resources: [...new Set(visibleLayers.map(layer => layer.resourcePath).filter(Boolean))],
+      safety: {
+        layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",
+        visualReferences: "Reference-board images are intentionally excluded from this import plan. Keep them in the .bwui project bundle.",
+        nextSteps: [
+          "Create the target GUI layout in your addon at the listed layoutPath.",
+          "Set root size, add the root FrameWidget, and recreate widgets using the plan's names, sources, anchors, and bounds.",
+          "Use Workbench's Generate Class from Layout after naming script-bound widgets with m_w prefixes.",
+          "Run Layout Editor Live Preview at supported resolutions, then wire gameplay behaviour in the generated controller."
+        ]
+      }
+    };
+  }
+
+  function exportWorkbenchPlan() {
+    const plan = makeWorkbenchPlan();
+    download(`${safeName(state.title)}-workbench-import-plan.json`, JSON.stringify(plan, null, 2), "application/json");
+    setStatus(`Workbench import plan exported · ${plan.widgets.length} UI widget${plan.widgets.length === 1 ? "" : "s"}`);
+  }
+
   async function copySpec() {
     const spec = {
       format: "BUSHWAR UI Composer Workbench handoff",
@@ -621,7 +685,9 @@
       ctx.fillStyle = layer.accent; ctx.beginPath(); ctx.arc(layer.x + 29, layer.y + layer.h / 2, 17, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = layer.color; ctx.textAlign = "left"; ctx.fillText(layer.text, layer.x + 58, layer.y + layer.h / 2, layer.w - 230);
       ctx.font = `700 ${Math.max(10, layer.fontSize * .68)}px Bahnschrift, sans-serif`; ctx.fillText("BRING ME   |   BRING PLAYER", layer.x + layer.w - 192, layer.y + layer.h / 2, 182);
-    } else if (["window", "dialog", "prompt", "toast", "context", "tooltip", "tabs", "table", "toolbar", "progress", "input", "toggle", "assetcard", "squadtile", "inventory", "categorybar", "reforger"].includes(layer.type)) {
+    } else if (layer.type === "reforger") {
+      drawReforgerPreview(ctx, layer);
+    } else if (["window", "dialog", "prompt", "toast", "context", "tooltip", "tabs", "table", "toolbar", "progress", "input", "toggle", "assetcard", "squadtile", "inventory", "categorybar"].includes(layer.type)) {
       ctx.fillStyle = layer.accent;
       ctx.fillRect(layer.x, layer.y, layer.w, Math.min(5, layer.h));
       ctx.fillStyle = layer.color;
@@ -630,6 +696,36 @@
       ctx.fillText(layer.text, layer.x + 14, layer.y + Math.min(layer.h / 2, 30), layer.w - 28);
     }
     ctx.restore();
+  }
+
+  function drawReforgerPreview(ctx, layer) {
+    const visual = layer.reforgerVisual || reforgerVisualFor(layer);
+    const x = layer.x, y = layer.y, w = layer.w, h = layer.h, accent = layer.accent || "#18bce8";
+    ctx.fillStyle = "#17242a";
+    ctx.fillRect(x, y, w, h);
+    if (visual === "button") {
+      ctx.fillStyle = "#303d43"; ctx.fillRect(x, y, w, h - 4); ctx.fillStyle = accent; ctx.fillRect(x, y + h - 4, w, 4);
+      ctx.fillStyle = "#f2f7f8"; ctx.textAlign = "center"; ctx.font = `700 ${Math.max(13, layer.fontSize)}px Bahnschrift, sans-serif`; ctx.fillText(layer.text, x + w / 2, y + h / 2, w - 24);
+      return;
+    }
+    if (visual === "map") {
+      ctx.fillStyle = "#25473e"; ctx.fillRect(x, y, w, h); ctx.strokeStyle = "#538272"; ctx.lineWidth = 2;
+      for (let offset = -h; offset < w; offset += 26) { ctx.beginPath(); ctx.moveTo(x + offset, y); ctx.lineTo(x + offset + h, y + h); ctx.stroke(); }
+      ctx.fillStyle = accent; ctx.font = `700 ${Math.max(22, h * .18)}px Bahnschrift, sans-serif`; ctx.textAlign = "center"; ctx.fillText("⌖", x + w / 2, y + h / 2, w - 12);
+      return;
+    }
+    if (visual === "icon-atlas") {
+      const cellW = (w - 16) / 3, cellH = (h - 16) / 2; ctx.fillStyle = "#0f191d"; ctx.fillRect(x, y, w, h);
+      for (let row = 0; row < 2; row++) for (let column = 0; column < 3; column++) { ctx.strokeStyle = "#607982"; ctx.strokeRect(x + 6 + column * (cellW + 2), y + 6 + row * (cellH + 2), cellW, cellH); }
+      return;
+    }
+    if (visual === "tabs") {
+      const labels = [layer.text, "DETAILS", "OPTIONS"]; ctx.fillStyle = "#151f23"; ctx.fillRect(x, y, w, h);
+      labels.forEach((label, index) => { const left = x + index * w / labels.length; ctx.strokeStyle = "#46575e"; ctx.strokeRect(left, y, w / labels.length, h); if (!index) { ctx.fillStyle = accent; ctx.fillRect(left, y + h - 4, w / labels.length, 4); } ctx.fillStyle = index ? "#9cadb3" : "#f5f8f8"; ctx.font = `700 ${Math.max(10, layer.fontSize * .7)}px Bahnschrift, sans-serif`; ctx.textAlign = "center"; ctx.fillText(label, left + w / labels.length / 2, y + h / 2, w / labels.length - 8); });
+      return;
+    }
+    ctx.fillStyle = accent; ctx.fillRect(x, y, 4, h);
+    ctx.fillStyle = "#eef5f7"; ctx.textAlign = "left"; ctx.font = `700 ${Math.max(12, layer.fontSize)}px Bahnschrift, sans-serif`; ctx.fillText(layer.text, x + 14, y + Math.min(h / 2, 30), w - 28);
   }
 
   function roundedRect(ctx, x, y, w, h, radius) {
@@ -859,6 +955,9 @@
   });
   $("#newBtn").addEventListener("click", () => { if (!confirm("Start a new design? Export the current design first if you want to keep it.")) return; checkpoint(); state = freshState(); selectedId = null; syncControls(); render(); });
   $("#pngBtn").addEventListener("click", exportPng);
+  $("#exportWorkbenchPlanBtn").addEventListener("click", exportWorkbenchPlan);
+  $("#workbenchTarget").addEventListener("change", event => { state.handoff.target = event.target.value; persist(); });
+  $("#workbenchLayoutName").addEventListener("change", event => { state.handoff.layoutName = event.target.value; persist(); });
   $("#whatsNewBtn").addEventListener("click", () => {
     const dialog = $("#updateDialog");
     dialog.dataset.autoNotice = "";
@@ -916,6 +1015,8 @@
   loadPersisted();
   renderReleaseNotice();
   syncControls();
+  $("#workbenchTarget").value = state.handoff.target;
+  $("#workbenchLayoutName").value = state.handoff.layoutName;
   renderUserTemplates();
   renderReforgerCatalog();
   updateUndoButtons();
