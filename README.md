@@ -25,6 +25,11 @@ workflow publishes the browser runtime files on each push to `main`.
 No Windows installer, Electron runtime, update feed, or GitHub Release is a
 supported public distribution channel.
 
+Run `npm test` from the Composer folder before publishing. The dependency-free
+generator smoke test checks that connected-player rows, the real `player.count`
+binding, and the live refresh callback remain present and that the API
+metadata's `out` label is not accidentally emitted into EnforceScript source.
+
 ### Publishing an update notice
 
 Before publishing a meaningful app update, edit `release-notes.js`: bump its

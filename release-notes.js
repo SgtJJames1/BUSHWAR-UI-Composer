@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.5",
+  version: "0.10.6",
   published: "13 August 2026",
-  title: "Live engine refresh contracts",
-  summary: "The Composer can now design explicit live-refresh controls and connected-player counts while keeping runtime values in the game session.",
+  title: "Generator contract smoke test",
+  summary: "The Composer now ships a regression test for the generated Reforger controller, protecting the live player refresh and compile-valid PlayerManager call path.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -34,6 +34,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Binding selectors are filtered to compatible widget types and handoff validation warns before a binding is attached to an incompatible layer.",
     "The disposable Workbench controller fixture was recompiled after the GetPlayers signature correction; its fresh Game module log contains no BWUIC script errors.",
     "Connected player count is now a real PlayerManager-backed scalar binding for text and badge widgets; without an imported snapshot the browser shows an explicit unknown value.",
-    "The new Refresh live engine values callback re-queries connected rows and scalar bindings in memory when a designed refresh button is clicked; it does not export player data to disk."
+    "The new Refresh live engine values callback re-queries connected rows and scalar bindings in memory when a designed refresh button is clicked; it does not export player data to disk.",
+    "npm test now validates generated connected-player, player-count, and live-refresh source contracts and rejects accidental GetPlayers(out ...) emission before publishing."
   ]
 };
