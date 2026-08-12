@@ -63,6 +63,9 @@ The **What's new** toolbar button remains available to reopen it.
   file.
 - Connected-player previews are runtime-shaped rather than mock tables: they show only imported non-empty players, expose the count and selected-name fields used by the native scaffold, and carry the clicked row's real `playerId` through the preview contract. With no context loaded, the preview intentionally renders zero player rows.
 - A GM admin-panel template using the approved left 24 px / top 15% / width 360 px / bottom 80% bounds
+- The GM admin-panel template starts with a real connected-player table,
+  PlayerManager-backed count badge, row-selection callback, and Refresh live
+  values button so new projects demonstrate the runtime workflow immediately.
 - Portable `.bwui.json` project and `.bwui-template.json` template bundles:
   they embed imported reference images and record a layer/asset manifest so a
   recipient can verify that an import did not lose a reference

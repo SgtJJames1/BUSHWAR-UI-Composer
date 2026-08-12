@@ -679,7 +679,9 @@
         makeLayer("text", { name: "Admin panel title", x: x + 18, y: y + 18, w: w - 76, h: 40, text: "BUSHWAR ADMIN TOOLS", fontSize: 22 }),
         makeLayer("button", { name: "Close", x: x + w - 48, y: y + 14, w: 32, h: 32, text: "×", fontSize: 24 }),
         makeLayer("text", { name: "Connected label", x: x + 18, y: y + 70, w: w - 36, h: 28, text: "CONNECTED PLAYERS", color: "#9eabb0", fontSize: 14 }),
-        makeLayer("table", { name: "Connected players (engine)", x: x + 14, y: y + 106, w: w - 28, h: h - 130, text: "CONNECTED PLAYERS", binding: "player.list.connected", functionId: "player.row.select", fontSize: 15 })
+        makeLayer("badge", { name: "Connected count (engine)", x: x + w - 158, y: y + 70, w: 140, h: 28, text: "CONNECTED", binding: "player.count", fontSize: 13 }),
+        makeLayer("table", { name: "Connected players (engine)", x: x + 14, y: y + 106, w: w - 28, h: h - 130, text: "CONNECTED PLAYERS", binding: "player.list.connected", functionId: "player.row.select", fontSize: 15 }),
+        makeLayer("button", { name: "Refresh live values", x: x + 206, y: y + 14, w: 92, h: 32, text: "REFRESH", functionId: "engine.context.refresh", fontSize: 12 })
       );
       selectedId = state.layers[0].id;
     } else if (name === "hud-card") {
