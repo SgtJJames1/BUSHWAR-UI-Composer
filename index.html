@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-  <link rel="stylesheet" href="styles.css?v=20260812-reforger-ui-2">
+  <link rel="stylesheet" href="styles.css?v=20260812-update-notice">
 </head>
 <body>
   <header class="topbar">
@@ -36,6 +36,7 @@
         <option value="1">100%</option>
       </select>
       <button id="previewBtn">Preview</button>
+      <button id="whatsNewBtn" title="View changes in this release">What's new</button>
       <button id="pngBtn" class="accent">Export PNG</button>
     </div>
   </header>
@@ -209,6 +210,16 @@
   <dialog id="validationDialog" class="template-dialog validation-dialog">
     <form method="dialog"><h2>Workbench handoff check</h2><div id="validationReport"></div><div class="dialog-actions"><button class="accent" value="close">Close</button></div></form>
   </dialog>
+  <dialog id="updateDialog" class="template-dialog update-dialog" aria-labelledby="updateTitle">
+    <form method="dialog">
+      <div class="update-heading"><span class="update-badge">UPDATED</span><span id="updateVersion" class="update-version"></span></div>
+      <h2 id="updateTitle">What's new</h2>
+      <p id="updatePublished" class="update-published"></p>
+      <p id="updateSummary"></p>
+      <ul id="updateChanges" class="update-changes"></ul>
+      <div class="dialog-actions"><button class="accent" value="close">Continue composing</button></div>
+    </form>
+  </dialog>
   <dialog id="templateDialog" class="template-dialog">
     <form method="dialog">
       <h2>Save as template</h2>
@@ -218,7 +229,8 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="reforger-catalog.js?v=20260812-reforger-ui-2"></script>
-  <script src="app.js?v=20260812-reforger-ui-2"></script>
+  <script src="release-notes.js?v=20260812-update-notice"></script>
+  <script src="reforger-catalog.js?v=20260812-update-notice"></script>
+  <script src="app.js?v=20260812-update-notice"></script>
 </body>
 </html>

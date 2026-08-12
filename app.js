@@ -4,7 +4,9 @@
   const storageKey = "bushwar-ui-composer-by-sgt-james";
   const legacyStorageKey = "bushwar-ui-composer";
   const templatesStorageKey = "bushwar-ui-composer-user-templates-v1";
-  const APP_VERSION = "0.5.0";
+  const updateSeenStorageKey = "bushwar-ui-composer-last-seen-release";
+  const release = window.BUSHWAR_COMPOSER_RELEASE || { version: "0.5.1", published: "", title: "Latest improvements", summary: "", changes: [] };
+  const APP_VERSION = release.version;
   const bundleFormat = "bushwar-ui-composer";
   const bundleSchema = 3;
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -713,6 +715,33 @@
     } catch { state = freshState(); }
   }
 
+  function renderReleaseNotice() {
+    $("#updateTitle").textContent = release.title || "What's new";
+    $("#updateVersion").textContent = `v${release.version}`;
+    $("#updatePublished").textContent = release.published || "";
+    $("#updateSummary").textContent = release.summary || "";
+    const list = $("#updateChanges");
+    list.innerHTML = "";
+    (Array.isArray(release.changes) ? release.changes : []).forEach(change => {
+      const item = document.createElement("li");
+      item.textContent = change;
+      list.append(item);
+    });
+  }
+
+  function showReleaseNoticeIfNew() {
+    const dialog = $("#updateDialog");
+    try {
+      if (localStorage.getItem(updateSeenStorageKey) === release.version) return;
+    } catch { /* If browser storage is unavailable, show the update for this visit. */ }
+    dialog.dataset.autoNotice = "true";
+    window.setTimeout(() => { if (!dialog.open) dialog.showModal(); }, 180);
+  }
+
+  function markReleaseAsSeen() {
+    try { localStorage.setItem(updateSeenStorageKey, release.version); } catch { /* Storage is optional. */ }
+  }
+
   stage.addEventListener("pointerdown", event => {
     const element = event.target.closest(".layer");
     if (!element) { selectedId = null; render(); return; }
@@ -830,6 +859,11 @@
   });
   $("#newBtn").addEventListener("click", () => { if (!confirm("Start a new design? Export the current design first if you want to keep it.")) return; checkpoint(); state = freshState(); selectedId = null; syncControls(); render(); });
   $("#pngBtn").addEventListener("click", exportPng);
+  $("#whatsNewBtn").addEventListener("click", () => {
+    const dialog = $("#updateDialog");
+    dialog.dataset.autoNotice = "";
+    if (!dialog.open) dialog.showModal();
+  });
   $("#copySpecBtn").addEventListener("click", copySpec);
   $("#validateBtn").addEventListener("click", validateHandoff);
   $("#exportTemplateBtn").addEventListener("click", exportTemplate);
@@ -847,6 +881,10 @@
   });
   $("#templateDialog").addEventListener("close", () => {
     if ($("#templateDialog").returnValue === "save") saveUserTemplate($("#templateName").value);
+  });
+  $("#updateDialog").addEventListener("close", () => {
+    if ($("#updateDialog").dataset.autoNotice === "true") markReleaseAsSeen();
+    $("#updateDialog").dataset.autoNotice = "";
   });
 
   window.addEventListener("keydown", event => {
@@ -876,9 +914,11 @@
   window.addEventListener("resize", updateStageScale);
   loadUserTemplates();
   loadPersisted();
+  renderReleaseNotice();
   syncControls();
   renderUserTemplates();
   renderReforgerCatalog();
   updateUndoButtons();
   if (!state.layers.length) applyTemplate("gm-admin"); else render();
+  showReleaseNoticeIfNew();
 })();

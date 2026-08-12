@@ -246,6 +246,12 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
 .validation-summary { padding: 8px; border-left: 3px solid var(--accent-2); background: #102027; }
 .validation-warnings { margin: 0; padding-left: 18px; color: #ffd4aa; }
 .validation-ok { color: #8de4bd; }
+.update-dialog { width: min(510px, calc(100vw - 32px)); }
+.update-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.update-badge { padding: 3px 7px; background: var(--accent); color: #17130f; font-size: 10px; font-weight: 800; letter-spacing: .8px; }
+.update-version, .update-published { color: #93a5ac !important; font: 12px Consolas, monospace; }
+.update-changes { display: grid; gap: 8px; margin: 2px 0 4px; padding-left: 19px; color: #d9e6e9; font-size: 13px; line-height: 1.42; }
+.update-changes li::marker { color: var(--accent-2); }
 .preset-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .preset-row button { padding: 5px 3px; font-size: 11px; }
 .statusbar { height: 26px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; background: #111a1e; border-top: 1px solid var(--line); color: #7f8d93; font-size: 11px; }

@@ -25,6 +25,14 @@ workflow publishes the browser runtime files on each push to `main`.
 No Windows installer, Electron runtime, update feed, or GitHub Release is a
 supported public distribution channel.
 
+### Publishing an update notice
+
+Before publishing a meaningful app update, edit `release-notes.js`: bump its
+`version`, set the short title/date/summary, and write the visible change
+list. The next time a user opens a newer version, the Composer shows that
+release note once, then remembers that they have seen it in their browser.
+The **What's new** toolbar button remains available to reopen it.
+
 ## Included
 
 - 1920x1080, 1440p, and 4K canvases with fit/percentage zoom
