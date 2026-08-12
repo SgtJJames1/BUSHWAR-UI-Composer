@@ -60,8 +60,14 @@ The **What's new** toolbar button remains available to reopen it.
 - A copied implementation specification containing both pixel bounds and normalized anchors
 - A structured **Workbench import plan** export with target kind, layout path,
   root/widget instructions, resource sources, anchors, and reusable widget
-  names. It is deliberately consumed through Workbench Layout Editor rather
-  than unsafe handwritten `.layout` XML.
+  names. It also carries a `layoutCreateRequest` for a native-widget scaffold
+  in the Enfusion `layout_create` tool. Open and resave that scaffold in
+  Workbench Layout Editor, then replace source-backed scaffold frames with the
+  listed WLib/vanilla layouts; never treat generated text serialization as a
+  finished production layout.
+- A one-click **Copy layout scaffold request** helper for handing that native
+  scaffold request to a Workbench/Codex import task; always target a disposable
+  addon first, then inspect and resave the result in Layout Editor.
 - A Workbench handoff check that flags undersized canvases, unlocked or missing
   visual references, missing Reforger resource paths, and empty projects
 

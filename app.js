@@ -567,6 +567,30 @@
     };
   }
 
+  function reforgerColor(hex, alpha = 1) {
+    const value = String(hex || "#ffffff").replace("#", "");
+    const red = parseInt(value.slice(0, 2), 16) || 0;
+    const green = parseInt(value.slice(2, 4), 16) || 0;
+    const blue = parseInt(value.slice(4, 6), 16) || 0;
+    return [red / 255, green / 255, blue / 255, clamp(alpha, 0, 1)].map(component => Number(component.toFixed(3))).join(" ");
+  }
+
+  function layoutCreateNodeFor(layer, index) {
+    const widget = workbenchWidgetFor(layer, index);
+    return {
+      type: "Frame",
+      name: widget.name,
+      props: { Color: reforgerColor(layer.fill, layer.opacity) },
+      slot: { anchor: "0 0 0 0", positionX: Math.round(layer.x), positionY: Math.round(layer.y), sizeX: Math.round(layer.w), sizeY: Math.round(layer.h) },
+      children: [{
+        type: "Text",
+        name: `${widget.name}Text`,
+        props: { Text: layer.text || layer.name, Color: reforgerColor(layer.color), ExactFontSize: String(Math.round(layer.fontSize)), Align: ["button", "badge", "reforger"].includes(layer.type) ? "center" : "left" },
+        slot: { anchor: "0 0 1 1" }
+      }]
+    };
+  }
+
   function makeWorkbenchPlan() {
     const layoutName = safeName(state.handoff.layoutName) || "bushwar-composer-layout";
     const classStem = layoutName.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("") || "BushwarComposerLayout";
@@ -585,12 +609,18 @@
       root: { width: state.canvas.width, height: state.canvas.height, widgetType: "FrameWidget", name: "m_wRoot" },
       widgets: visibleLayers.map(workbenchWidgetFor),
       resources: [...new Set(visibleLayers.map(layer => layer.resourcePath).filter(Boolean))],
+      layoutCreateRequest: {
+        name: layoutName,
+        description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
+        root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
+        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. For any widget with a source path, replace the scaffold frame with the listed vanilla/WLib layout in Layout Editor."
+      },
       safety: {
         layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",
         visualReferences: "Reference-board images are intentionally excluded from this import plan. Keep them in the .bwui project bundle.",
         nextSteps: [
-          "Create the target GUI layout in your addon at the listed layoutPath.",
-          "Set root size, add the root FrameWidget, and recreate widgets using the plan's names, sources, anchors, and bounds.",
+          "Use layoutCreateRequest with the Enfusion layout_create tool to generate a native-widget scaffold in an isolated addon, or create the target GUI layout manually at the listed layoutPath.",
+          "Open the scaffold in Layout Editor, set root size, and replace source-backed frames with their listed WLib/vanilla layout prefabs using the plan's names, anchors, and bounds.",
           "Use Workbench's Generate Class from Layout after naming script-bound widgets with m_w prefixes.",
           "Run Layout Editor Live Preview at supported resolutions, then wire gameplay behaviour in the generated controller."
         ]
@@ -602,6 +632,17 @@
     const plan = makeWorkbenchPlan();
     download(`${safeName(state.title)}-workbench-import-plan.json`, JSON.stringify(plan, null, 2), "application/json");
     setStatus(`Workbench import plan exported · ${plan.widgets.length} UI widget${plan.widgets.length === 1 ? "" : "s"}`);
+  }
+
+  async function copyLayoutCreateRequest() {
+    const request = makeWorkbenchPlan().layoutCreateRequest;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(request, null, 2));
+      setStatus("Layout scaffold request copied · use it in an isolated Workbench addon first");
+    } catch {
+      download(`${safeName(state.title)}-layout-scaffold-request.json`, JSON.stringify(request, null, 2), "application/json");
+      setStatus("Clipboard unavailable; layout scaffold request downloaded");
+    }
   }
 
   async function copySpec() {
@@ -667,7 +708,7 @@
     if ((layer.type === "image" || layer.type === "reference") && layer.image) {
       const image = await loadImage(layer.image);
       ctx.drawImage(image, layer.x, layer.y, layer.w, layer.h);
-    } else if (layer.type !== "text") {
+    } else if (!["text", "reforger"].includes(layer.type)) {
       roundedRect(ctx, layer.x, layer.y, layer.w, layer.h, layer.radius);
       ctx.fillStyle = layer.fill;
       ctx.fill();
@@ -786,15 +827,17 @@
     const warnings = [];
     const references = state.layers.filter(layer => layer.type === "reference");
     const refAssets = references.filter(layer => layer.image).length;
+    const importableLayers = state.layers.filter(layer => layer.type !== "reference");
     if (state.canvas.width < 1920 || state.canvas.height < 1080) warnings.push("Canvas is below Workbench's documented 1920 × 1080 minimum root size.");
     if (references.some(layer => !layer.locked)) warnings.push("One or more visual-reference layers are unlocked and can be moved accidentally.");
     if (references.some(layer => !layer.image)) warnings.push("One or more visual-reference layers have no embedded image.");
     if (state.layers.some(layer => layer.type === "reforger" && !layer.resourcePath)) warnings.push("A Reforger reference card is missing its resource path.");
     if (!state.layers.length) warnings.push("Project has no UI layers.");
+    if (!state.handoff.layoutName.trim()) warnings.push("Give the Workbench layout a name before exporting its import plan.");
     const assets = assetSummary();
     const report = $("#validationReport");
     report.className = "validation-report";
-    report.innerHTML = `<div class="validation-summary"><b>${warnings.length ? "Review before handoff" : "Ready for Workbench handoff"}</b><br>${state.layers.length} layer${state.layers.length === 1 ? "" : "s"} · ${refAssets} embedded reference board image${refAssets === 1 ? "" : "s"} · ${(assets.bytes / 1024 / 1024).toFixed(1)} MB portable bundle estimate.</div>${warnings.length ? `<ul class="validation-warnings">${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="validation-ok">Use Save project to create the authoritative .bwui.json file, then implement the layout in Workbench Layout Editor and run Live Preview at your target resolutions.</p>`}<p class="hint">Exported bundles contain ${bundleIntegrity(state).assetCount} embedded image asset${bundleIntegrity(state).assetCount === 1 ? "" : "s"} and record a layer/asset manifest. Composer output is an implementation handoff; it does not generate a production .layout file or replace the Workbench Layout Editor.</p>`;
+    report.innerHTML = `<div class="validation-summary"><b>${warnings.length ? "Review before handoff" : "Ready for Workbench handoff"}</b><br>${state.layers.length} layer${state.layers.length === 1 ? "" : "s"} · ${importableLayers.length} importable UI widget${importableLayers.length === 1 ? "" : "s"} · ${refAssets} embedded reference board image${refAssets === 1 ? "" : "s"} · ${(assets.bytes / 1024 / 1024).toFixed(1)} MB portable bundle estimate.</div>${warnings.length ? `<ul class="validation-warnings">${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="validation-ok">Save the authoritative .bwui.json file, then export the Workbench import plan. Create the listed layout in Workbench Layout Editor, apply the plan, and run Live Preview at your target resolutions.</p>`}<p class="hint">Reference-board images stay in the .bwui bundle; the import plan contains only real UI widgets, sources, names, anchors, and pixel bounds. Composer does not write production .layout XML or replace Workbench Layout Editor.</p>`;
     $("#validationDialog").showModal();
   }
 
@@ -956,6 +999,7 @@
   $("#newBtn").addEventListener("click", () => { if (!confirm("Start a new design? Export the current design first if you want to keep it.")) return; checkpoint(); state = freshState(); selectedId = null; syncControls(); render(); });
   $("#pngBtn").addEventListener("click", exportPng);
   $("#exportWorkbenchPlanBtn").addEventListener("click", exportWorkbenchPlan);
+  $("#copyLayoutCreateBtn").addEventListener("click", copyLayoutCreateRequest);
   $("#workbenchTarget").addEventListener("change", event => { state.handoff.target = event.target.value; persist(); });
   $("#workbenchLayoutName").addEventListener("change", event => { state.handoff.layoutName = event.target.value; persist(); });
   $("#whatsNewBtn").addEventListener("click", () => {

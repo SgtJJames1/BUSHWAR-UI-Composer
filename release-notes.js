@@ -1,12 +1,12 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.5.2",
+  version: "0.5.3",
   published: "12 August 2026",
-  title: "Workbench import-plan update",
-  summary: "Reforger reference layers now behave like visual UI compositions, and your design can be handed to Workbench with structured implementation data.",
+  title: "Workbench layout scaffold update",
+  summary: "Your import plan now includes a native-widget scaffold request that can create a real layout in an isolated Workbench addon before Layout Editor refinement.",
   changes: [
-    "Reforger database layers no longer sit inside one generic reference card; each renders as its own UI composition.",
-    "Added Export Workbench import plan with target type, layout name, widget sources, root data, anchors, bounds, and script-safe widget names.",
-    "The exported plan preserves real vanilla layout paths while keeping reference-board images out of a game import.",
-    "Workbench authoring remains Layout Editor-owned so widget GUIDs and serialization stay valid."
+    "Exported Workbench import plans now include a layoutCreateRequest for a native-widget scaffold.",
+    "The scaffold path was verified in a disposable addon: Workbench registered it, assigned a GUID, and loaded the layout.",
+    "Reforger database layers render as their own UI compositions instead of a generic reference card.",
+    "Open and resave every generated scaffold in Layout Editor, then replace source-backed frames with the listed WLib or vanilla layout prefabs."
   ]
 };
