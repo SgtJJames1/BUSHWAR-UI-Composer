@@ -23,7 +23,6 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Generated plans now carry engine-context provenance, runtime authority, refresh events, row identity, and callback implementation status.",
     "Player-row callback scaffolds retain the actual PlayerManager ID and emit a compile-safe review hook for server-authoritative actions such as teleport.",
     "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
-    "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract."
   ]
 };
