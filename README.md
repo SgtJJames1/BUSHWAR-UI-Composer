@@ -67,6 +67,13 @@ The **What's new** toolbar button remains available to reopen it.
   Workbench Layout Editor, then replace source-backed scaffold frames with the
   listed WLib/vanilla layouts; never treat generated text serialization as a
   finished production layout.
+- A schema 3 **EnforceScript controller scaffold** in every Workbench plan, plus
+  a separate **Export EnforceScript controller scaffold** download. When a
+  connected-player binding is present, the source reads `PlayerManager`, skips
+  empty IDs, creates one native row per real player, carries the actual
+  `playerId`, and updates a named `SELECTED:` label on row selection. It is
+  intentionally reviewable source, not an automatically trusted or privileged
+  mod.
 - A one-click **Copy layout scaffold request** helper for handing that native
   scaffold request to a Workbench/Codex import task; always target a disposable
   addon first, then inspect and resave the result in Layout Editor.
@@ -112,8 +119,11 @@ This is a design/prototyping tool, not a replacement for the Reforger Layout Edi
 5. Use **Validate Workbench handoff** and fix any warnings. Then copy the
    specification or use the exported PNG as a visual brief.
 6. If your addon includes the optional BUSHWAR validation plug-in, run
-   **BUSHWAR UI Composer → Review import plan**. It accepts schema 2 plans and
-   confirms the binding/callback contract before authoring.
+   **BUSHWAR UI Composer → Review import plan**. It accepts schema 3 plans,
+   checks that the controller path/source is present, and confirms the
+   binding/callback contract before authoring. Copy the controller source into
+   the exported `controllerPath`, then compile it in the disposable addon
+   before wiring it to a production menu.
 7. Recreate the finished UI in Workbench's **Layout Editor** using the listed
    WLib resource paths and test the actual `.layout` with **Live Preview** at
    the resolutions you support. The bundle is a reliable design reference, not
