@@ -62,10 +62,11 @@ The **What's new** toolbar button remains available to reopen it.
 - A structured **Workbench import plan** export with target kind, layout path,
   root/widget instructions, resource sources, anchors, and reusable widget
   names. It also carries a `layoutCreateRequest` for a native-widget scaffold
-  in the Enfusion `layout_create` tool. Its scaffold slots use expanded native
-  pixel offsets against the exported root size, so fixed bounds such as 24 px /
-  360 px do not collapse to the origin when Workbench reserializes a point
-  anchor. Palette elements map to native Button/Text/Image/ProgressBar/
+  in the Enfusion `layout_create` tool. Its scaffold slots use
+  `PositionX`/`PositionY`/`SizeX`/`SizeY` with point anchors, matching the
+  shipped BUSHWAR GM layouts so fixed bounds such as 24 px / 360 px do not
+  collapse to the origin when Workbench reserializes a point anchor. Palette
+  elements map to native Button/Text/Image/ProgressBar/
   EditBox/CheckBox/layout-container classes instead of every element collapsing
   to a generic Frame. Open and resave that scaffold in
   Workbench Layout Editor, then replace source-backed scaffold frames with the

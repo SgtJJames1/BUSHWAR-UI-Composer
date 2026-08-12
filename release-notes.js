@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.1",
+  version: "0.10.2",
   published: "12 August 2026",
   title: "Reliable Workbench pixel handoff",
-  summary: "Workbench exports now use native pixel offsets so imported panels no longer collapse into the top-left corner.",
+  summary: "Workbench exports now use the same Position/Size slots as the shipped BUSHWAR GM layouts, so imported panels no longer collapse into the top-left corner.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -24,7 +24,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Player-row callback scaffolds retain the actual PlayerManager ID and emit a compile-safe review hook for server-authoritative actions such as teleport.",
     "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract.",
-    "Generated FrameWidgetSlot geometry now uses expanded pixel offsets instead of shorthand PositionX/SizeX fields, preventing the cramped top-left import seen with older handoff files.",
-    "The disposable admin-menu fixtures use the same offset-based bounds: left 24 px, top 15%, width 360 px, bottom 80%."
+    "Generated FrameWidgetSlot geometry now uses PositionX/PositionY/SizeX/SizeY with point anchors, matching the shipped BUSHWAR GM menu and preventing the cramped top-left import seen with older handoff files.",
+    "The disposable admin-menu fixtures use the same Position/Size bounds: left 24 px, top 15%, width 360 px, bottom 80%."
   ]
 };

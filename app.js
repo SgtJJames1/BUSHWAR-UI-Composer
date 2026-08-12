@@ -731,21 +731,18 @@
     // scaffold pixel-accurate instead of silently converting a 360 px panel
     // into a proportionally resizing anchor-only widget. The plan still
     // carries normalized anchors for responsive handoff review.
-    // Use the expanded FrameWidgetSlot offsets for point-anchored widgets.
-    // PositionX/SizeX look equivalent in the editor, but older handoff
-    // exports could collapse to the origin when Workbench reserialized a
-    // point anchor with those shorthand fields. Offsets are the native
-    // pixel-authoritative form and survive Layout Editor import reliably.
+    // Use the same FrameWidgetSlot geometry that the shipped BUSHWAR GM
+    // layouts use. Position/Size fields are the pixel-authoritative form for
+    // point-anchored widgets; emitting Offset* here can be ignored by
+    // Workbench and collapse the panel into a tiny top-left cluster.
     const left = Math.round(layer.x);
     const top = Math.round(layer.y);
-    const right = Math.round(layer.x + layer.w);
-    const bottom = Math.round(layer.y + layer.h);
     const pixelSlot = {
       anchor: "0 0 0 0",
-      offsetLeft: left,
-      offsetTop: top,
-      offsetRight: right,
-      offsetBottom: bottom
+      positionX: left,
+      positionY: top,
+      sizeX: Math.round(layer.w),
+      sizeY: Math.round(layer.h)
     };
     if (layer.type === "table" && widget.binding === "player.list.connected") {
       return {
@@ -1097,7 +1094,7 @@
         description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
         rootSize: { width: state.canvas.width, height: state.canvas.height, source: "Composer canvas; set the same root size in Layout Editor before judging pixel bounds." },
         root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
-        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container) and expanded pixel offsets preserve the Composer canvas at the exported root size without relying on shorthand point-anchor Position/Size fields. Open and resave in Workbench Layout Editor before production. For any widget with a source path, replace the native scaffold with the listed vanilla/WLib layout in Layout Editor."
+        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container). Pixel-authored widgets use PositionX/PositionY/SizeX/SizeY with point anchors, matching the shipped BUSHWAR GM layouts and preserving the Composer canvas at the exported root size. Open and resave in Workbench Layout Editor before production. For any widget with a source path, replace the native scaffold with the listed vanilla/WLib layout in Layout Editor."
       },
       safety: {
         layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",
