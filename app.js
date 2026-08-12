@@ -1644,6 +1644,19 @@
       if (layer.functionId === "player.row.select" && layer.binding !== "player.list.connected") warnings.push(`${layer.name || "The player row"} needs the Connected players engine binding before its playerId callback can be wired.`);
       if (layer.binding === "player.list.connected" && !layer.functionId) warnings.push(`${layer.name || "Connected players"} reads real PlayerManager rows but has no row callback; add Connected-player row selected if clicking a player should carry its ID.`);
     });
+    const runtimeBoundLayers = state.layers.filter(layer => layer.binding || layer.functionId);
+    if (runtimeBoundLayers.length) {
+      const generatedSource = makeWorkbenchPlan().controllerSource;
+      if (state.layers.some(layer => layer.binding === "player.list.connected") && (!generatedSource.includes("playerManager.GetPlayers(playerIds);") || generatedSource.includes("GetPlayers(out"))) {
+        warnings.push("Generated controller failed the compile-safe PlayerManager.GetPlayers contract; re-export before opening this plan in Workbench.");
+      }
+      if (state.layers.some(layer => layer.binding === "player.count") && !generatedSource.includes("runtimePlayerCount++")) {
+        warnings.push("Connected player count is bound, but the generated controller does not contain its runtime count path.");
+      }
+      if (state.layers.some(layer => layer.functionId === "engine.context.refresh") && !generatedSource.includes("RefreshRuntimeBindings();")) {
+        warnings.push("Live engine refresh is assigned, but the generated controller does not contain its refresh route.");
+      }
+    }
     if (!state.layers.length) warnings.push("Project has no UI layers.");
     if (!state.handoff.layoutName.trim()) warnings.push("Give the Workbench layout a name before exporting its import plan.");
     const assets = assetSummary();
