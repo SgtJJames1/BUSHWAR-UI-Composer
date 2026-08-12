@@ -77,14 +77,6 @@
       <section>
         <div class="section-title">Element library</div>
         <input id="componentSearch" class="component-search" type="search" placeholder="Search UI elements…">
-        <label class="catalog-filter" for="catalogCategoryFilter">Reforger category
-          <select id="catalogCategoryFilter">
-            <option value="all">All Reforger references</option>
-            <option value="Widgets">Widgets / WLib prefabs</option>
-            <option value="HUD">HUD &amp; Game Master</option>
-            <option value="Icons">Icon atlas families</option>
-          </select>
-        </label>
         <div class="library-label">Basic</div>
         <div class="widget-grid" id="componentLibrary">
           <button data-add="panel"><span class="widget-icon square"></span>Panel</button>
@@ -117,6 +109,14 @@
         </div>
         <div class="library-label">Reforger UI database <span id="catalogCount"></span></div>
         <p id="catalogNote" class="hint catalog-note"></p>
+        <label class="catalog-filter" for="catalogCategoryFilter">Reforger category
+          <select id="catalogCategoryFilter">
+            <option value="all">All Reforger references</option>
+            <option value="Widgets">Widgets / WLib prefabs</option>
+            <option value="HUD">HUD &amp; Game Master</option>
+            <option value="Icons">Icon atlas families</option>
+          </select>
+        </label>
         <div id="reforgerCatalog" class="reforger-catalog"></div>
       </section>
 

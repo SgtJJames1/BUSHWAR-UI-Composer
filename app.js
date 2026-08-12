@@ -247,15 +247,14 @@
 
       renderLayerContent(layer, element);
       if (layer.id === selectedId && !preview) {
-        if (layer.locked) {
-          const lock = document.createElement("span");
-          lock.className = "canvas-lock-badge";
-          lock.title = "Locked layer — unlock it from Layers or Selection";
-          lock.setAttribute("aria-label", "Locked layer");
-          lock.textContent = "🔒";
-          lock.style.left = `${Math.ceil(element.dataset.size.length * 7.25 + 18)}px`;
-          element.append(lock);
-        }
+        const lock = document.createElement("button");
+        lock.type = "button";
+        lock.className = `canvas-lock-toggle${layer.locked ? " locked" : ""}`;
+        lock.title = layer.locked ? "Unlock layer" : "Lock layer";
+        lock.setAttribute("aria-label", `${layer.locked ? "Unlock" : "Lock"} ${layer.name}`);
+        lock.textContent = layer.locked ? "🔒" : "🔓";
+        lock.style.left = `${Math.ceil(element.dataset.size.length * 7.25 + 17)}px`;
+        element.append(lock);
         const handle = document.createElement("span");
         handle.className = "resize-handle";
         element.append(handle);
@@ -313,8 +312,45 @@
     } else if (layer.type === "categorybar") {
       element.innerHTML = `<div class="category-wrap"><span class="category-item active">${text}</span><span class="category-item">CHARACTERS</span><span class="category-item">VEHICLES</span><span class="category-item">GROUPS</span><span class="category-item">PROPS</span></div>`;
     } else if (layer.type === "reforger") {
-      element.innerHTML = `<div class="reforger-reference"><span class="ref-badge">${escapeHtml(layer.catalogPreview || "REF")}</span><span><b>${text}</b><small>${escapeHtml(layer.resourcePath || "Reforger resource reference")}</small></span></div>`;
+      renderReforgerReference(layer, element, text);
     }
+  }
+
+  function reforgerVisualFor(item) {
+    const category = item.category || item.catalogCategory || "";
+    const value = `${item.name} ${category} ${item.kind || item.catalogKind || ""}`.toLowerCase();
+    if (category.startsWith("Icons")) return value.includes("map") ? "map-marker" : "icon-atlas";
+    if (value.includes("checkbox")) return "checkbox";
+    if (value.includes("slider")) return "slider";
+    if (value.includes("progress") || value.includes("loading")) return "progress";
+    if (value.includes("combo") || value.includes("spinbox")) return "selector";
+    if (value.includes("editbox") || value.includes("input")) return "input";
+    if (value.includes("tab")) return "tabs";
+    if (value.includes("gallery") || value.includes("list") || value.includes("sort")) return "list";
+    if (value.includes("vehiclehud") || value.includes("gauge")) return "vehicle-hud";
+    if (value.includes("map") || value.includes("compass")) return "map";
+    if (value.includes("chat")) return "chat";
+    if (value.includes("action") || value.includes("command") || value.includes("ping")) return "action";
+    if (value.includes("gamemaster") || value.includes("editor") || value.includes("hudmenu")) return "gm-hud";
+    if (value.includes("button")) return "button";
+    if (value.includes("label") || value.includes("text") || value.includes("heading")) return "text";
+    return "panel";
+  }
+
+  function reforgerBoundsFor(visual) {
+    const bounds = { button: [270, 58], checkbox: [260, 46], slider: [350, 56], progress: [370, 64], selector: [300, 58], input: [340, 70], tabs: [480, 58], list: [430, 220], "vehicle-hud": [420, 160], map: [390, 240], chat: [400, 160], action: [360, 78], "gm-hud": [470, 110], "icon-atlas": [240, 120], "map-marker": [220, 170], text: [360, 58], panel: [420, 110] };
+    const [w, h] = bounds[visual] || bounds.panel;
+    return { w, h };
+  }
+
+  function renderReforgerReference(layer, element, text) {
+    const visual = layer.reforgerVisual || reforgerVisualFor(layer);
+    const path = escapeHtml(layer.resourcePath || "Reforger resource reference");
+    const title = text || "Reforger reference";
+    const body = {
+      button: `<span class="rr-button">${title}<i>›</i></span>`, checkbox: `<span class="rr-check checked">✓</span><span class="rr-label">${title}</span>`, slider: `<span class="rr-label">${title}</span><span class="rr-slider"><i></i></span>`, progress: `<span class="rr-label">${title}</span><span class="rr-progress"><i></i></span>`, selector: `<span class="rr-select">${title}<b>⌄</b></span>`, input: `<span class="rr-input"><b>${title}</b><i>Search / enter value</i></span>`, tabs: `<span class="rr-tabs"><b>${title}</b><i>DETAILS</i><i>OPTIONS</i></span>`, list: `<span class="rr-list"><b>${title}</b><i></i><i></i><i></i></span>`, "vehicle-hud": `<span class="rr-gauge">62</span><span class="rr-vehicle"><b>${title}</b><i>GEAR 3 · 48 km/h</i><em></em></span>`, map: `<span class="rr-map"><i>⌖</i><b>${title}</b><em></em></span>`, chat: `<span class="rr-chat"><b>${title}</b><i>PLAYER: Ready on your mark.</i><i>GM: Entity placed.</i></span>`, action: `<span class="rr-action"><b>F</b><span>${title}<i>Hold to interact</i></span></span>`, "gm-hud": `<span class="rr-gm"><b>◆</b><span>${title}<i>GAME MASTER / EDITOR</i></span><em>⌘</em></span>`, "icon-atlas": `<span class="rr-atlas"><i>⌁</i><i>⚙</i><i>◇</i><i>⌖</i><i>◉</i><i>▣</i></span>`, "map-marker": `<span class="rr-marker">⌖</span><span class="rr-label">${title}</span>`, text: `<span class="rr-text">${title}</span>`, panel: `<span class="rr-panel"><b>${title}</b><i>Workbench layout reference</i></span>`
+    }[visual] || `<span class="rr-panel"><b>${title}</b></span>`;
+    element.innerHTML = `<div class="reforger-reference"><span class="ref-badge">${escapeHtml(layer.catalogPreview || "REF")}</span><span class="rr-content">${body}<small>${path}</small></span></div>`;
   }
 
   function renderLayers() {
@@ -617,12 +653,13 @@
       if (!matchesFamily || (query && !haystack.includes(query))) return;
       visible += 1;
       const button = document.createElement("button");
+      const visual = reforgerVisualFor(item);
       button.className = "catalog-entry";
       button.title = `Add reference for ${item.path}`;
-      button.innerHTML = `<span class="catalog-preview">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(item.path)}</small></span>`;
+      button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(item.path)}</small></span>`;
       button.addEventListener("click", () => addLayer("reforger", {
         name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.path,
-        catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview
+        catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview, reforgerVisual: visual, ...reforgerBoundsFor(visual)
       }));
       root.append(button);
     });
@@ -680,6 +717,14 @@
     if (!element) { selectedId = null; render(); return; }
     const layer = state.layers.find(item => item.id === element.dataset.id);
     if (!layer) return;
+    if (event.target.closest(".canvas-lock-toggle")) {
+      checkpoint();
+      layer.locked = !layer.locked;
+      render();
+      setStatus(`${layer.name} ${layer.locked ? "locked" : "unlocked"}`);
+      event.preventDefault();
+      return;
+    }
     selectedId = layer.id;
     if (layer.locked || preview) { render(); return; }
     checkpoint();
