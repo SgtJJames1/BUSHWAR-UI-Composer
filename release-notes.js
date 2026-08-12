@@ -1,10 +1,10 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.9.0",
+  version: "0.9.1",
   published: "12 August 2026",
-  title: "Executable Workbench controller handoff",
-  summary: "Workbench exports now include a reviewable controller scaffold so data bindings and row callbacks can be compiled and tested instead of stopping at a visual mockup.",
+  title: "Authoritative connected-player refresh",
+  summary: "Generated controllers now consume Reforger's real connected-player ID list and refresh the table when the live roster changes.",
   changes: [
-    "Connected players uses PlayerManager.GetPlayerCount() + GetPlayerName(playerId), with empty-slot filtering.",
+    "Connected players uses PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
     "Connected-player tables default to a row-selection contract that carries the real playerId into the controller.",
     "The GM base template no longer seeds fake Alpha/Bravo/Charlie player rows; it uses the engine-backed table instead.",
@@ -15,6 +15,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Handoff validation now flags static player-name text without a runtime binding instead of allowing fake Alpha/Bravo/Sgt.James rows through silently.",
     "Schema 3 Workbench plans include controllerPath and controllerSource, plus a one-click EnforceScript controller export.",
     "Connected-player scaffolds include a named selection label; generated OnPlayerRowClicked writes SELECTED: <engine name> while retaining the real playerId.",
+    "Generated controllers include a throttled OnUpdate signature check so joins, leaves, and name changes refresh the native rows without rebuilding every frame.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract."
   ]
 };

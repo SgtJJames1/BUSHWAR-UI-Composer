@@ -15,10 +15,10 @@
       category: "Players",
       valueType: "array<PlayerRecord>",
       sourceClass: "PlayerManager",
-      sourceMethods: ["GetPlayerCount()", "GetPlayerName(playerId)"],
+      sourceMethods: ["GetPlayers(out playerIds)", "GetPlayerName(playerId)"],
       updateEvents: ["player joined", "player left"],
       authority: "client-read",
-      runtime: "Enumerate valid player IDs and omit empty names; never create placeholder rows.",
+      runtime: "Read the authoritative connected-player ID array, resolve each name, and omit empty values; never scan a guessed ID range or create placeholder rows.",
       preview: "engine-list"
     },
     {

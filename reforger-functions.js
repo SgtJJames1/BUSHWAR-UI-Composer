@@ -55,9 +55,9 @@
       category: "Player data",
       kind: "engine-api",
       targetKinds: ["table", "player"],
-      callback: "PlayerManager.GetPlayerCount() + GetPlayerName(playerId)",
+      callback: "PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId)",
       authority: "client-read",
-      runtime: "Enumerate valid IDs, omit empty names, and create exactly one row per returned player."
+      runtime: "Read the authoritative connected-player ID array, omit empty names, and create exactly one row per returned player."
     },
     {
       id: "player.row.select",

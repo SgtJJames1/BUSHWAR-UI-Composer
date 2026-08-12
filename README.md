@@ -81,13 +81,15 @@ The **What's new** toolbar button remains available to reopen it.
   visual references, missing Reforger resource paths, and empty projects
 - Engine binding contracts for runtime-backed compositions. The first live
   contract is Connected players (engine): it maps to
-  PlayerManager.GetPlayerCount() + GetPlayerName(playerId), filters empty
-  slots, and exports the contract in the project and Workbench-plan JSON.
+  PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), filters
+  empty names, and exports the contract in the project and Workbench-plan JSON.
 - A bound connected-player table also exports a runtime scaffold request with
   named count/scroll/list widgets and a row-layout path, so the generated
   Enfusion controller has concrete widget targets instead of a visual-only
-  guess. The plan also includes a native Button/Text row scaffold with valid
-  parent-inferred slots.
+  guess. The generated controller reads the engine's authoritative ID array,
+  carries each real playerId beside its row, and uses a throttled OnUpdate
+  signature check for join/leave/name changes. The plan also includes a native
+  Button/Text row scaffold with valid parent-inferred slots.
 - An explicit callback catalogue lets each supported widget declare the
   Enfusion event/API or controller contract it needs. Connected-player tables
   default to a row-selection contract that carries the real `playerId`; the
