@@ -1,0 +1,75 @@
+{
+  "name": "bushwar-ui-composer",
+  "version": "0.4.0",
+  "description": "Visual Arma Reforger UI prototyping studio by Sgt.James",
+  "author": "Sgt.James",
+  "private": true,
+  "main": "desktop-main.js",
+  "scripts": {
+    "start": "electron .",
+    "package:dir": "electron-builder --dir --win x64",
+    "dist": "electron-builder --win nsis portable --x64",
+    "publish": "electron-builder --win nsis --x64 --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "latest"
+  },
+  "build": {
+    "appId": "com.bushwar.ui-composer",
+    "productName": "BUSHWAR UI Composer by Sgt.James",
+    "copyright": "Copyright © 2026 Sgt.James",
+    "asar": true,
+    "electronUpdaterCompatibility": ">=2.16",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "reforger-catalog.js",
+      "desktop-main.js",
+      "assets/**/*",
+      "build/icon.svg",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "SgtJJames1",
+        "repo": "BUSHWAR-UI-Composer",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.svg",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "BUSHWAR-UI-Composer-Setup-${version}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BUSHWAR UI Composer"
+    },
+    "portable": {
+      "artifactName": "BUSHWAR-UI-Composer-Portable-${version}.${ext}"
+    }
+  }
+}

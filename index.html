@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>BUSHWAR UI Composer by Sgt.James</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">BW</span><span>BUSHWAR UI Composer</span><small>by Sgt.James</small></div>
+    <div class="toolbar">
+      <button id="newBtn" title="New design">New</button>
+      <button id="openBtn">Import design</button>
+      <button id="saveBtn">Export design</button>
+      <span class="separator"></span>
+      <button id="undoBtn" title="Ctrl+Z">Undo</button>
+      <button id="redoBtn" title="Ctrl+Y">Redo</button>
+      <span class="separator"></span>
+      <label class="scene-picker">Scene
+        <select id="sceneSelect" aria-label="Base UI scene">
+          <option value="blank">Blank</option>
+          <option value="vanilla-gm">Vanilla GM</option>
+        </select>
+      </label>
+      <button id="sceneToggleBtn" title="Show or hide the base scene">Scene on</button>
+      <span class="separator"></span>
+      <label class="check"><input id="gridToggle" type="checkbox" checked> Grid</label>
+      <label class="check"><input id="snapToggle" type="checkbox" checked> Snap</label>
+      <select id="zoomSelect" aria-label="Canvas zoom">
+        <option value="fit">Fit</option>
+        <option value="0.25">25%</option>
+        <option value="0.5">50%</option>
+        <option value="0.75">75%</option>
+        <option value="1">100%</option>
+      </select>
+      <button id="previewBtn">Preview</button>
+      <button id="pngBtn" class="accent">Export PNG</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="sidebar left-sidebar">
+      <section>
+        <div class="section-title">Base scene</div>
+        <div class="scene-cards">
+          <button data-scene="blank"><span class="scene-thumb blank-thumb"></span><span><b>Blank workspace</b><small>Start a new UI</small></span></button>
+          <button data-scene="vanilla-gm"><span class="scene-thumb gm-thumb"></span><span><b>Vanilla GM</b><small>Built from your screenshot</small></span></button>
+        </div>
+        <div class="field compact"><label>Base scene opacity</label><input id="sceneOpacity" type="range" min="0" max="1" step="0.05" value="1"></div>
+      </section>
+
+      <section>
+        <div class="section-title">Extra reference</div>
+        <button id="backgroundBtn" class="wide">Load screenshot</button>
+        <div class="field compact"><label>Reference opacity</label><input id="backgroundOpacity" type="range" min="0" max="1" step="0.05" value="0.45"></div>
+        <button id="clearBackgroundBtn" class="wide ghost">Clear screenshot</button>
+      </section>
+
+      <section>
+        <div class="section-title">Templates</div>
+        <div class="template-grid">
+          <button data-template="gm-scene">Vanilla GM + admin overlay</button>
+          <button data-template="gm-admin">Admin panel only</button>
+          <button data-template="hud-card">HUD status card</button>
+          <button data-template="blank">Blank canvas</button>
+        </div>
+        <button id="saveTemplateBtn" class="wide template-save">Save current as template</button>
+        <p class="hint template-hint">Saved templates stay on this PC and can be loaded or removed below.</p>
+        <div id="userTemplateList" class="user-template-list"></div>
+      </section>
+
+      <section>
+        <div class="section-title">Element library</div>
+        <input id="componentSearch" class="component-search" type="search" placeholder="Search UI elements…">
+        <label class="catalog-filter" for="catalogCategoryFilter">Reforger category
+          <select id="catalogCategoryFilter">
+            <option value="all">All Reforger references</option>
+            <option value="Widgets">Widgets / WLib prefabs</option>
+            <option value="HUD">HUD &amp; Game Master</option>
+            <option value="Icons">Icon atlas families</option>
+          </select>
+        </label>
+        <div class="library-label">Basic</div>
+        <div class="widget-grid" id="componentLibrary">
+          <button data-add="panel"><span class="widget-icon square"></span>Panel</button>
+          <button data-add="text"><span class="widget-icon letter">T</span>Text</button>
+          <button data-add="button"><span class="widget-icon button-icon"></span>Button</button>
+          <button data-add="icon"><span class="widget-icon diamond"></span>Icon</button>
+          <button data-add="image"><span class="widget-icon image-icon"></span>Image</button>
+          <button data-add="player"><span class="widget-icon player-icon"></span>Player row</button>
+          <button data-add="divider"><span class="widget-icon divider-icon"></span>Divider</button>
+          <button data-add="badge"><span class="widget-icon badge-icon"></span>Badge</button>
+          <div class="library-label library-span">Windows & prompts</div>
+          <button data-add="window"><span class="widget-icon window-icon"></span>Window</button>
+          <button data-add="dialog"><span class="widget-icon dialog-icon"></span>Confirm dialog</button>
+          <button data-add="prompt"><span class="widget-icon prompt-icon">!</span>Prompt</button>
+          <button data-add="toast"><span class="widget-icon toast-icon"></span>Notification</button>
+          <button data-add="context"><span class="widget-icon context-icon"></span>Context menu</button>
+          <button data-add="tooltip"><span class="widget-icon tooltip-icon"></span>Tooltip</button>
+          <div class="library-label library-span">Data & navigation</div>
+          <button data-add="tabs"><span class="widget-icon tabs-icon"></span>Tabs</button>
+          <button data-add="table"><span class="widget-icon table-icon"></span>Data table</button>
+          <button data-add="toolbar"><span class="widget-icon toolbar-icon"></span>Toolbar</button>
+          <button data-add="progress"><span class="widget-icon progress-icon"></span>Progress</button>
+          <button data-add="input"><span class="widget-icon input-icon"></span>Input field</button>
+          <button data-add="toggle"><span class="widget-icon toggle-icon"></span>Toggle</button>
+          <div class="library-label library-span">Game Master</div>
+          <button data-add="assetcard"><span class="widget-icon card-icon"></span>Asset card</button>
+          <button data-add="squadtile"><span class="widget-icon squad-icon"></span>Squad tile</button>
+          <button data-add="inventory"><span class="widget-icon inventory-icon"></span>Slot grid</button>
+          <button data-add="categorybar"><span class="widget-icon category-icon"></span>Category bar</button>
+        </div>
+        <div class="library-label">Reforger UI database <span id="catalogCount"></span></div>
+        <p id="catalogNote" class="hint catalog-note"></p>
+        <div id="reforgerCatalog" class="reforger-catalog"></div>
+      </section>
+
+      <section class="layers-section">
+        <div class="section-title row-title"><span>Layers</span><span class="layer-actions"><button id="layerUpBtn" title="Move forward">↑</button><button id="layerDownBtn" title="Move backward">↓</button></span></div>
+        <div id="layerList" class="layer-list"></div>
+      </section>
+    </aside>
+
+    <section class="workspace" id="workspace">
+      <div class="ruler-label"><span id="canvasLabel">1920 × 1080</span><span id="pointerLabel">x 0 · y 0</span></div>
+      <div class="canvas-scroll" id="canvasScroll">
+        <div id="stageWrap" class="stage-wrap">
+          <div id="stage" class="stage" tabindex="0" aria-label="UI design canvas"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="sidebar right-sidebar">
+      <section>
+        <div class="section-title">Selection</div>
+        <div id="emptyInspector" class="empty-state">Select a widget to edit it.</div>
+        <div id="inspector" hidden>
+          <div class="field"><label for="propName">Name</label><input id="propName" data-prop="name" type="text"></div>
+          <div class="four-grid">
+            <div class="field"><label>X</label><input data-prop="x" type="number"></div>
+            <div class="field"><label>Y</label><input data-prop="y" type="number"></div>
+            <div class="field"><label>W</label><input data-prop="w" type="number" min="1"></div>
+            <div class="field"><label>H</label><input data-prop="h" type="number" min="1"></div>
+          </div>
+          <div class="field"><label>Text</label><textarea data-prop="text" rows="2"></textarea></div>
+          <div class="two-grid">
+            <div class="field"><label>Fill</label><input data-prop="fill" type="color"></div>
+            <div class="field"><label>Text</label><input data-prop="color" type="color"></div>
+            <div class="field"><label>Border</label><input data-prop="borderColor" type="color"></div>
+            <div class="field"><label>Accent</label><input data-prop="accent" type="color"></div>
+          </div>
+          <div class="two-grid">
+            <div class="field"><label>Font px</label><input data-prop="fontSize" type="number" min="8" max="120"></div>
+            <div class="field"><label>Radius</label><input data-prop="radius" type="number" min="0" max="100"></div>
+          </div>
+          <div class="field"><label>Opacity <output id="opacityOutput">100%</output></label><input data-prop="opacity" type="range" min="0" max="1" step="0.05"></div>
+          <div class="field inline-checks">
+            <label><input data-prop="visible" type="checkbox"> Visible</label>
+            <label><input data-prop="locked" type="checkbox"> Locked <span aria-hidden="true">🔒</span></label>
+          </div>
+          <div class="button-row">
+            <button id="duplicateBtn">Duplicate</button>
+            <button id="deleteBtn" class="danger">Delete</button>
+          </div>
+          <div id="imageControls" hidden>
+            <button id="layerImageBtn" class="wide">Choose image asset</button>
+          </div>
+          <div id="resourceControls" hidden>
+            <div class="field"><label for="resourcePath">Reforger resource reference</label><input id="resourcePath" type="text" readonly></div>
+            <button id="copyResourceBtn" class="wide">Copy resource path</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">Screen</div>
+        <div class="two-grid">
+          <div class="field"><label>Width</label><input id="screenWidth" type="number" value="1920" min="320"></div>
+          <div class="field"><label>Height</label><input id="screenHeight" type="number" value="1080" min="240"></div>
+        </div>
+        <div class="preset-row">
+          <button data-size="1920,1080">1080p</button>
+          <button data-size="2560,1440">1440p</button>
+          <button data-size="3840,2160">4K</button>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">Handoff</div>
+        <p class="hint">Copy normalized anchors and pixel bounds for implementation in Workbench.</p>
+        <button id="copySpecBtn" class="wide">Copy design specification</button>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="statusbar"><span id="statusText">Ready</span><span>Delete · Ctrl+D duplicate · arrows nudge · Shift+arrows ×10</span></footer>
+
+  <input id="backgroundInput" type="file" accept="image/*" hidden>
+  <input id="designInput" type="file" accept="application/json,.json" hidden>
+  <input id="layerImageInput" type="file" accept="image/*" hidden>
+  <dialog id="templateDialog" class="template-dialog">
+    <form method="dialog">
+      <h2>Save as template</h2>
+      <p>Save a reusable local snapshot of the current canvas, layers, locks, and styling.</p>
+      <label for="templateName">Template name</label>
+      <input id="templateName" type="text" maxlength="80" placeholder="e.g. Squad command panel" required autofocus>
+      <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
+    </form>
+  </dialog>
+  <script src="reforger-catalog.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
