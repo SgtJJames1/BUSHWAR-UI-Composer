@@ -8,7 +8,7 @@
   const release = window.BUSHWAR_COMPOSER_RELEASE || { version: "0.5.1", published: "", title: "Latest improvements", summary: "", changes: [] };
   const APP_VERSION = release.version;
   const bundleFormat = "bushwar-ui-composer";
-  const bundleSchema = 3;
+  const bundleSchema = 4;
   const workbenchPlanFormat = "bushwar-ui-composer-workbench-plan";
   const workbenchPlanSchema = 1;
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -84,8 +84,16 @@
     clean.canvas = { ...freshState().canvas, ...(value.canvas || {}) };
     clean.settings = { ...freshState().settings, ...(value.settings || {}) };
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
-    clean.layers = Array.isArray(value.layers) ? value.layers : [];
+    clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", ...layer })) : [];
     return clean;
+  }
+
+  function bindingCatalog() {
+    return window.BUSHWAR_REFORGER_BINDINGS || { entries: [], byId: () => null };
+  }
+
+  function bindingFor(layer) {
+    return layer?.binding ? bindingCatalog().byId(layer.binding) : null;
   }
 
   function portableSnapshot() {
@@ -284,7 +292,9 @@
       else if (layer.type === "image") element.classList.add("no-image");
     } else if (layer.type === "player") {
       const initial = (layer.text || "P").trim().slice(0, 1).toUpperCase();
-      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${text}</span><span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
+      const binding = bindingFor(layer);
+      const engineLabel = binding ? `<small class="binding-badge">${escapeHtml(binding.label)}</small>` : "";
+      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${text}</span>${engineLabel}<span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
     } else if (layer.type === "window") {
       element.innerHTML = `<div class="comp-header"><span>${text}</span><span class="comp-close">×</span></div><div class="comp-body"><strong>Window content</strong>Place lists, controls, previews, and custom widgets inside this frame.</div><div class="comp-footer"><span class="comp-button">CLOSE</span><span class="comp-button primary">APPLY</span></div>`;
     } else if (layer.type === "dialog") {
@@ -300,7 +310,11 @@
     } else if (layer.type === "tabs") {
       element.innerHTML = `<div class="tabs-wrap"><span class="tab-item active">${text}</span><span class="tab-item">ENTITIES</span><span class="tab-item">SYSTEMS</span><span class="tab-item">FAVORITES</span></div>`;
     } else if (layer.type === "table") {
-      element.innerHTML = `<table class="data-table"><thead><tr><th>${text}</th><th>Role</th><th>Status</th><th>Ping</th></tr></thead><tbody><tr><td>Sgt.James</td><td>GM</td><td class="status-online">Online</td><td>24</td></tr><tr><td>Player Alpha</td><td>Player</td><td class="status-online">Online</td><td>42</td></tr><tr><td>Player Bravo</td><td>Player</td><td>Away</td><td>61</td></tr></tbody></table>`;
+      const binding = bindingFor(layer);
+      const body = binding?.id === "player.list.connected"
+        ? `<tr><td colspan="4" class="engine-preview-empty">Workbench will populate valid connected players here; the browser does not invent rows.</td></tr>`
+        : `<tr><td colspan="4" class="engine-preview-empty">Design preview only — assign an engine binding to make this runtime-backed.</td></tr>`;
+      element.innerHTML = `<table class="data-table"><thead><tr><th>${text}</th><th>Role</th><th>Status</th><th>Ping</th></tr></thead><tbody>${body}</tbody></table>`;
     } else if (layer.type === "toolbar") {
       element.innerHTML = '<div class="toolbar-wrap"><span class="tool-item active">◆</span><span class="tool-item">✚</span><span class="tool-item">◉</span><span class="tool-item">▣</span><span class="tool-item">⌖</span><span class="tool-item">⚙</span><span class="tool-item">?</span></div>';
     } else if (layer.type === "progress") {
@@ -398,6 +412,16 @@
     $("#imageControls").hidden = !["image", "reference"].includes(layer.type);
     $("#resourceControls").hidden = layer.type !== "reforger";
     if (layer.type === "reforger") $("#resourcePath").value = layer.resourcePath || "";
+    const bindingControls = $("#bindingControls");
+    bindingControls.hidden = !["player", "table"].includes(layer.type);
+    if (!bindingControls.hidden) {
+      const select = $("#bindingSelect");
+      const entries = bindingCatalog().entries;
+      select.innerHTML = `<option value="">No engine binding (design-only)</option>${entries.map(binding => `<option value="${escapeHtml(binding.id)}">${escapeHtml(binding.label)}</option>`).join("")}`;
+      select.value = layer.binding || "";
+      const binding = bindingFor(layer);
+      $("#bindingContract").textContent = binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" · ")} · ${binding.authority}. ${binding.runtime}` : "Design-only preview. Export a binding before expecting Workbench runtime data.";
+    }
   }
 
   function select(id) {
@@ -559,6 +583,8 @@
       widgetType,
       source: source || undefined,
       importMode: source ? "Drag this WLib/vanilla layout into the root, then apply the bounds below." : "Create this native widget under the root FrameWidget.",
+      binding: layer.binding || "",
+      bindingContract: bindingFor(layer) || undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
       anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
       properties: { text: layer.text, fill: layer.fill, color: layer.color, borderColor: layer.borderColor, accent: layer.accent, opacity: layer.opacity, fontSize: layer.fontSize, visible: layer.visible },
@@ -581,11 +607,11 @@
       type: "Frame",
       name: widget.name,
       props: { Color: reforgerColor(layer.fill, layer.opacity) },
-      slot: { anchor: "0 0 0 0", positionX: Math.round(layer.x), positionY: Math.round(layer.y), sizeX: Math.round(layer.w), sizeY: Math.round(layer.h) },
+      slot: { anchor: widget.anchors.join(" ") },
       children: [{
         type: "Text",
         name: `${widget.name}Text`,
-        props: { Text: layer.text || layer.name, Color: reforgerColor(layer.color), ExactFontSize: String(Math.round(layer.fontSize)), Align: ["button", "badge", "reforger"].includes(layer.type) ? "center" : "left" },
+        props: { Text: layer.text || layer.name, Color: reforgerColor(layer.color) },
         slot: { anchor: "0 0 1 1" }
       }]
     };
@@ -608,6 +634,7 @@
       },
       root: { width: state.canvas.width, height: state.canvas.height, widgetType: "FrameWidget", name: "m_wRoot" },
       widgets: visibleLayers.map(workbenchWidgetFor),
+      bindings: visibleLayers.map(workbenchWidgetFor).filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
       resources: [...new Set(visibleLayers.map(layer => layer.resourcePath).filter(Boolean))],
       layoutCreateRequest: {
         name: layoutName,
@@ -652,6 +679,7 @@
       canvas: `${state.canvas.width}x${state.canvas.height}`,
       baseScene: { name: state.canvas.baseScene, visible: state.canvas.baseSceneVisible, opacity: state.canvas.baseSceneOpacity },
       references: { embeddedAssets: assetSummary().count, note: "Reference images are preserved in .bwui project/template bundles; do not distribute vanilla game assets." },
+      bindings: state.layers.filter(layer => layer.binding).map(layer => ({ id: layer.binding, contract: bindingFor(layer) })),
       bundleIntegrity: bundleIntegrity(state),
       note: "Anchors are normalized left/top/right/bottom. Pixel bounds remain the visual authority. Build the final .layout in Workbench Layout Editor and validate Live Preview at target resolutions.",
       layers: state.layers.map(layer => ({
@@ -659,7 +687,7 @@
         boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
         anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
         style: { fill: layer.fill, color: layer.color, border: layer.borderColor, opacity: layer.opacity, fontSize: layer.fontSize, locked: layer.locked }, text: layer.text,
-        reforgerResource: layer.resourcePath || undefined, referenceName: layer.referenceName || undefined
+        reforgerResource: layer.resourcePath || undefined, binding: layer.binding || undefined, bindingContract: bindingFor(layer) || undefined, referenceName: layer.referenceName || undefined
       }))
     };
     try {
@@ -922,7 +950,7 @@
   window.addEventListener("pointerup", () => { interaction = null; });
   window.addEventListener("pointercancel", () => { interaction = null; });
 
-  $$("[data-add]").forEach(button => button.addEventListener("click", () => addLayer(button.dataset.add)));
+  $$("[data-add]").forEach(button => button.addEventListener("click", () => addLayer(button.dataset.add, button.dataset.binding ? { binding: button.dataset.binding } : {})));
   $$("[data-template]").forEach(button => button.addEventListener("click", () => applyTemplate(button.dataset.template)));
   $$("[data-scene]").forEach(button => button.addEventListener("click", () => setBaseScene(button.dataset.scene)));
   $("#sceneSelect").addEventListener("change", event => setBaseScene(event.target.value));
@@ -961,6 +989,16 @@
       render();
     };
     input.addEventListener(input.type === "range" || input.type === "color" ? "input" : "change", commit);
+  });
+
+  $("#bindingSelect").addEventListener("change", event => {
+    const layer = selectedLayer();
+    if (!layer) return;
+    checkpoint();
+    layer.binding = event.target.value;
+    render();
+    const binding = bindingFor(layer);
+    setStatus(binding ? "Engine binding assigned: " + binding.label : "Engine binding removed; layer is design-only");
   });
 
   $("#backgroundBtn").addEventListener("click", () => $("#backgroundInput").click());

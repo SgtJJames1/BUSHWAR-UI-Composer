@@ -155,6 +155,9 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
 .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #12bde8; color: #073442; font-weight: 900; flex: none; }
 .player-name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-action { font-size: .72em; padding: 7px 10px; background: #26343a; border-left: 3px solid var(--accent); }
+.binding-badge { margin-left: auto; color: #18bce8; font-size: .62em; text-transform: uppercase; letter-spacing: .04em; }
+.engine-preview-empty { color: #8fa0a7; text-align: center !important; font-style: italic; padding: 24px 12px !important; }
+#bindingControls { margin-top: 10px; padding-top: 10px; border-top: 1px solid #344249; }
 .layer.divider-layer { min-height: 1px; }
 .layer.badge-layer { justify-content: center; font-weight: 700; padding: 0 10px; }
 .layer.window-layer, .layer.dialog-layer, .layer.prompt-layer, .layer.toast-layer,

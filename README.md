@@ -70,6 +70,10 @@ The **What's new** toolbar button remains available to reopen it.
   addon first, then inspect and resave the result in Layout Editor.
 - A Workbench handoff check that flags undersized canvases, unlocked or missing
   visual references, missing Reforger resource paths, and empty projects
+- Engine binding contracts for runtime-backed compositions. The first live
+  contract is Connected players (engine): it maps to
+  PlayerManager.GetPlayerCount() + GetPlayerName(playerId), filters empty
+  slots, and exports the contract in the project and Workbench-plan JSON.
 
 ## Workbench boundary
 
@@ -85,9 +89,12 @@ This is a design/prototyping tool, not a replacement for the Reforger Layout Edi
    Both formats embed your local reference images; recipients do not need the
    original image files. On open, the composer verifies the saved layer/asset
    manifest and calls out a mismatch.
-3. Use **Validate Workbench handoff** and fix any warnings. Then copy the
+3. For data-backed widgets, assign an **Engine data / function** binding in the
+   inspector. The browser preview is deliberately truthful: it shows the
+   runtime contract rather than inventing fake player rows.
+4. Use **Validate Workbench handoff** and fix any warnings. Then copy the
    specification or use the exported PNG as a visual brief.
-4. Recreate the finished UI in Workbench's **Layout Editor** using the listed
+5. Recreate the finished UI in Workbench's **Layout Editor** using the listed
    WLib resource paths and test the actual `.layout` with **Live Preview** at
    the resolutions you support. The bundle is a reliable design reference, not
    a runtime UI package.
