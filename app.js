@@ -345,6 +345,7 @@
 
   function renderReforgerReference(layer, element, text) {
     const visual = layer.reforgerVisual || reforgerVisualFor(layer);
+    element.classList.add(`reforger-${visual}`);
     const path = escapeHtml(layer.resourcePath || "Reforger resource reference");
     const title = text || "Reforger reference";
     const body = {
