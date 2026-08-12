@@ -1,14 +1,11 @@
 # BUSHWAR UI Composer roadmap
 
-## 0.2 desktop foundation — complete
+## Distribution — web-only
 
-- Branded Electron desktop shell for Windows
-- Portable x64 executable and MSI installer
-- Reproducible dependency lockfile and local build commands
-- Renderer sandbox, context isolation, disabled Node integration, restrictive
-  content-security policy, single-instance behavior, and blocked in-app
-  navigation
-- Shared editor code between browser and desktop editions
+- The hosted browser app is the only public distribution channel.
+- Share one URL; visitors always load the current deployment with no install
+  or Smart App Control prompt.
+- Exported project/template bundles are the portable file format.
 
 ## Next editor milestone
 
@@ -33,8 +30,6 @@
 
 ## Distribution milestone
 
-- Trusted Windows code-signing certificate
-- Versioned release channel, changelog, installer upgrade testing, and
-  optional signed auto-update feed
+- Deploy previews and a concise web-app changelog
 - Crash reporting and opt-in diagnostics with no project content uploaded
 - Public documentation, sample projects, and plugin/component SDK
