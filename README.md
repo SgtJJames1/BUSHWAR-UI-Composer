@@ -50,6 +50,7 @@ The **What's new** toolbar button remains available to reopen it.
 - A clear lock toggle in every layer row plus a lock badge beside the selected layer's pixel-bounds label; locked layers cannot be dragged, resized, or nudged
 - A searchable, categorized Reforger UI reference database: Widget Library (`WLib`) layout prefabs, HUD/Game Master layouts, and vanilla icon-atlas families, each carrying its exact resource path, native widget-class hint, and Workbench action for the handoff
 - An optional Workbench engine-context import (`bushwar-ui-composer-engine-context`, schema 1) for previewing a captured connected-player roster. Imported names/IDs are evidence for the browser preview only; generated controllers always re-query `PlayerManager` in Reforger.
+- Connected-player previews are runtime-shaped rather than mock tables: they show only imported non-empty players, expose the count and selected-name fields used by the native scaffold, and carry the clicked row's real `playerId` through the preview contract. With no context loaded, the preview intentionally renders zero player rows.
 - A GM admin-panel template using the approved left 24 px / top 15% / width 360 px / bottom 80% bounds
 - Portable `.bwui.json` project and `.bwui-template.json` template bundles:
   they embed imported reference images and record a layer/asset manifest so a
@@ -111,7 +112,9 @@ The **What's new** toolbar button remains available to reopen it.
   Enfusion event/API or controller contract it needs. Connected-player tables
   default to a row-selection contract that carries the real `playerId`; the
   plan exports callbacks separately from data bindings so visual design and
-  runtime behavior cannot be confused.
+  runtime behavior cannot be confused. Unknown or server-authoritative actions
+  export a review hook and are called out by validation; they are never treated
+  as already implemented.
 
 ## Workbench boundary
 

@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.2",
+  version: "0.10.3",
   published: "12 August 2026",
-  title: "Reliable Workbench pixel handoff",
-  summary: "Workbench exports now use the same Position/Size slots as the shipped BUSHWAR GM layouts, so imported panels no longer collapse into the top-left corner.",
+  title: "Engine-backed preview and callback parity",
+  summary: "The Composer preview, native scaffold, and generated controller now describe the same connected-player tree and use the real PlayerManager IDs instead of visual-only placeholder rows.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -25,6 +25,10 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract.",
     "Generated FrameWidgetSlot geometry now uses PositionX/PositionY/SizeX/SizeY with point anchors, matching the shipped BUSHWAR GM menu and preventing the cramped top-left import seen with older handoff files.",
-    "The disposable admin-menu fixtures use the same Position/Size bounds: left 24 px, top 15%, width 360 px, bottom 80%."
+    "The disposable admin-menu fixtures use the same Position/Size bounds: left 24 px, top 15%, width 360 px, bottom 80%.",
+    "Browser and PNG previews for Connected players now mirror the native count / selection / scroll / Button row / NameText scaffold; empty context shows zero rows rather than invented player entries.",
+    "Imported engine context is normalized to positive, unique player IDs with non-empty names, and clicking a preview row records the real PlayerManager ID used by the generated callback contract.",
+    "Generated native widget names are deterministic and duplicate-safe across the layout scaffold, plan, and controller source; callback routes now expose explicit review hooks instead of silently pretending an action is implemented.",
+    "Generated PlayerManager calls now use the documented GetPlayers(out playerIds) API signature."
   ]
 };

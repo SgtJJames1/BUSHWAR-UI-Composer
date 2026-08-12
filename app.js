@@ -60,6 +60,10 @@
   let interaction = null;
   let preview = false;
   let userTemplates = [];
+  // Browser-only selection state for engine-backed preview rows. It is never
+  // exported as runtime authority; the generated controller re-reads the
+  // PlayerManager ID when the real layout is opened in Reforger.
+  const previewSelections = new Map();
 
   const stage = $("#stage");
   const stageWrap = $("#stageWrap");
@@ -88,7 +92,7 @@
     clean.settings = { ...freshState().settings, ...(value.settings || {}) };
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
     clean.engineContext = { ...freshState().engineContext, ...(value.engineContext || {}) };
-    clean.engineContext.players = Array.isArray(clean.engineContext.players) ? clean.engineContext.players.filter(player => player && Number.isFinite(Number(player.id)) && String(player.name || "").trim()) : [];
+    clean.engineContext.players = normalizeEnginePlayers(clean.engineContext.players);
     clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", functionId: "", ...layer })) : [];
     return clean;
   }
@@ -123,7 +127,21 @@
   }
 
   function enginePlayers() {
-    return Array.isArray(state.engineContext?.players) ? state.engineContext.players : [];
+    return normalizeEnginePlayers(state.engineContext?.players);
+  }
+
+  function normalizeEnginePlayers(players) {
+    const seenIds = new Set();
+    return (Array.isArray(players) ? players : []).map(player => ({
+      id: Number(player?.id),
+      name: String(player?.name || "").trim(),
+      identity: String(player?.identity || ""),
+      controlledEntity: String(player?.controlledEntity || "")
+    })).filter(player => {
+      if (!Number.isInteger(player.id) || player.id <= 0 || !player.name || seenIds.has(player.id)) return false;
+      seenIds.add(player.id);
+      return true;
+    });
   }
 
   function engineContextLabel() {
@@ -131,6 +149,39 @@
     if (!enginePlayers().length) return "No Workbench snapshot loaded";
     const version = context.engineVersion ? ` · WR ${context.engineVersion}` : "";
     return `${enginePlayers().length} connected player${enginePlayers().length === 1 ? "" : "s"} imported${version}`;
+  }
+
+  function isConnectedPlayersBinding(layer) {
+    return bindingFor(layer)?.id === "player.list.connected";
+  }
+
+  function selectedPreviewPlayer(layer) {
+    const selectedId = previewSelections.get(layer.id);
+    return enginePlayers().find(player => Number(player.id) === Number(selectedId)) || null;
+  }
+
+  function connectedPlayerRowsMarkup(layer) {
+    const players = enginePlayers();
+    const selected = selectedPreviewPlayer(layer);
+    const rows = players.map(player => {
+      const selectedClass = selected && Number(selected.id) === Number(player.id) ? " selected" : "";
+      return `<button type="button" class="engine-scaffold-row${selectedClass}" data-player-id="${escapeHtml(player.id)}"><span class="engine-row-name">${escapeHtml(player.name)}</span></button>`;
+    }).join("");
+    const empty = players.length ? "" : `<div class="engine-scaffold-empty">No imported Workbench players. Runtime opens with zero rows until PlayerManager returns a valid connected player.</div>`;
+    return { players, selected, rows, empty };
+  }
+
+  function renderConnectedPlayerScaffold(layer, element, mode = "table") {
+    const { players, selected, rows, empty } = connectedPlayerRowsMarkup(layer);
+    element.classList.add("runtime-engine-layer");
+    if (mode === "player") {
+      const row = players[0];
+      element.innerHTML = row
+        ? `<button type="button" class="engine-scaffold-row${selected && Number(selected.id) === Number(row.id) ? " selected" : ""}" data-player-id="${escapeHtml(row.id)}"><span class="engine-row-name">${escapeHtml(row.name)}</span></button>`
+        : `<div class="engine-scaffold-empty">No imported Workbench player row.</div>`;
+      return;
+    }
+    element.innerHTML = `<div class="engine-scaffold"><div class="engine-scaffold-count">${players.length} CONNECTED</div><div class="engine-scaffold-selection">SELECTED: ${selected ? escapeHtml(selected.name) : "NONE"}</div><div class="engine-scaffold-scroll"><div class="engine-scaffold-list">${rows}${empty}</div></div></div>`;
   }
 
   function updateEngineContextStatus() {
@@ -336,17 +387,8 @@
       if (layer.image) element.style.backgroundImage = `url("${layer.image}")`;
       else if (layer.type === "image") element.classList.add("no-image");
     } else if (layer.type === "player") {
-      const binding = bindingFor(layer);
-      const callback = functionFor(layer);
-      const runtimeBacked = binding?.id === "player.list.connected";
-      const importedPlayer = runtimeBacked ? enginePlayers()[0] : null;
-      const displayText = importedPlayer?.name || (runtimeBacked ? "NAME FROM WORKBENCH" : layer.text);
-      const initial = (displayText || "P").trim().slice(0, 1).toUpperCase();
-      const engineLabel = binding ? `<small class="binding-badge">${escapeHtml(binding.label)}</small>` : "";
-      const callbackLabel = callback ? `<small class="binding-badge callback-badge">${escapeHtml(callback.label)}</small>` : "";
-      const playerId = importedPlayer ? `<small class="engine-player-id">ID ${escapeHtml(importedPlayer.id)}</small>` : "";
-      const emptyState = runtimeBacked && !importedPlayer ? `<small class="engine-preview-empty">Import a Workbench context to preview a real player row</small>` : "";
-      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${escapeHtml(displayText || "PLAYER NAME FROM WORKBENCH")}</span>${playerId}${engineLabel}${callbackLabel}${emptyState}`;
+      if (isConnectedPlayersBinding(layer)) renderConnectedPlayerScaffold(layer, element, "player");
+      else element.innerHTML = `<span class="player-name">${escapeHtml(layer.text || "PLAYER ROW")}</span>`;
     } else if (layer.type === "window") {
       element.innerHTML = `<div class="comp-header"><span>${text}</span><span class="comp-close">×</span></div><div class="comp-body"><strong>Window content</strong>Place lists, controls, previews, and custom widgets inside this frame.</div><div class="comp-footer"><span class="comp-button">CLOSE</span><span class="comp-button primary">APPLY</span></div>`;
     } else if (layer.type === "dialog") {
@@ -362,18 +404,8 @@
     } else if (layer.type === "tabs") {
       element.innerHTML = `<div class="tabs-wrap"><span class="tab-item active">${text}</span><span class="tab-item">ENTITIES</span><span class="tab-item">SYSTEMS</span><span class="tab-item">FAVORITES</span></div>`;
     } else if (layer.type === "table") {
-      const binding = bindingFor(layer);
-      const callback = functionFor(layer);
-      let body;
-      if (binding?.id === "player.list.connected") {
-        body = enginePlayers().length
-          ? enginePlayers().map(player => `<tr><td>${escapeHtml(player.name)}</td><td>PLAYER #${escapeHtml(player.id)}</td><td class="status-online">CONNECTED</td><td>ENGINE</td></tr>`).join("")
-          : `<tr><td colspan="4" class="engine-preview-empty">No Workbench context loaded — runtime will populate only valid connected players.</td></tr>`;
-      } else {
-        body = `<tr><td colspan="4" class="engine-preview-empty">Design preview only — assign an engine binding to make this runtime-backed.</td></tr>`;
-      }
-      const callbackHint = callback ? `<div class="table-callback-hint">${escapeHtml(callback.label)}</div>` : "";
-      element.innerHTML = `${callbackHint}<table class="data-table"><thead><tr><th>${text}</th><th>Role</th><th>Status</th><th>Source</th></tr></thead><tbody>${body}</tbody></table>`;
+      if (isConnectedPlayersBinding(layer)) renderConnectedPlayerScaffold(layer, element, "table");
+      else element.innerHTML = `<div class="engine-design-only">Design preview only — assign an engine binding to make this runtime-backed.</div>`;
     } else if (layer.type === "toolbar") {
       element.innerHTML = '<div class="toolbar-wrap"><span class="tool-item active">◆</span><span class="tool-item">✚</span><span class="tool-item">◉</span><span class="tool-item">▣</span><span class="tool-item">⌖</span><span class="tool-item">⚙</span><span class="tool-item">?</span></div>';
     } else if (layer.type === "progress") {
@@ -648,15 +680,24 @@
     setStatus(`Template bundle exported · ${assets.count} embedded reference asset${assets.count === 1 ? "" : "s"}`);
   }
 
-  function workbenchWidgetFor(layer, index) {
+  function nativeWidgetBaseName(layer, index = 0) {
+    const fallback = `Widget${index + 1}`;
+    const sourceName = safeName(layer?.name || fallback);
+    return `m_w${sourceName.replace(/-([a-z])/g, (_, character) => character.toUpperCase()) || fallback}`;
+  }
+
+  function workbenchWidgetFor(layer, index, allLayers = []) {
     const profile = widgetProfileFor(layer);
     const source = layer.type === "reforger" && /\.layout$/i.test(layer.resourcePath || "") ? layer.resourcePath : "";
     const widgetType = source ? "Layout prefab" : (profile.runtimeClass || "FrameWidgetClass");
     const binding = bindingFor(layer);
     const callback = functionFor(layer);
+    const baseName = nativeWidgetBaseName(layer, index);
+    const sameNameBefore = allLayers.slice(0, index).filter((previous, previousIndex) => nativeWidgetBaseName(previous, previousIndex) === baseName).length;
+    const widgetName = sameNameBefore ? `${baseName}_${sameNameBefore + 1}` : baseName;
     return {
       id: layer.id,
-      name: `m_w${safeName(layer.name || `Widget${index + 1}`).replace(/-([a-z])/g, (_, character) => character.toUpperCase()) || `Widget${index + 1}`}`,
+      name: widgetName,
       widgetType,
       nativeType: source ? "Layout prefab" : profile.layoutType,
       widgetProfile: profile.label,
@@ -672,6 +713,8 @@
         authority: callback?.authority || binding?.authority || "client-local",
         refreshEvents: binding?.updateEvents || callback?.updateEvents || [],
         rowIdentity: binding?.id === "player.list.connected" ? "PlayerManager playerId carried beside each native row" : undefined,
+        nativePreviewShape: binding?.id === "player.list.connected" ? "Frame > count Text + selection Text + ScrollLayout > VerticalLayout > Button Row > Text NameText" : undefined,
+        actualValuesOnly: binding?.id === "player.list.connected" ? true : undefined,
         preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values"
       } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
@@ -724,8 +767,8 @@
     return [{ type: "Text", name: `${widget.name}Text`, props: { Text: layer.text || layer.name, Color: reforgerColor(layer.color) }, slot: { anchor: "0 0 1 1" } }];
   }
 
-  function layoutCreateNodeFor(layer, index) {
-    const widget = workbenchWidgetFor(layer, index);
+  function layoutCreateNodeFor(layer, index, allLayers) {
+    const widget = workbenchWidgetFor(layer, index, allLayers);
     const profile = widgetProfileFor(layer);
     // The Composer canvas is pixel-authored. Keep the generated Workbench
     // scaffold pixel-accurate instead of silently converting a 360 px panel
@@ -790,13 +833,20 @@
     const connected = widgets.find(widget => widget.binding === "player.list.connected");
     const callbackIds = [...new Set(widgets.map(widget => widget.functionId).filter(Boolean))];
     const callbackRoutes = [];
+    let needsWidgetClickHook = false;
+    let needsReviewHook = false;
     widgets.filter(widget => widget.functionId && widget.functionId !== "player.row.select").forEach(widget => {
       callbackRoutes.push(`\t\tif (w && w.GetName() == "${widget.name}")`);
       callbackRoutes.push("\t\t{");
+      let directReturn = false;
       if (widget.functionId === "ui.layout.close") callbackRoutes.push("\t\t\tClose();");
+      else if (widget.functionId === "ui.layout.open") callbackRoutes.push("\t\t\tOpen();");
+      else if (widget.functionId === "player.list.refresh" && connected) callbackRoutes.push("\t\t\tRefreshConnectedPlayers();");
+      else if (widget.functionId === "player.list.refresh") { callbackRoutes.push("\t\t\treturn OnReviewRequiredCallback(\"player.list.refresh\", w);"); needsReviewHook = true; directReturn = true; }
       else if (widget.functionId === "player.row.teleport") callbackRoutes.push("\t\t\tRequestTeleportSelectedPlayer();");
-      else callbackRoutes.push(`\t\t\t// Callback contract '${widget.functionId}' is assigned to this named widget.`);
-      callbackRoutes.push("\t\t\treturn true;");
+      else if (widget.functionId === "ui.widget.click") { callbackRoutes.push("\t\t\treturn OnWidgetClickContract(w, x, y, button);"); needsWidgetClickHook = true; directReturn = true; }
+      else { callbackRoutes.push(`\t\t\treturn OnReviewRequiredCallback("${widget.functionId}", w);`); needsReviewHook = true; directReturn = true; }
+      if (!directReturn) callbackRoutes.push("\t\t\treturn true;");
       callbackRoutes.push("\t\t}");
     });
     const lines = [
@@ -856,6 +906,7 @@
     if (connected) {
       const names = connected.requiredWidgetNames || {
         count: `${connected.name}Count`,
+        selection: `${connected.name}Selection`,
         list: `${connected.name}List`,
         rowName: "NameText"
       };
@@ -878,6 +929,7 @@
         `\t\tif (!m_w${classStem}ConnectedList)`,
         "\t\t\treturn;",
         "",
+        "\t\tint previousSelectedPlayerId = m_iSelectedPlayerId;",
         `\t\tWidget child = m_w${classStem}ConnectedList.GetChildren();`,
         "\t\twhile (child)",
         "\t\t{",
@@ -894,7 +946,7 @@
         "\t\t\treturn;",
         "",
         "\t\tarray<int> playerIds = {};",
-        "\t\tplayerManager.GetPlayers(playerIds);",
+        "\t\tplayerManager.GetPlayers(out playerIds);",
         "\t\tint renderedPlayers;",
         "\t\tfor (int playerIndex = 0; playerIndex < playerIds.Count(); playerIndex++)",
         "\t\t{",
@@ -921,12 +973,20 @@
         "\t\t\t\tm_aPlayerRows.Insert(nameText);",
         "\t\t\t\tm_aPlayerRowIds.Insert(playerId);",
         "\t\t\t}",
+        "\t\t\tif (playerId == previousSelectedPlayerId)",
+        "\t\t\t\tm_iSelectedPlayerId = playerId;",
         "\t\t\trenderedPlayers++;",
         "\t\t}",
         "",
         "\t\tTextWidget countText = TextWidget.Cast(countWidget);",
         "\t\tif (countText)",
         "\t\t\tcountText.SetText(renderedPlayers.ToString() + \" CONNECTED\");",
+        `\t\tTextWidget selectionText = TextWidget.Cast(m_wRoot.FindAnyWidget("${names.selection || `${connected.name}Selection`}"));`,
+        "\t\tif (selectionText)",
+        "\t\t{",
+        `\t\t\tif (m_iSelectedPlayerId >= 0) selectionText.SetText("SELECTED: " + playerManager.GetPlayerName(m_iSelectedPlayerId));`,
+        "\t\t\telse selectionText.SetText(\"SELECTED: NONE\");",
+        "\t\t}",
         "\t\tm_sConnectedPlayerSignature = BuildConnectedPlayerSignature();",
         "\t}",
         "",
@@ -938,7 +998,7 @@
         "\t\t\treturn signature;",
         "",
         "\t\tarray<int> playerIds = {};",
-        "\t\tplayerManager.GetPlayers(playerIds);",
+        "\t\tplayerManager.GetPlayers(out playerIds);",
         "\t\tfor (int playerIndex = 0; playerIndex < playerIds.Count(); playerIndex++)",
         "\t\t{",
         "\t\t\tint playerId = playerIds[playerIndex];",
@@ -989,6 +1049,28 @@
       );
 
     }
+    if (needsWidgetClickHook) {
+      lines.push(
+        "\tprotected bool OnWidgetClickContract(Widget w, int x, int y, int button)",
+        "\t{",
+        "\t\t// Generated engine-event seam. Add the target addon's real action here;",
+        "\t\t// return true only after the action is actually consumed.",
+        "\t\treturn false;",
+        "\t}",
+        ""
+      );
+    }
+    if (needsReviewHook) {
+      lines.push(
+        "\tprotected bool OnReviewRequiredCallback(string callbackId, Widget w)",
+        "\t{",
+        "\t\t// This callback is intentionally not guessed by the Composer. Add the",
+        "\t\t// reviewed Workbench/WR implementation in the target addon first.",
+        "\t\treturn false;",
+        "\t}",
+        ""
+      );
+    }
     if (callbackIds.includes("player.row.teleport")) {
       lines.push(
         "\tprotected void RequestTeleportSelectedPlayer()",
@@ -1025,7 +1107,7 @@
     const layoutName = safeName(state.handoff.layoutName) || "bushwar-composer-layout";
     const classStem = layoutName.split(/[-_]+/).filter(Boolean).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("") || "BushwarComposerLayout";
     const visibleLayers = state.layers.filter(layer => layer.type !== "reference");
-    const widgets = visibleLayers.map(workbenchWidgetFor);
+    const widgets = visibleLayers.map((layer, index, layers) => workbenchWidgetFor(layer, index, layers));
     const runtimeScaffolds = widgets.filter(widget => widget.binding).map(widget => ({
       binding: widget.binding,
       contract: widget.bindingContract,
@@ -1049,7 +1131,7 @@
         rowName: "NameText"
       } : undefined,
       implementation: widget.binding === "player.list.connected"
-        ? "Read PlayerManager.GetPlayerCount(), enumerate valid IDs with GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, set TextWidget.SetExactFontSize from the Composer font contract, and refresh on join/left changes. If a row callback is assigned, carry the actual playerId alongside the row."
+        ? "Read PlayerManager.GetPlayers(out playerIds), resolve GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, set TextWidget.SetExactFontSize from the Composer font contract, and refresh when the roster signature changes. If a row callback is assigned, carry the actual playerId alongside the row."
         : "Implement the listed engine contract in the generated controller; the Composer does not invent callbacks or authority."
     }));
     const controllerClass = `BWUIC_${classStem}Controller`;
@@ -1224,6 +1306,11 @@
   async function drawLayer(ctx, layer) {
     ctx.save();
     ctx.globalAlpha = layer.opacity;
+    if ((layer.type === "table" || layer.type === "player") && isConnectedPlayersBinding(layer)) {
+      drawConnectedPlayerScaffold(ctx, layer, layer.type === "player" ? "player" : "table");
+      ctx.restore();
+      return;
+    }
     if ((layer.type === "image" || layer.type === "reference") && layer.image) {
       const image = await loadImage(layer.image);
       ctx.drawImage(image, layer.x, layer.y, layer.w, layer.h);
@@ -1256,6 +1343,68 @@
       ctx.fillText(layer.text, layer.x + 14, layer.y + Math.min(layer.h / 2, 30), layer.w - 28);
     }
     ctx.restore();
+  }
+
+  function drawConnectedPlayerScaffold(ctx, layer, mode = "table") {
+    const x = layer.x, y = layer.y, w = layer.w, h = layer.h;
+    const players = enginePlayers();
+    const selected = selectedPreviewPlayer(layer);
+    ctx.fillStyle = layer.fill || "#172126";
+    roundedRect(ctx, x, y, w, h, layer.radius || 0);
+    ctx.fill();
+    ctx.strokeStyle = layer.borderColor || "#46565d";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    if (mode === "player") {
+      const player = players[0];
+      if (player) {
+        ctx.fillStyle = "#202a2f";
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = layer.color || "#ffffff";
+        ctx.font = `600 ${Math.max(12, layer.fontSize)}px Bahnschrift, Segoe UI, sans-serif`;
+        ctx.fillText(player.name, x + 12, y + h / 2, w - 24);
+      } else {
+        ctx.fillStyle = "#8fa0a7";
+        ctx.font = `italic ${Math.max(10, layer.fontSize * .72)}px Bahnschrift, Segoe UI, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText("NO WORKBENCH PLAYER SNAPSHOT", x + w / 2, y + h / 2, w - 20);
+      }
+      return;
+    }
+    const countHeight = Math.max(22, Math.round(h * .12));
+    const selectionHeight = Math.max(22, Math.round(h * .12));
+    ctx.fillStyle = layer.accent || "#18bce8";
+    ctx.font = `700 ${Math.max(10, layer.fontSize * .72)}px Bahnschrift, Segoe UI, sans-serif`;
+    ctx.fillText(`${players.length} CONNECTED`, x + 14, y + countHeight / 2, w - 28);
+    ctx.fillStyle = layer.color || "#9eabb0";
+    ctx.fillText(`SELECTED: ${selected ? selected.name : "NONE"}`, x + 14, y + countHeight + selectionHeight / 2, w - 28);
+    ctx.strokeStyle = "#344249";
+    ctx.beginPath();
+    ctx.moveTo(x, y + countHeight + selectionHeight);
+    ctx.lineTo(x + w, y + countHeight + selectionHeight);
+    ctx.stroke();
+    const rowTop = y + countHeight + selectionHeight + 10;
+    const rowHeight = Math.max(34, Math.min(54, Math.round(layer.fontSize * 2.4)));
+    players.forEach((player, index) => {
+      const rowY = rowTop + index * (rowHeight + 6);
+      if (rowY + rowHeight > y + h) return;
+      const active = selected && Number(selected.id) === Number(player.id);
+      ctx.fillStyle = active ? "#2b3c43" : "#202a2f";
+      ctx.fillRect(x + 12, rowY, w - 24, rowHeight);
+      ctx.strokeStyle = active ? (layer.accent || "#f47b36") : "#39474d";
+      ctx.strokeRect(x + 12, rowY, w - 24, rowHeight);
+      ctx.fillStyle = layer.color || "#ffffff";
+      ctx.font = `600 ${Math.max(11, layer.fontSize)}px Bahnschrift, Segoe UI, sans-serif`;
+      ctx.fillText(player.name, x + 24, rowY + rowHeight / 2, w - 48);
+    });
+    if (!players.length) {
+      ctx.fillStyle = "#8fa0a7";
+      ctx.font = `italic ${Math.max(10, layer.fontSize * .72)}px Bahnschrift, Segoe UI, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("NO WORKBENCH PLAYER SNAPSHOT", x + w / 2, rowTop + 22, w - 24);
+    }
   }
 
   function drawReforgerPreview(ctx, layer) {
@@ -1301,12 +1450,7 @@
 
   function normalizeEngineContext(value) {
     if (!value || value.format !== engineContextFormat || Number(value.schema) !== 1) throw new Error("Unsupported Workbench context format");
-    const players = Array.isArray(value.players) ? value.players.map(player => ({
-      id: Number(player?.id),
-      name: String(player?.name || "").trim(),
-      identity: String(player?.identity || ""),
-      controlledEntity: String(player?.controlledEntity || "")
-    })).filter(player => Number.isFinite(player.id) && player.name) : [];
+    const players = normalizeEnginePlayers(value.players);
     return {
       schema: 1,
       source: "workbench",
@@ -1387,15 +1531,27 @@
     if (references.some(layer => !layer.image)) warnings.push("One or more visual-reference layers have no embedded image.");
     if (state.layers.some(layer => layer.type === "reforger" && !layer.resourcePath)) warnings.push("A Reforger reference card is missing its resource path.");
     if (state.layers.some(layer => layer.type === "player" && !layer.binding)) warnings.push("One or more player rows are design-only; assign Connected players (engine) to read actual PlayerManager values at runtime.");
+    const widgetNameCounts = new Map();
+    importableLayers.forEach((layer, index) => {
+      const baseName = nativeWidgetBaseName(layer, index);
+      widgetNameCounts.set(baseName, (widgetNameCounts.get(baseName) || 0) + 1);
+    });
+    const duplicateWidgetNames = [...widgetNameCounts.entries()].filter(([, count]) => count > 1).map(([name]) => name);
+    if (duplicateWidgetNames.length) warnings.push(`Duplicate native widget names will be suffixed in the export (${duplicateWidgetNames.join(", ")}); rename layers if you need stable hand-authored FindAnyWidget names.`);
     const staticPlayerLabels = state.layers.filter(layer => {
       const label = `${layer.name || ""} ${layer.text || ""}`.toLowerCase();
       return !layer.binding && /\b(player\s+(alpha|bravo|charlie)|sgt\.?\s*james)\b/.test(label);
     });
     if (staticPlayerLabels.length) warnings.push("Static player-name text was found without an engine binding; replace it with Connected players (engine) so Workbench cannot show fake or empty rows.");
     state.layers.forEach(layer => {
+      if (layer.binding && !bindingFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown engine binding.`);
       if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
-      if (layer.functionId && functionFor(layer) && !functionFor(layer).targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);
+      const callback = functionFor(layer);
+      if (layer.functionId && callback && !callback.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);
+      if (callback?.requiresBinding?.some(bindingId => layer.binding !== bindingId)) warnings.push(`${layer.name || "A layer"} uses ${callback.label} without its required ${callback.requiresBinding.join(" / ")} engine binding.`);
+      if (callback?.implementation?.status === "review-required") warnings.push(`${layer.name || "A layer"} uses ${callback.label}; the export includes a review hook, not server/admin authority.`);
       if (layer.functionId === "player.row.select" && layer.binding !== "player.list.connected") warnings.push(`${layer.name || "The player row"} needs the Connected players engine binding before its playerId callback can be wired.`);
+      if (layer.binding === "player.list.connected" && !layer.functionId) warnings.push(`${layer.name || "Connected players"} reads real PlayerManager rows but has no row callback; add Connected-player row selected if clicking a player should carry its ID.`);
     });
     if (!state.layers.length) warnings.push("Project has no UI layers.");
     if (!state.handoff.layoutName.trim()) warnings.push("Give the Workbench layout a name before exporting its import plan.");
@@ -1486,6 +1642,25 @@
       interaction.layer.h = clamp(snap(interaction.h + dy), 3, state.canvas.height - interaction.layer.y);
     }
     render();
+  });
+
+  // Let the browser preview exercise the same identity contract as the
+  // generated controller: a row click carries the imported numeric playerId,
+  // never a display-name lookup or row index. This is a local preview only.
+  stage.addEventListener("click", event => {
+    const row = event.target.closest(".engine-scaffold-row");
+    if (!row) return;
+    const element = row.closest(".layer");
+    const layer = element ? state.layers.find(item => item.id === element.dataset.id) : null;
+    const playerId = Number(row.dataset.playerId);
+    const player = enginePlayers().find(item => Number(item.id) === playerId);
+    if (!layer || !Number.isFinite(playerId) || !player) return;
+    event.preventDefault();
+    event.stopPropagation();
+    previewSelections.set(layer.id, playerId);
+    selectedId = layer.id;
+    render();
+    setStatus(`Preview selected ${player.name} · PlayerManager ID ${playerId}; generated OnPlayerRowClicked will receive this ID`);
   });
   window.addEventListener("pointerup", () => { interaction = null; });
   window.addEventListener("pointercancel", () => { interaction = null; });

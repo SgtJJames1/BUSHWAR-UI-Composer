@@ -152,6 +152,17 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
 .layer.reference-layer { display: block; background-size: contain; background-repeat: no-repeat; background-position: center; border-style: dashed !important; }
 .layer.image-layer.no-image::before { content: "IMAGE"; color: #8ca0a8; letter-spacing: 2px; }
 .layer.player-layer { gap: 12px; padding: 0 12px; }
+.layer.runtime-engine-layer { display: block; padding: 0; background: #172126; }
+.engine-scaffold { height: 100%; min-height: 0; display: grid; grid-template-rows: 12% 12% 1fr; color: #eef5f7; }
+.engine-scaffold-count { display: flex; align-items: center; padding: 0 14px; color: var(--comp-accent); font-size: .78em; font-weight: 700; letter-spacing: .06em; }
+.engine-scaffold-selection { display: flex; align-items: center; padding: 0 14px; color: #9eabb0; font-size: .78em; border-top: 1px solid #344249; border-bottom: 1px solid #344249; }
+.engine-scaffold-scroll { min-height: 0; overflow: auto; padding: 10px 12px 12px; }
+.engine-scaffold-list { display: flex; flex-direction: column; gap: 6px; min-height: 100%; }
+.engine-scaffold-row { width: 100%; min-height: 42px; display: flex; align-items: center; padding: 0 12px; border: 1px solid #39474d; border-bottom: 3px solid var(--comp-accent); background: #202a2f; color: #ffffff; text-align: left; font: inherit; cursor: pointer; }
+.engine-scaffold-row:hover, .engine-scaffold-row.selected { background: #2b3c43; border-color: var(--comp-accent); }
+.engine-row-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.engine-scaffold-empty, .engine-design-only { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px 12px; color: #8fa0a7; font-size: .72em; font-style: italic; text-align: center; }
+.layer.runtime-engine-layer > .engine-scaffold-row { height: 100%; }
 .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #12bde8; color: #073442; font-weight: 900; flex: none; }
 .player-name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-action { font-size: .72em; padding: 7px 10px; background: #26343a; border-left: 3px solid var(--accent); }
