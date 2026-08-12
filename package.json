@@ -6,7 +6,7 @@
   "private": true,
   "main": "desktop-main.js",
   "scripts": {
-    "test": "node tests/controller-source.test.js",
+    "test": "node tests/controller-source.test.js && node tests/validation-controller.test.js",
     "start": "electron .",
     "package:dir": "electron-builder --dir --win x64",
     "dist": "electron-builder --win nsis portable --x64 --publish never",
