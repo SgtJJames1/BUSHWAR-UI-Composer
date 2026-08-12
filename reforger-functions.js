@@ -14,7 +14,7 @@
       label: "Widget click (OnClick)",
       category: "UI events",
       kind: "engine-event",
-      targetKinds: ["button", "player", "table", "input", "toggle", "context", "dialog"],
+      targetKinds: ["button", "player", "table", "input", "toggle", "context", "dialog", "panel", "window", "text", "badge"],
       callback: "ScriptedWidgetEventHandler.OnClick(Widget w, int x, int y, int button)",
       authority: "client-local",
       runtime: "Route the clicked widget to the generated controller and return true only when the action is consumed.",
@@ -56,10 +56,10 @@
       label: "Refresh connected players",
       category: "Player data",
       kind: "engine-api",
-      targetKinds: ["table", "player"],
-      callback: "PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId)",
+      targetKinds: ["table", "player", "button"],
+      callback: "PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) [out parameter]",
       authority: "client-read",
-      runtime: "Read the authoritative connected-player ID array, omit empty names, and create exactly one row per returned player.",
+      runtime: "Read the authoritative connected-player ID array (call syntax omits the out keyword), omit empty names, and create exactly one row per returned player.",
       implementation: { status: "generated", method: "RefreshConnectedPlayers", notes: "The controller carries each playerId beside its native row and never scans guessed IDs." }
     },
     {
@@ -101,7 +101,7 @@
 
   window.BUSHWAR_REFORGER_FUNCTIONS = {
     schema: 1,
-    checked: "2026-08-12",
+    checked: "2026-08-13",
     disclaimer: "Callbacks are explicit Workbench implementation contracts. The browser cannot invoke Enforce Script directly.",
     entries: functions,
     byId(id) { return functions.find(callback => callback.id === id) || null; },

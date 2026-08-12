@@ -15,10 +15,11 @@
       category: "Players",
       valueType: "array<PlayerRecord>",
       sourceClass: "PlayerManager",
-      sourceMethods: ["GetPlayers(out playerIds)", "GetPlayerName(playerId)"],
+      sourceMethods: ["GetPlayers(playerIds) [out parameter]", "GetPlayerName(playerId)"],
+      targetKinds: ["table", "player"],
       updateEvents: ["player joined", "player left"],
       authority: "client-read",
-      runtime: "Read the authoritative connected-player ID array, resolve each name, and omit empty values; never scan a guessed ID range or create placeholder rows.",
+      runtime: "Read the authoritative connected-player ID array (the API parameter is out, but the EnforceScript call is GetPlayers(playerIds)), resolve each name, and omit empty values; never scan a guessed ID range or create placeholder rows.",
       preview: "engine-list"
     },
     {
@@ -28,21 +29,10 @@
       valueType: "string",
       sourceClass: "PlayerManager",
       sourceMethods: ["GetPlayerName(playerId)"],
+      targetKinds: ["text", "badge", "player"],
       updateEvents: ["player identity changed"],
       authority: "client-read",
       runtime: "Read the selected player record; empty values must render as unavailable, not as a fake name.",
-      preview: "scalar"
-    },
-    {
-      id: "player.controlled-entity",
-      label: "Player controlled entity",
-      category: "Players",
-      valueType: "IEntity",
-      sourceClass: "PlayerManager",
-      sourceMethods: ["GetPlayerControlledEntity(playerId)"],
-      updateEvents: ["player possession changed", "player respawned"],
-      authority: "client-read",
-      runtime: "Resolve the entity at refresh time; do not cache a stale entity reference across respawns.",
       preview: "scalar"
     },
     {
@@ -51,41 +41,18 @@
       category: "Game Master",
       valueType: "bool",
       sourceClass: "SCR_EditorManagerEntity",
-      sourceMethods: ["GetInstance()", "IsOpened()"],
+      sourceMethods: ["IsOpenedInstance(includeLimited)"],
+      targetKinds: ["text", "badge"],
       updateEvents: ["editor opened", "editor closed"],
       authority: "client-read",
       runtime: "Hide GM-only widgets when the local editor is closed or limited.",
       preview: "scalar"
     },
-    {
-      id: "menu.close",
-      label: "Close this menu",
-      category: "UI actions",
-      valueType: "event",
-      sourceClass: "ScriptedWidgetEventHandler",
-      sourceMethods: ["delete root widget", "remove input listener"],
-      updateEvents: ["button clicked", "MenuBack"],
-      authority: "client-local",
-      runtime: "A local UI action; it does not grant server authority.",
-      preview: "action"
-    },
-    {
-      id: "player.teleport.near",
-      label: "Teleport player (server RPC required)",
-      category: "Game Master actions",
-      valueType: "event",
-      sourceClass: "SCR_PlayerController",
-      sourceMethods: ["RplRpc Server", "authority validation", "SetTransform"],
-      updateEvents: ["button clicked"],
-      authority: "server-rpc",
-      runtime: "Only a separately reviewed server RPC may implement this. The Composer never invents or embeds admin authority.",
-      preview: "action"
-    }
   ];
 
   window.BUSHWAR_REFORGER_BINDINGS = {
     schema: 1,
-    checked: "2026-08-12",
+    checked: "2026-08-13",
     disclaimer: "Bindings are explicit Workbench implementation contracts. The browser cannot call the game engine directly.",
     entries: bindings,
     byId(id) { return bindings.find(binding => binding.id === id) || null; }

@@ -50,6 +50,7 @@ The **What's new** toolbar button remains available to reopen it.
 - A clear lock toggle in every layer row plus a lock badge beside the selected layer's pixel-bounds label; locked layers cannot be dragged, resized, or nudged
 - A searchable, categorized Reforger UI reference database: Widget Library (`WLib`) layout prefabs, HUD/Game Master layouts, and vanilla icon-atlas families, each carrying its exact resource path, native widget-class hint, and Workbench action for the handoff
 - An optional Workbench engine-context import (`bushwar-ui-composer-engine-context`, schema 1) for previewing a captured connected-player roster. Imported names/IDs are evidence for the browser preview only; generated controllers always re-query `PlayerManager` in Reforger.
+- The same context contract can carry the local GM editor state (`editorOpen`); scalar bindings display that captured value or an explicit unknown-state label instead of guessing.
 - Connected-player previews are runtime-shaped rather than mock tables: they show only imported non-empty players, expose the count and selected-name fields used by the native scaffold, and carry the clicked row's real `playerId` through the preview contract. With no context loaded, the preview intentionally renders zero player rows.
 - A GM admin-panel template using the approved left 24 px / top 15% / width 360 px / bottom 80% bounds
 - Portable `.bwui.json` project and `.bwui-template.json` template bundles:
@@ -99,8 +100,14 @@ The **What's new** toolbar button remains available to reopen it.
   visual references, missing Reforger resource paths, and empty projects
 - Engine binding contracts for runtime-backed compositions. The first live
   contract is Connected players (engine): it maps to
-  PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), filters
+  PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId), filters
   empty names, and exports the contract in the project and Workbench-plan JSON.
+  The API metadata labels `playerIds` as an out parameter; the EnforceScript
+  call itself must omit the `out` keyword.
+- Scalar bindings are target-filtered: Player display name is valid on text,
+  badge, or player widgets, while GM editor state is valid on text or badge
+  widgets. The generated controller re-queries the engine when the layout
+  opens; the browser snapshot is never runtime authority.
 - A bound connected-player table also exports a runtime scaffold request with
   named count/scroll/list widgets and a row-layout path, so the generated
   Enfusion controller has concrete widget targets instead of a visual-only

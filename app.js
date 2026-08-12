@@ -77,7 +77,7 @@
       canvas: { width: 1920, height: 1080, baseScene: "blank", baseSceneVisible: true, baseSceneOpacity: 1, background: "", backgroundName: "", backgroundOpacity: 0.45 },
       settings: { grid: true, snap: true, gridSize: 10 },
       handoff: { target: "Menu", layoutName: "BUSHWAR_ComposerLayout" },
-      engineContext: { schema: 1, source: "none", capturedAt: "", engineVersion: "", players: [], note: "No Workbench context loaded; runtime data remains authoritative." },
+      engineContext: { schema: 1, source: "none", capturedAt: "", engineVersion: "", editorOpen: null, players: [], note: "No Workbench context loaded; runtime data remains authoritative." },
       layers: []
     };
   }
@@ -105,6 +105,10 @@
     return layer?.binding ? bindingCatalog().byId(layer.binding) : null;
   }
 
+  function bindingsForLayer(layer) {
+    return bindingCatalog().entries.filter(binding => !binding.targetKinds || binding.targetKinds.includes(layer?.type));
+  }
+
   function functionCatalog() {
     return window.BUSHWAR_REFORGER_FUNCTIONS || { entries: [], byId: () => null, forLayer: () => [] };
   }
@@ -124,6 +128,35 @@
 
   function functionFor(layer) {
     return layer?.functionId ? functionCatalog().byId(layer.functionId) : null;
+  }
+
+  function selectedRuntimePlayer() {
+    const selectedIds = [...previewSelections.values()];
+    for (const selectedId of selectedIds) {
+      const player = enginePlayers().find(item => Number(item.id) === Number(selectedId));
+      if (player) return player;
+    }
+    return enginePlayers()[0] || null;
+  }
+
+  function runtimeDisplayValue(layer) {
+    const binding = bindingFor(layer);
+    if (!binding) return layer.text;
+    if (binding.id === "player.name") return selectedRuntimePlayer()?.name || "NO WORKBENCH PLAYER SNAPSHOT";
+    if (binding.id === "editor.gm.open") {
+      if (typeof state.engineContext?.editorOpen !== "boolean") return "GM EDITOR STATE UNKNOWN";
+      return state.engineContext.editorOpen ? "GM EDITOR OPEN" : "GM EDITOR CLOSED";
+    }
+    return layer.text;
+  }
+
+  function groupedCatalogOptions(entries) {
+    const groups = {};
+    entries.forEach(entry => {
+      const category = entry.category || "Other";
+      (groups[category] ||= []).push(entry);
+    });
+    return Object.entries(groups).map(([category, values]) => `<optgroup label="${escapeHtml(category)}">${values.map(entry => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.label)}</option>`).join("")}</optgroup>`).join("");
   }
 
   function enginePlayers() {
@@ -148,7 +181,8 @@
     const context = state.engineContext || {};
     if (!enginePlayers().length) return "No Workbench snapshot loaded";
     const version = context.engineVersion ? ` · WR ${context.engineVersion}` : "";
-    return `${enginePlayers().length} connected player${enginePlayers().length === 1 ? "" : "s"} imported${version}`;
+    const editor = typeof context.editorOpen === "boolean" ? ` · GM editor ${context.editorOpen ? "open" : "closed"}` : "";
+    return `${enginePlayers().length} connected player${enginePlayers().length === 1 ? "" : "s"} imported${editor}${version}`;
   }
 
   function isConnectedPlayersBinding(layer) {
@@ -381,14 +415,14 @@
 
   function renderLayerContent(layer, element) {
     const text = escapeHtml(layer.text);
-    if (layer.type === "text" || layer.type === "button" || layer.type === "badge") element.textContent = layer.text;
+    if (layer.type === "text" || layer.type === "button" || layer.type === "badge") element.textContent = runtimeDisplayValue(layer);
     else if (layer.type === "icon") element.innerHTML = '<span class="icon-glyph"></span>';
     else if (layer.type === "image" || layer.type === "reference") {
       if (layer.image) element.style.backgroundImage = `url("${layer.image}")`;
       else if (layer.type === "image") element.classList.add("no-image");
     } else if (layer.type === "player") {
       if (isConnectedPlayersBinding(layer)) renderConnectedPlayerScaffold(layer, element, "player");
-      else element.innerHTML = `<span class="player-name">${escapeHtml(layer.text || "PLAYER ROW")}</span>`;
+      else element.innerHTML = `<span class="player-name">${escapeHtml(runtimeDisplayValue(layer) || "PLAYER ROW")}</span>`;
     } else if (layer.type === "window") {
       element.innerHTML = `<div class="comp-header"><span>${text}</span><span class="comp-close">×</span></div><div class="comp-body"><strong>Window content</strong>Place lists, controls, previews, and custom widgets inside this frame.</div><div class="comp-footer"><span class="comp-button">CLOSE</span><span class="comp-button primary">APPLY</span></div>`;
     } else if (layer.type === "dialog") {
@@ -516,11 +550,11 @@
       $("#nativeWidgetNote").textContent = sourceHint;
     }
     const bindingControls = $("#bindingControls");
-    bindingControls.hidden = !["player", "table"].includes(layer.type);
+    const bindingEntries = bindingsForLayer(layer);
+    bindingControls.hidden = !bindingEntries.length;
     if (!bindingControls.hidden) {
       const select = $("#bindingSelect");
-      const entries = bindingCatalog().entries;
-      select.innerHTML = `<option value="">No engine binding (design-only)</option>${entries.map(binding => `<option value="${escapeHtml(binding.id)}">${escapeHtml(binding.label)}</option>`).join("")}`;
+      select.innerHTML = `<option value="">No engine binding (design-only)</option>${groupedCatalogOptions(bindingEntries)}`;
       select.value = layer.binding || "";
       const binding = bindingFor(layer);
       $("#bindingContract").textContent = binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" · ")} · ${binding.authority}. ${binding.runtime}` : "Design-only preview. Export a binding before expecting Workbench runtime data.";
@@ -530,7 +564,7 @@
     if (!functionControls.hidden) {
       const select = $("#functionSelect");
       const entries = functionCatalog().forLayer(layer);
-      select.innerHTML = `<option value="">No callback assigned (visual-only)</option>${entries.map(callback => `<option value="${escapeHtml(callback.id)}">${escapeHtml(callback.label)}</option>`).join("")}`;
+      select.innerHTML = `<option value="">No callback assigned (visual-only)</option>${groupedCatalogOptions(entries)}`;
       select.value = layer.functionId || "";
       const callback = functionFor(layer);
       $("#functionContract").textContent = callback ? `${callback.callback} · ${callback.authority}. ${callback.runtime}${callback.implementation ? ` Implementation: ${callback.implementation.status} via ${callback.implementation.method}.` : ""}` : "Choose a callback contract to tell Workbench what this widget should do when used.";
@@ -714,7 +748,7 @@
         refreshEvents: binding?.updateEvents || callback?.updateEvents || [],
         rowIdentity: binding?.id === "player.list.connected" ? "PlayerManager playerId carried beside each native row" : undefined,
         nativePreviewShape: binding?.id === "player.list.connected" ? "Frame > count Text + selection Text + ScrollLayout > VerticalLayout > Button Row > Text NameText" : undefined,
-        actualValuesOnly: binding?.id === "player.list.connected" ? true : undefined,
+        actualValuesOnly: binding ? true : undefined,
         preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values"
       } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
@@ -831,6 +865,7 @@
   function controllerSourceFor(classStem, layoutName, widgets) {
     const className = `BWUIC_${classStem}Controller`;
     const connected = widgets.find(widget => widget.binding === "player.list.connected");
+    const scalarBindings = widgets.filter(widget => ["player.name", "editor.gm.open"].includes(widget.binding));
     const callbackIds = [...new Set(widgets.map(widget => widget.functionId).filter(Boolean))];
     const callbackRoutes = [];
     let needsWidgetClickHook = false;
@@ -879,6 +914,7 @@
       "\t\t\tinputManager.AddActionListener(\"MenuBack\", EActionTrigger.DOWN, Close);",
       "",
       connected ? "\t\tRefreshConnectedPlayers();" : "\t\t// Add named-widget initialization here after Layout Editor authoring.",
+      scalarBindings.length ? "\t\tRefreshRuntimeBindings();" : "",
       "\t}",
       "",
       "\tvoid Close()",
@@ -946,7 +982,7 @@
         "\t\t\treturn;",
         "",
         "\t\tarray<int> playerIds = {};",
-        "\t\tplayerManager.GetPlayers(out playerIds);",
+        "\t\tplayerManager.GetPlayers(playerIds);",
         "\t\tint renderedPlayers;",
         "\t\tfor (int playerIndex = 0; playerIndex < playerIds.Count(); playerIndex++)",
         "\t\t{",
@@ -998,7 +1034,7 @@
         "\t\t\treturn signature;",
         "",
         "\t\tarray<int> playerIds = {};",
-        "\t\tplayerManager.GetPlayers(out playerIds);",
+        "\t\tplayerManager.GetPlayers(playerIds);",
         "\t\tfor (int playerIndex = 0; playerIndex < playerIds.Count(); playerIndex++)",
         "\t\t{",
         "\t\t\tint playerId = playerIds[playerIndex];",
@@ -1025,6 +1061,7 @@
         "\t\t\t\tRefreshConnectedPlayers();",
         "\t\t\t}",
         "\t\t}",
+        scalarBindings.length ? "\t\tRefreshRuntimeBindings();" : "",
         "\t\treturn false;",
         "\t}",
         "",
@@ -1048,6 +1085,45 @@
         ""
       );
 
+    }
+    if (scalarBindings.length) {
+      lines.push(
+        "\tprotected void RefreshRuntimeBindings()",
+        "\t{",
+        "\t\tif (!m_wRoot)",
+        "\t\t\treturn;",
+        "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\tstring runtimePlayerName;" : "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\tPlayerManager playerManager = GetGame().GetPlayerManager();" : "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\tif (playerManager)": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t{": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\tarray<int> runtimePlayerIds = {};": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\tplayerManager.GetPlayers(runtimePlayerIds);": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\tfor (int runtimeIndex = 0; runtimeIndex < runtimePlayerIds.Count(); runtimeIndex++)": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t{": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t\truntimePlayerName = playerManager.GetPlayerName(runtimePlayerIds[runtimeIndex]);": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t\tif (!runtimePlayerName.IsEmpty()) break;": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t}": "",
+        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t}": "",
+        ...scalarBindings.map(widget => {
+          if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
+          return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance() ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
+        }),
+        "\t}",
+        ""
+      );
+      if (!connected) {
+        lines.push(
+          "\toverride bool OnUpdate(Widget w)",
+          "\t{",
+          "\t\tif (w != m_wRoot)",
+          "\t\t\treturn false;",
+          "\t\tRefreshRuntimeBindings();",
+          "\t\treturn false;",
+          "\t}",
+          ""
+        );
+      }
     }
     if (needsWidgetClickHook) {
       lines.push(
@@ -1131,7 +1207,7 @@
         rowName: "NameText"
       } : undefined,
       implementation: widget.binding === "player.list.connected"
-        ? "Read PlayerManager.GetPlayers(out playerIds), resolve GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, set TextWidget.SetExactFontSize from the Composer font contract, and refresh when the roster signature changes. If a row callback is assigned, carry the actual playerId alongside the row."
+        ? "Read PlayerManager.GetPlayers(playerIds) (the API marks this parameter out), resolve GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, set TextWidget.SetExactFontSize from the Composer font contract, and refresh when the roster signature changes. If a row callback is assigned, carry the actual playerId alongside the row."
         : "Implement the listed engine contract in the generated controller; the Composer does not invent callbacks or authority."
     }));
     const controllerClass = `BWUIC_${classStem}Controller`;
@@ -1306,6 +1382,7 @@
   async function drawLayer(ctx, layer) {
     ctx.save();
     ctx.globalAlpha = layer.opacity;
+    const displayText = runtimeDisplayValue(layer);
     if ((layer.type === "table" || layer.type === "player") && isConnectedPlayersBinding(layer)) {
       drawConnectedPlayerScaffold(ctx, layer, layer.type === "player" ? "player" : "table");
       ctx.restore();
@@ -1325,12 +1402,12 @@
     ctx.textBaseline = "middle";
     if (["text", "button", "badge"].includes(layer.type)) {
       ctx.textAlign = layer.type === "text" ? "left" : "center";
-      ctx.fillText(layer.text, layer.type === "text" ? layer.x : layer.x + layer.w / 2, layer.y + layer.h / 2, layer.w - 16);
+      ctx.fillText(displayText, layer.type === "text" ? layer.x : layer.x + layer.w / 2, layer.y + layer.h / 2, layer.w - 16);
     } else if (layer.type === "icon") {
       ctx.save(); ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2); ctx.rotate(Math.PI / 4); ctx.strokeStyle = layer.color; ctx.lineWidth = 5; const size = Math.min(layer.w, layer.h) * .35; ctx.strokeRect(-size / 2, -size / 2, size, size); ctx.restore();
     } else if (layer.type === "player") {
       ctx.fillStyle = layer.accent; ctx.beginPath(); ctx.arc(layer.x + 29, layer.y + layer.h / 2, 17, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = layer.color; ctx.textAlign = "left"; ctx.fillText(layer.text, layer.x + 58, layer.y + layer.h / 2, layer.w - 230);
+      ctx.fillStyle = layer.color; ctx.textAlign = "left"; ctx.fillText(displayText, layer.x + 58, layer.y + layer.h / 2, layer.w - 230);
       ctx.font = `700 ${Math.max(10, layer.fontSize * .68)}px Bahnschrift, sans-serif`; ctx.fillText("BRING ME   |   BRING PLAYER", layer.x + layer.w - 192, layer.y + layer.h / 2, 182);
     } else if (layer.type === "reforger") {
       drawReforgerPreview(ctx, layer);
@@ -1340,7 +1417,7 @@
       ctx.fillStyle = layer.color;
       ctx.textAlign = "left";
       ctx.font = `700 ${layer.fontSize}px Bahnschrift, Segoe UI, sans-serif`;
-      ctx.fillText(layer.text, layer.x + 14, layer.y + Math.min(layer.h / 2, 30), layer.w - 28);
+      ctx.fillText(displayText, layer.x + 14, layer.y + Math.min(layer.h / 2, 30), layer.w - 28);
     }
     ctx.restore();
   }
@@ -1456,6 +1533,7 @@
       source: "workbench",
       capturedAt: String(value.capturedAt || new Date().toISOString()),
       engineVersion: String(value.engineVersion || ""),
+      editorOpen: typeof value.editorOpen === "boolean" ? value.editorOpen : null,
       players,
       note: String(value.note || "Imported from a trusted Workbench runtime snapshot.")
     };
@@ -1545,6 +1623,8 @@
     if (staticPlayerLabels.length) warnings.push("Static player-name text was found without an engine binding; replace it with Connected players (engine) so Workbench cannot show fake or empty rows.");
     state.layers.forEach(layer => {
       if (layer.binding && !bindingFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown engine binding.`);
+      const binding = bindingFor(layer);
+      if (layer.binding && binding && binding.targetKinds && !binding.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses ${binding.label} on a ${layer.type} widget; choose a compatible widget type before handoff.`);
       if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
       const callback = functionFor(layer);
       if (layer.functionId && callback && !callback.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);

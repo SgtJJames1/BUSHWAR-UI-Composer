@@ -1,10 +1,10 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.3",
+  version: "0.10.4",
   published: "12 August 2026",
-  title: "Engine-backed preview and callback parity",
-  summary: "The Composer preview, native scaffold, and generated controller now describe the same connected-player tree and use the real PlayerManager IDs instead of visual-only placeholder rows.",
+  title: "Runtime contracts and real engine values",
+  summary: "The Composer now exposes compatible engine bindings for scalar widgets, reports the imported GM editor state, and validates binding/widget mismatches before handoff.",
   changes: [
-    "Connected players uses PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), with empty-name filtering and no guessed ID range.",
+    "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
     "Connected-player tables default to a row-selection contract that carries the real playerId into the controller.",
     "The GM base template no longer seeds fake Alpha/Bravo/Charlie player rows; it uses the engine-backed table instead.",
@@ -29,6 +29,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Browser and PNG previews for Connected players now mirror the native count / selection / scroll / Button row / NameText scaffold; empty context shows zero rows rather than invented player entries.",
     "Imported engine context is normalized to positive, unique player IDs with non-empty names, and clicking a preview row records the real PlayerManager ID used by the generated callback contract.",
     "Generated native widget names are deterministic and duplicate-safe across the layout scaffold, plan, and controller source; callback routes now expose explicit review hooks instead of silently pretending an action is implemented.",
-    "Generated PlayerManager calls now use the documented GetPlayers(out playerIds) API signature."
+    "Generated PlayerManager calls now use the compile-valid GetPlayers(playerIds) call syntax for the API's out array parameter.",
+    "Text and badge widgets can bind to Player display name or GM editor state; the preview shows the imported value or an explicit unknown-state placeholder.",
+    "Binding selectors are filtered to compatible widget types and handoff validation warns before a binding is attached to an incompatible layer.",
+    "The disposable Workbench controller fixture was recompiled after the GetPlayers signature correction; its fresh Game module log contains no BWUIC script errors."
   ]
 };
