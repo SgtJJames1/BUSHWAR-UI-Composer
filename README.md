@@ -74,6 +74,10 @@ The **What's new** toolbar button remains available to reopen it.
   contract is Connected players (engine): it maps to
   PlayerManager.GetPlayerCount() + GetPlayerName(playerId), filters empty
   slots, and exports the contract in the project and Workbench-plan JSON.
+- A bound connected-player table also exports a runtime scaffold request with
+  named count/scroll/list widgets and a row-layout path, so the generated
+  Enfusion controller has concrete widget targets instead of a visual-only
+  guess.
 
 ## Workbench boundary
 

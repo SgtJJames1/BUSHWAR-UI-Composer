@@ -603,6 +603,32 @@
 
   function layoutCreateNodeFor(layer, index) {
     const widget = workbenchWidgetFor(layer, index);
+    if (layer.type === "table" && widget.binding === "player.list.connected") {
+      return {
+        type: "Frame",
+        name: widget.name,
+        props: { Color: reforgerColor(layer.fill, layer.opacity) },
+        slot: { anchor: widget.anchors.join(" ") },
+        children: [
+          {
+            type: "Text",
+            name: `${widget.name}Count`,
+            props: { Text: "0 CONNECTED", Color: reforgerColor(layer.accent) },
+            slot: { anchor: "0 0 1 0.12" }
+          },
+          {
+            type: "ScrollLayout",
+            name: `${widget.name}Scroll`,
+            slot: { anchor: "0 0.14 1 1" },
+            children: [{
+              type: "VerticalLayout",
+              name: `${widget.name}List`,
+              slot: { sizeMode: "FILL" }
+            }]
+          }
+        ]
+      };
+    }
     return {
       type: "Frame",
       name: widget.name,
@@ -621,6 +647,24 @@
     const layoutName = safeName(state.handoff.layoutName) || "bushwar-composer-layout";
     const classStem = layoutName.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("") || "BushwarComposerLayout";
     const visibleLayers = state.layers.filter(layer => layer.type !== "reference");
+    const widgets = visibleLayers.map(workbenchWidgetFor);
+    const runtimeScaffolds = widgets.filter(widget => widget.binding).map(widget => ({
+      binding: widget.binding,
+      contract: widget.bindingContract,
+      widgetName: widget.name,
+      controllerClass: `BWUIC_${classStem}Controller`,
+      layoutPath: `UI/layouts/${layoutName}.layout`,
+      rowLayoutPath: widget.binding === "player.list.connected" ? `UI/layouts/${layoutName}-player-row.layout` : undefined,
+      requiredWidgetNames: widget.binding === "player.list.connected" ? {
+        count: `${widget.name}Count`,
+        scroll: `${widget.name}Scroll`,
+        list: `${widget.name}List`,
+        rowName: "NameText"
+      } : undefined,
+      implementation: widget.binding === "player.list.connected"
+        ? "Read PlayerManager.GetPlayerCount(), enumerate valid IDs with GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, and refresh on join/left changes."
+        : "Implement the listed engine contract in the generated controller; the Composer does not invent callbacks or authority."
+    }));
     return {
       format: workbenchPlanFormat,
       schema: workbenchPlanSchema,
@@ -633,8 +677,9 @@
         controllerClass: `BWUIC_${classStem}Controller`
       },
       root: { width: state.canvas.width, height: state.canvas.height, widgetType: "FrameWidget", name: "m_wRoot" },
-      widgets: visibleLayers.map(workbenchWidgetFor),
-      bindings: visibleLayers.map(workbenchWidgetFor).filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
+      widgets,
+      bindings: widgets.filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
+      runtimeScaffolds,
       resources: [...new Set(visibleLayers.map(layer => layer.resourcePath).filter(Boolean))],
       layoutCreateRequest: {
         name: layoutName,
@@ -649,7 +694,7 @@
           "Use layoutCreateRequest with the Enfusion layout_create tool to generate a native-widget scaffold in an isolated addon, or create the target GUI layout manually at the listed layoutPath.",
           "Open the scaffold in Layout Editor, set root size, and replace source-backed frames with their listed WLib/vanilla layout prefabs using the plan's names, anchors, and bounds.",
           "Use Workbench's Generate Class from Layout after naming script-bound widgets with m_w prefixes.",
-          "Run Layout Editor Live Preview at supported resolutions, then wire gameplay behaviour in the generated controller."
+          "Run Layout Editor Live Preview at supported resolutions, then wire gameplay behaviour in the generated controller using runtimeScaffolds.requiredWidgetNames."
         ]
       }
     };
