@@ -4,6 +4,9 @@
   const storageKey = "bushwar-ui-composer-by-sgt-james";
   const legacyStorageKey = "bushwar-ui-composer";
   const templatesStorageKey = "bushwar-ui-composer-user-templates-v1";
+  const APP_VERSION = "0.5.0";
+  const bundleFormat = "bushwar-ui-composer";
+  const bundleSchema = 3;
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const uid = () => `layer-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -34,7 +37,8 @@
     squadtile: { name: "Squad tile", x: 760, y: 560, w: 310, h: 110, text: "LIGHT FIRE TEAM", fill: "#172126", color: "#ffffff", borderColor: "#46565d", accent: "#18bce8", fontSize: 16, radius: 1 },
     inventory: { name: "Slot grid", x: 1210, y: 650, w: 330, h: 210, text: "ENTITY SLOTS", fill: "#11191d", color: "#ffffff", borderColor: "#46565d", accent: "#18bce8", fontSize: 16, radius: 1 },
     categorybar: { name: "Category bar", x: 560, y: 900, w: 600, h: 62, text: "ALL", fill: "#151f23", color: "#ffffff", borderColor: "#46565d", accent: "#f47b36", fontSize: 15, radius: 1 },
-    reforger: { name: "Reforger reference", x: 640, y: 360, w: 430, h: 76, text: "WLib_ButtonText", fill: "#11191d", color: "#eef5f7", borderColor: "#52707a", accent: "#18bce8", fontSize: 17, radius: 1, resourcePath: "", catalogCategory: "", catalogKind: "", catalogPreview: "REF" }
+    reforger: { name: "Reforger reference", x: 640, y: 360, w: 430, h: 76, text: "WLib_ButtonText", fill: "#11191d", color: "#eef5f7", borderColor: "#52707a", accent: "#18bce8", fontSize: 17, radius: 1, resourcePath: "", catalogCategory: "", catalogKind: "", catalogPreview: "REF" },
+    reference: { name: "Visual reference", x: 0, y: 0, w: 1920, h: 1080, text: "", fill: "#000000", color: "#ffffff", borderColor: "#18bce8", accent: "#18bce8", fontSize: 14, radius: 0, referenceName: "" }
   };
 
   const baseScenes = {
@@ -58,7 +62,7 @@
 
   function freshState() {
     return {
-      version: 1,
+      version: bundleSchema,
       title: "Untitled BUSHWAR UI",
       canvas: { width: 1920, height: 1080, baseScene: "blank", baseSceneVisible: true, baseSceneOpacity: 1, background: "", backgroundName: "", backgroundOpacity: 0.45 },
       settings: { grid: true, snap: true, gridSize: 10 },
@@ -78,11 +82,42 @@
     return clean;
   }
 
-  function templateSnapshot() {
+  function portableSnapshot() {
+    return clone(state);
+  }
+
+  function autoSaveSnapshot() {
     const snapshot = clone(state);
     if (snapshot.canvas.background && snapshot.canvas.background.length > 500000) snapshot.canvas.background = "";
     snapshot.layers.forEach(layer => { if (layer.image && layer.image.length > 500000) layer.image = ""; });
     return snapshot;
+  }
+
+  function assetSummary(design = state) {
+    const assets = [design.canvas.background, ...design.layers.map(layer => layer.image)].filter(value => typeof value === "string" && value.startsWith("data:"));
+    return { count: assets.length, bytes: assets.reduce((total, value) => total + value.length, 0) };
+  }
+
+  function bundleIntegrity(design) {
+    const assets = assetSummary(design);
+    return { layerCount: design.layers.length, assetCount: assets.count, assetBytes: assets.bytes };
+  }
+
+  function makeBundle(kind, name) {
+    const design = portableSnapshot();
+    const assets = assetSummary(design);
+    return { format: bundleFormat, schema: bundleSchema, kind, name: name || state.title, createdAt: new Date().toISOString(), appVersion: APP_VERSION, assets, integrity: bundleIntegrity(design), design };
+  }
+
+  function readBundle(value) {
+    const bundle = value?.format === bundleFormat ? value : { format: "legacy-json", schema: 1, kind: "project", name: value?.title || "Imported design", design: value };
+    if (!bundle.design?.canvas || !Array.isArray(bundle.design.layers)) throw new Error("This is not a valid Composer project or template bundle");
+    if (bundle.format === bundleFormat && !["project", "template"].includes(bundle.kind)) throw new Error("This bundle has an unsupported type");
+    const expected = bundle.integrity || bundle.assets;
+    const actual = bundleIntegrity(bundle.design);
+    const expectedAssets = expected?.assetCount ?? expected?.count;
+    bundle.integrityStatus = !expected || (Number(expected.layerCount ?? actual.layerCount) === actual.layerCount && Number(expectedAssets ?? actual.assetCount) === actual.assetCount && Number(expected.assetBytes ?? expected.bytes ?? actual.assetBytes) === actual.assetBytes) ? "verified" : "mismatch";
+    return bundle;
   }
 
   function loadUserTemplates() {
@@ -93,7 +128,8 @@
   }
 
   function persistUserTemplates() {
-    try { localStorage.setItem(templatesStorageKey, JSON.stringify(userTemplates)); } catch { setStatus("Template storage is unavailable in this browser profile"); }
+    try { localStorage.setItem(templatesStorageKey, JSON.stringify(userTemplates)); return true; }
+    catch { setStatus("Template is too large for local storage. Export it as a template bundle to preserve its reference images."); return false; }
   }
 
   function renderUserTemplates() {
@@ -115,11 +151,14 @@
 
   function saveUserTemplate(name) {
     const cleanName = name.trim().replace(/\s+/g, " ");
-    if (!cleanName) return;
+    if (!cleanName) return false;
     const existing = userTemplates.find(item => item.name.toLowerCase() === cleanName.toLowerCase());
-    const saved = { id: existing ? existing.id : `template-${uid()}`, name: cleanName, updatedAt: new Date().toISOString(), design: templateSnapshot() };
+    const before = clone(userTemplates);
+    const saved = { id: existing ? existing.id : `template-${uid()}`, name: cleanName, updatedAt: new Date().toISOString(), design: portableSnapshot() };
     userTemplates = existing ? userTemplates.map(item => item.id === existing.id ? saved : item) : [saved, ...userTemplates];
-    persistUserTemplates(); renderUserTemplates(); setStatus(`${existing ? "Updated" : "Saved"} template: ${cleanName}`);
+    if (!persistUserTemplates()) { userTemplates = before; return false; }
+    renderUserTemplates(); setStatus(`${existing ? "Updated" : "Saved"} template: ${cleanName}`);
+    return true;
   }
 
   function loadUserTemplate(id) {
@@ -127,6 +166,7 @@
     if (!template) return;
     checkpoint();
     state = normalizeState(clone(template.design));
+    state.title = template.name || state.title;
     selectedId = null;
     syncControls(); render(); setStatus(`Template loaded: ${template.name}`);
   }
@@ -234,9 +274,9 @@
     const text = escapeHtml(layer.text);
     if (layer.type === "text" || layer.type === "button" || layer.type === "badge") element.textContent = layer.text;
     else if (layer.type === "icon") element.innerHTML = '<span class="icon-glyph"></span>';
-    else if (layer.type === "image") {
+    else if (layer.type === "image" || layer.type === "reference") {
       if (layer.image) element.style.backgroundImage = `url("${layer.image}")`;
-      else element.classList.add("no-image");
+      else if (layer.type === "image") element.classList.add("no-image");
     } else if (layer.type === "player") {
       const initial = (layer.text || "P").trim().slice(0, 1).toUpperCase();
       element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${text}</span><span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
@@ -313,7 +353,7 @@
       else input.value = layer[prop] ?? "";
     });
     $("#opacityOutput").textContent = `${Math.round(layer.opacity * 100)}%`;
-    $("#imageControls").hidden = layer.type !== "image";
+    $("#imageControls").hidden = !["image", "reference"].includes(layer.type);
     $("#resourceControls").hidden = layer.type !== "reforger";
     if (layer.type === "reforger") $("#resourcePath").value = layer.resourcePath || "";
   }
@@ -448,20 +488,34 @@
   }
 
   function exportDesign() {
-    download(`${safeName(state.title)}.json`, JSON.stringify(state, null, 2), "application/json");
-    setStatus("Design JSON exported");
+    const bundle = makeBundle("project");
+    download(`${safeName(state.title)}.bwui.json`, JSON.stringify(bundle, null, 2), "application/json");
+    const assets = assetSummary();
+    setStatus(`Portable project saved · ${assets.count} embedded reference asset${assets.count === 1 ? "" : "s"}`);
+  }
+
+  function exportTemplate() {
+    const bundle = makeBundle("template", state.title);
+    download(`${safeName(state.title)}.bwui-template.json`, JSON.stringify(bundle, null, 2), "application/json");
+    const assets = assetSummary();
+    setStatus(`Template bundle exported · ${assets.count} embedded reference asset${assets.count === 1 ? "" : "s"}`);
   }
 
   async function copySpec() {
     const spec = {
+      format: "BUSHWAR UI Composer Workbench handoff",
+      appVersion: APP_VERSION,
       canvas: `${state.canvas.width}x${state.canvas.height}`,
       baseScene: { name: state.canvas.baseScene, visible: state.canvas.baseSceneVisible, opacity: state.canvas.baseSceneOpacity },
-      note: "Anchors are normalized left/top/right/bottom. Pixel bounds remain the visual authority.",
+      references: { embeddedAssets: assetSummary().count, note: "Reference images are preserved in .bwui project/template bundles; do not distribute vanilla game assets." },
+      bundleIntegrity: bundleIntegrity(state),
+      note: "Anchors are normalized left/top/right/bottom. Pixel bounds remain the visual authority. Build the final .layout in Workbench Layout Editor and validate Live Preview at target resolutions.",
       layers: state.layers.map(layer => ({
         name: layer.name, type: layer.type,
         boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
         anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
-        style: { fill: layer.fill, color: layer.color, border: layer.borderColor, opacity: layer.opacity, fontSize: layer.fontSize }, text: layer.text
+        style: { fill: layer.fill, color: layer.color, border: layer.borderColor, opacity: layer.opacity, fontSize: layer.fontSize, locked: layer.locked }, text: layer.text,
+        reforgerResource: layer.resourcePath || undefined, referenceName: layer.referenceName || undefined
       }))
     };
     try {
@@ -507,7 +561,7 @@
   async function drawLayer(ctx, layer) {
     ctx.save();
     ctx.globalAlpha = layer.opacity;
-    if (layer.type === "image" && layer.image) {
+    if ((layer.type === "image" || layer.type === "reference") && layer.image) {
       const image = await loadImage(layer.image);
       ctx.drawImage(image, layer.x, layer.y, layer.w, layer.h);
     } else if (layer.type !== "text") {
@@ -576,9 +630,41 @@
     $("#catalogNote").textContent = catalog.disclaimer;
   }
 
+  function addReferenceFiles(files) {
+    const list = [...files].filter(file => file?.type.startsWith("image/"));
+    if (!list.length) return;
+    Promise.all(list.map(file => new Promise((resolve, reject) => {
+      const reader = new FileReader(); reader.onload = () => resolve({ data: reader.result, name: file.name }); reader.onerror = reject; reader.readAsDataURL(file);
+    }))).then(images => {
+      checkpoint();
+      const references = images.map(({ data, name }) => makeLayer("reference", {
+        name: `REF · ${name}`, referenceName: name, image: data, x: 0, y: 0, w: state.canvas.width, h: state.canvas.height, opacity: 0.48, locked: true
+      }));
+      state.layers.unshift(...references);
+      selectedId = references.at(-1)?.id || null;
+      render(); setStatus(`${references.length} locked visual reference${references.length === 1 ? "" : "s"} added to the board`);
+    }).catch(() => setStatus("One or more visual references could not be read"));
+  }
+
+  function validateHandoff() {
+    const warnings = [];
+    const references = state.layers.filter(layer => layer.type === "reference");
+    const refAssets = references.filter(layer => layer.image).length;
+    if (state.canvas.width < 1920 || state.canvas.height < 1080) warnings.push("Canvas is below Workbench's documented 1920 × 1080 minimum root size.");
+    if (references.some(layer => !layer.locked)) warnings.push("One or more visual-reference layers are unlocked and can be moved accidentally.");
+    if (references.some(layer => !layer.image)) warnings.push("One or more visual-reference layers have no embedded image.");
+    if (state.layers.some(layer => layer.type === "reforger" && !layer.resourcePath)) warnings.push("A Reforger reference card is missing its resource path.");
+    if (!state.layers.length) warnings.push("Project has no UI layers.");
+    const assets = assetSummary();
+    const report = $("#validationReport");
+    report.className = "validation-report";
+    report.innerHTML = `<div class="validation-summary"><b>${warnings.length ? "Review before handoff" : "Ready for Workbench handoff"}</b><br>${state.layers.length} layer${state.layers.length === 1 ? "" : "s"} · ${refAssets} embedded reference board image${refAssets === 1 ? "" : "s"} · ${(assets.bytes / 1024 / 1024).toFixed(1)} MB portable bundle estimate.</div>${warnings.length ? `<ul class="validation-warnings">${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="validation-ok">Use Save project to create the authoritative .bwui.json file, then implement the layout in Workbench Layout Editor and run Live Preview at your target resolutions.</p>`}<p class="hint">Exported bundles contain ${bundleIntegrity(state).assetCount} embedded image asset${bundleIntegrity(state).assetCount === 1 ? "" : "s"} and record a layer/asset manifest. Composer output is an implementation handoff; it does not generate a production .layout file or replace the Workbench Layout Editor.</p>`;
+    $("#validationDialog").showModal();
+  }
+
   function persist() {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(templateSnapshot()));
+      localStorage.setItem(storageKey, JSON.stringify(autoSaveSnapshot()));
     } catch { /* Storage is optional. */ }
   }
 
@@ -664,6 +750,8 @@
   });
 
   $("#backgroundBtn").addEventListener("click", () => $("#backgroundInput").click());
+  $("#referenceBtn").addEventListener("click", () => $("#referenceInput").click());
+  $("#referenceInput").addEventListener("change", event => { addReferenceFiles(event.target.files); event.target.value = ""; });
   $("#backgroundInput").addEventListener("change", event => readImageFile(event.target.files[0], (data, name) => { checkpoint(); state.canvas.background = data; state.canvas.backgroundName = name; render(); setStatus(`Reference loaded: ${name}`); }));
   $("#clearBackgroundBtn").addEventListener("click", () => { checkpoint(); state.canvas.background = ""; state.canvas.backgroundName = ""; render(); });
   $("#backgroundOpacity").addEventListener("input", event => { state.canvas.backgroundOpacity = Number(event.target.value); render(); });
@@ -692,11 +780,18 @@
   $("#openBtn").addEventListener("click", () => $("#designInput").click());
   $("#designInput").addEventListener("change", event => {
     const file = event.target.files[0]; if (!file) return;
-    const reader = new FileReader(); reader.onload = () => { try { checkpoint(); const loaded = JSON.parse(reader.result); if (!loaded.canvas || !Array.isArray(loaded.layers)) throw new Error("Invalid design"); state = normalizeState(loaded); selectedId = null; syncControls(); render(); setStatus(`Design imported: ${file.name}`); } catch (error) { alert(`Could not import design: ${error.message}`); } }; reader.readAsText(file);
+    const reader = new FileReader(); reader.onload = () => { try { checkpoint(); const bundle = readBundle(JSON.parse(reader.result)); state = normalizeState(bundle.design); state.title = bundle.name || state.title; selectedId = null; syncControls(); render(); const count = assetSummary().count; setStatus(`Project opened: ${file.name} · ${count} embedded asset${count === 1 ? "" : "s"} · ${bundle.integrityStatus === "mismatch" ? "manifest mismatch — review references" : "bundle verified"}`); } catch (error) { alert(`Could not open project: ${error.message}`); } }; reader.readAsText(file);
   });
   $("#newBtn").addEventListener("click", () => { if (!confirm("Start a new design? Export the current design first if you want to keep it.")) return; checkpoint(); state = freshState(); selectedId = null; syncControls(); render(); });
   $("#pngBtn").addEventListener("click", exportPng);
   $("#copySpecBtn").addEventListener("click", copySpec);
+  $("#validateBtn").addEventListener("click", validateHandoff);
+  $("#exportTemplateBtn").addEventListener("click", exportTemplate);
+  $("#importTemplateBtn").addEventListener("click", () => $("#templateInput").click());
+  $("#templateInput").addEventListener("change", event => {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader(); reader.onload = () => { try { const bundle = readBundle(JSON.parse(reader.result)); if (bundle.kind !== "template" && bundle.format === bundleFormat) throw new Error("This is a project bundle; use Open project instead"); checkpoint(); state = normalizeState(bundle.design); state.title = bundle.name || state.title; selectedId = null; syncControls(); render(); const saved = saveUserTemplate(bundle.name || file.name.replace(/\.json$/i, "")); setStatus(saved ? `Template imported and saved locally: ${bundle.name || file.name}` : `Template opened: ${bundle.name || file.name} · export a bundle to keep its embedded references`); } catch (error) { alert(`Could not import template: ${error.message}`); } }; reader.readAsText(file);
+  });
   $("#previewBtn").addEventListener("click", () => { preview = !preview; document.body.classList.toggle("preview-mode", preview); $("#previewBtn").textContent = preview ? "Exit preview" : "Preview"; render(); });
   $("#saveTemplateBtn").addEventListener("click", () => {
     const dialog = $("#templateDialog");

@@ -1,6 +1,6 @@
 {
   "name": "bushwar-ui-composer",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Visual Arma Reforger UI prototyping studio by Sgt.James",
   "author": "Sgt.James",
   "private": true,
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "package:dir": "electron-builder --dir --win x64",
-    "dist": "electron-builder --win nsis portable --x64",
+    "dist": "electron-builder --win nsis portable --x64 --publish never",
     "publish": "electron-builder --win nsis --x64 --publish always"
   },
   "dependencies": {

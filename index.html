@@ -12,8 +12,8 @@
     <div class="brand"><span class="brand-mark">BW</span><span>BUSHWAR UI Composer</span><small>by Sgt.James</small></div>
     <div class="toolbar">
       <button id="newBtn" title="New design">New</button>
-      <button id="openBtn">Import design</button>
-      <button id="saveBtn">Export design</button>
+      <button id="openBtn">Open project</button>
+      <button id="saveBtn">Save project</button>
       <span class="separator"></span>
       <button id="undoBtn" title="Ctrl+Z">Undo</button>
       <button id="redoBtn" title="Ctrl+Y">Redo</button>
@@ -52,10 +52,12 @@
       </section>
 
       <section>
-        <div class="section-title">Extra reference</div>
-        <button id="backgroundBtn" class="wide">Load screenshot</button>
+        <div class="section-title">Visual references</div>
+        <button id="referenceBtn" class="wide">Add to reference board</button>
+        <p class="hint reference-hint">Adds one or more locked, embedded reference layers. They travel with a saved project/template bundle.</p>
+        <button id="backgroundBtn" class="wide ghost">Use temporary screenshot</button>
         <div class="field compact"><label>Reference opacity</label><input id="backgroundOpacity" type="range" min="0" max="1" step="0.05" value="0.45"></div>
-        <button id="clearBackgroundBtn" class="wide ghost">Clear screenshot</button>
+        <button id="clearBackgroundBtn" class="wide ghost">Clear temporary screenshot</button>
       </section>
 
       <section>
@@ -67,7 +69,8 @@
           <button data-template="blank">Blank canvas</button>
         </div>
         <button id="saveTemplateBtn" class="wide template-save">Save current as template</button>
-        <p class="hint template-hint">Saved templates stay on this PC and can be loaded or removed below.</p>
+        <div class="template-io"><button id="exportTemplateBtn">Export current</button><button id="importTemplateBtn">Import template</button></div>
+        <p class="hint template-hint">Local templates are a convenience. Exported template bundles are the reliable share/backup format and include reference images.</p>
         <div id="userTemplateList" class="user-template-list"></div>
       </section>
 
@@ -189,8 +192,9 @@
 
       <section>
         <div class="section-title">Handoff</div>
-        <p class="hint">Copy normalized anchors and pixel bounds for implementation in Workbench.</p>
+        <p class="hint">Project bundles preserve reference assets. Implement the final UI in Workbench Layout Editor, then test Live Preview at supported aspect ratios.</p>
         <button id="copySpecBtn" class="wide">Copy design specification</button>
+        <button id="validateBtn" class="wide handoff-validate">Validate Workbench handoff</button>
       </section>
     </aside>
   </main>
@@ -198,8 +202,13 @@
   <footer class="statusbar"><span id="statusText">Ready</span><span>Delete · Ctrl+D duplicate · arrows nudge · Shift+arrows ×10</span></footer>
 
   <input id="backgroundInput" type="file" accept="image/*" hidden>
-  <input id="designInput" type="file" accept="application/json,.json" hidden>
+  <input id="referenceInput" type="file" accept="image/*" multiple hidden>
+  <input id="designInput" type="file" accept="application/json,.json,.bwui.json" hidden>
+  <input id="templateInput" type="file" accept="application/json,.json,.bwui-template.json" hidden>
   <input id="layerImageInput" type="file" accept="image/*" hidden>
+  <dialog id="validationDialog" class="template-dialog validation-dialog">
+    <form method="dialog"><h2>Workbench handoff check</h2><div id="validationReport"></div><div class="dialog-actions"><button class="accent" value="close">Close</button></div></form>
+  </dialog>
   <dialog id="templateDialog" class="template-dialog">
     <form method="dialog">
       <h2>Save as template</h2>
