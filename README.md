@@ -77,7 +77,13 @@ The **What's new** toolbar button remains available to reopen it.
 - A bound connected-player table also exports a runtime scaffold request with
   named count/scroll/list widgets and a row-layout path, so the generated
   Enfusion controller has concrete widget targets instead of a visual-only
-  guess.
+  guess. The plan also includes a native Button/Text row scaffold with valid
+  parent-inferred slots.
+- An explicit callback catalogue lets each supported widget declare the
+  Enfusion event/API or controller contract it needs. Connected-player tables
+  default to a row-selection contract that carries the real `playerId`; the
+  plan exports callbacks separately from data bindings so visual design and
+  runtime behavior cannot be confused.
 
 ## Workbench boundary
 
@@ -96,9 +102,14 @@ This is a design/prototyping tool, not a replacement for the Reforger Layout Edi
 3. For data-backed widgets, assign an **Engine data / function** binding in the
    inspector. The browser preview is deliberately truthful: it shows the
    runtime contract rather than inventing fake player rows.
-4. Use **Validate Workbench handoff** and fix any warnings. Then copy the
+4. Assign an **Engine callback / action** in the inspector when the widget must
+   do something. For a connected-player table, keep `player.list.connected`
+   paired with `player.row.select`; the exported controller must carry the
+   engine player ID alongside each row instead of inferring identity from row
+   order or display text.
+5. Use **Validate Workbench handoff** and fix any warnings. Then copy the
    specification or use the exported PNG as a visual brief.
-5. Recreate the finished UI in Workbench's **Layout Editor** using the listed
+6. Recreate the finished UI in Workbench's **Layout Editor** using the listed
    WLib resource paths and test the actual `.layout` with **Live Preview** at
    the resolutions you support. The bundle is a reliable design reference, not
    a runtime UI package.

@@ -8,9 +8,9 @@
   const release = window.BUSHWAR_COMPOSER_RELEASE || { version: "0.5.1", published: "", title: "Latest improvements", summary: "", changes: [] };
   const APP_VERSION = release.version;
   const bundleFormat = "bushwar-ui-composer";
-  const bundleSchema = 4;
+  const bundleSchema = 5;
   const workbenchPlanFormat = "bushwar-ui-composer-workbench-plan";
-  const workbenchPlanSchema = 1;
+  const workbenchPlanSchema = 2;
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const uid = () => `layer-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -76,7 +76,7 @@
   }
 
   function makeLayer(type, overrides = {}) {
-    return { id: uid(), type, opacity: 1, visible: true, locked: false, image: "", ...clone(defaults[type]), ...overrides };
+    return { id: uid(), type, opacity: 1, visible: true, locked: false, image: "", binding: "", bindingMode: "engine", functionId: "", ...clone(defaults[type]), ...overrides };
   }
 
   function normalizeState(value) {
@@ -84,7 +84,7 @@
     clean.canvas = { ...freshState().canvas, ...(value.canvas || {}) };
     clean.settings = { ...freshState().settings, ...(value.settings || {}) };
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
-    clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", ...layer })) : [];
+    clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", functionId: "", ...layer })) : [];
     return clean;
   }
 
@@ -94,6 +94,14 @@
 
   function bindingFor(layer) {
     return layer?.binding ? bindingCatalog().byId(layer.binding) : null;
+  }
+
+  function functionCatalog() {
+    return window.BUSHWAR_REFORGER_FUNCTIONS || { entries: [], byId: () => null, forLayer: () => [] };
+  }
+
+  function functionFor(layer) {
+    return layer?.functionId ? functionCatalog().byId(layer.functionId) : null;
   }
 
   function portableSnapshot() {
@@ -293,8 +301,10 @@
     } else if (layer.type === "player") {
       const initial = (layer.text || "P").trim().slice(0, 1).toUpperCase();
       const binding = bindingFor(layer);
+      const callback = functionFor(layer);
       const engineLabel = binding ? `<small class="binding-badge">${escapeHtml(binding.label)}</small>` : "";
-      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${text}</span>${engineLabel}<span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
+      const callbackLabel = callback ? `<small class="binding-badge callback-badge">${escapeHtml(callback.label)}</small>` : "";
+      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${text}</span>${engineLabel}${callbackLabel}<span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
     } else if (layer.type === "window") {
       element.innerHTML = `<div class="comp-header"><span>${text}</span><span class="comp-close">×</span></div><div class="comp-body"><strong>Window content</strong>Place lists, controls, previews, and custom widgets inside this frame.</div><div class="comp-footer"><span class="comp-button">CLOSE</span><span class="comp-button primary">APPLY</span></div>`;
     } else if (layer.type === "dialog") {
@@ -311,10 +321,12 @@
       element.innerHTML = `<div class="tabs-wrap"><span class="tab-item active">${text}</span><span class="tab-item">ENTITIES</span><span class="tab-item">SYSTEMS</span><span class="tab-item">FAVORITES</span></div>`;
     } else if (layer.type === "table") {
       const binding = bindingFor(layer);
+      const callback = functionFor(layer);
       const body = binding?.id === "player.list.connected"
         ? `<tr><td colspan="4" class="engine-preview-empty">Workbench will populate valid connected players here; the browser does not invent rows.</td></tr>`
         : `<tr><td colspan="4" class="engine-preview-empty">Design preview only — assign an engine binding to make this runtime-backed.</td></tr>`;
-      element.innerHTML = `<table class="data-table"><thead><tr><th>${text}</th><th>Role</th><th>Status</th><th>Ping</th></tr></thead><tbody>${body}</tbody></table>`;
+      const callbackHint = callback ? `<div class="table-callback-hint">${escapeHtml(callback.label)}</div>` : "";
+      element.innerHTML = `${callbackHint}<table class="data-table"><thead><tr><th>${text}</th><th>Role</th><th>Status</th><th>Ping</th></tr></thead><tbody>${body}</tbody></table>`;
     } else if (layer.type === "toolbar") {
       element.innerHTML = '<div class="toolbar-wrap"><span class="tool-item active">◆</span><span class="tool-item">✚</span><span class="tool-item">◉</span><span class="tool-item">▣</span><span class="tool-item">⌖</span><span class="tool-item">⚙</span><span class="tool-item">?</span></div>';
     } else if (layer.type === "progress") {
@@ -421,6 +433,16 @@
       select.value = layer.binding || "";
       const binding = bindingFor(layer);
       $("#bindingContract").textContent = binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" · ")} · ${binding.authority}. ${binding.runtime}` : "Design-only preview. Export a binding before expecting Workbench runtime data.";
+    }
+    const functionControls = $("#functionControls");
+    functionControls.hidden = !functionCatalog().forLayer(layer).length;
+    if (!functionControls.hidden) {
+      const select = $("#functionSelect");
+      const entries = functionCatalog().forLayer(layer);
+      select.innerHTML = `<option value="">No callback assigned (visual-only)</option>${entries.map(callback => `<option value="${escapeHtml(callback.id)}">${escapeHtml(callback.label)}</option>`).join("")}`;
+      select.value = layer.functionId || "";
+      const callback = functionFor(layer);
+      $("#functionContract").textContent = callback ? `${callback.callback} · ${callback.authority}. ${callback.runtime}` : "Choose a callback contract to tell Workbench what this widget should do when used.";
     }
   }
 
@@ -531,7 +553,7 @@
         makeLayer("text", { name: "Admin panel title", x: x + 18, y: y + 18, w: w - 76, h: 40, text: "BUSHWAR ADMIN TOOLS", fontSize: 22 }),
         makeLayer("button", { name: "Close", x: x + w - 48, y: y + 14, w: 32, h: 32, text: "×", fontSize: 24 }),
         makeLayer("text", { name: "Connected label", x: x + 18, y: y + 70, w: w - 36, h: 28, text: "CONNECTED PLAYERS", color: "#9eabb0", fontSize: 14 }),
-        ...["Sgt.James", "Player Alpha", "Player Bravo", "Player Charlie"].map((text, i) => makeLayer("player", { name: `Player: ${text}`, x: x + 14, y: y + 106 + i * 62, w: w - 28, h: 54, text, fontSize: 15 }))
+        makeLayer("table", { name: "Connected players (engine)", x: x + 14, y: y + 106, w: w - 28, h: h - 130, text: "CONNECTED PLAYERS", binding: "player.list.connected", functionId: "player.row.select", fontSize: 15 })
       );
       selectedId = state.layers[0].id;
     } else if (name === "hud-card") {
@@ -585,6 +607,8 @@
       importMode: source ? "Drag this WLib/vanilla layout into the root, then apply the bounds below." : "Create this native widget under the root FrameWidget.",
       binding: layer.binding || "",
       bindingContract: bindingFor(layer) || undefined,
+      functionId: layer.functionId || "",
+      functionContract: functionFor(layer) || undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
       anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
       properties: { text: layer.text, fill: layer.fill, color: layer.color, borderColor: layer.borderColor, accent: layer.accent, opacity: layer.opacity, fontSize: layer.fontSize, visible: layer.visible },
@@ -651,18 +675,26 @@
     const runtimeScaffolds = widgets.filter(widget => widget.binding).map(widget => ({
       binding: widget.binding,
       contract: widget.bindingContract,
+      functionId: widget.functionId || undefined,
+      functionContract: widget.functionContract,
       widgetName: widget.name,
       controllerClass: `BWUIC_${classStem}Controller`,
       layoutPath: `UI/layouts/${layoutName}.layout`,
       rowLayoutPath: widget.binding === "player.list.connected" ? `UI/layouts/${layoutName}-player-row.layout` : undefined,
+      rowLayoutCreateRequest: widget.binding === "player.list.connected" ? {
+        name: `${layoutName}-player-row`,
+        description: "Native row scaffold for a connected-player callback. Keep the playerId in controller state, not in display text.",
+        root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "Player", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 0 0 0" } }] }
+      } : undefined,
       requiredWidgetNames: widget.binding === "player.list.connected" ? {
         count: `${widget.name}Count`,
         scroll: `${widget.name}Scroll`,
         list: `${widget.name}List`,
+        rowRoot: "Row",
         rowName: "NameText"
       } : undefined,
       implementation: widget.binding === "player.list.connected"
-        ? "Read PlayerManager.GetPlayerCount(), enumerate valid IDs with GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, and refresh on join/left changes."
+        ? "Read PlayerManager.GetPlayerCount(), enumerate valid IDs with GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, and refresh on join/left changes. If a row callback is assigned, carry the actual playerId alongside the row."
         : "Implement the listed engine contract in the generated controller; the Composer does not invent callbacks or authority."
     }));
     return {
@@ -679,6 +711,7 @@
       root: { width: state.canvas.width, height: state.canvas.height, widgetType: "FrameWidget", name: "m_wRoot" },
       widgets,
       bindings: widgets.filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
+      callbacks: widgets.filter(widget => widget.functionId).map(widget => ({ id: widget.functionId, contract: widget.functionContract })),
       runtimeScaffolds,
       resources: [...new Set(visibleLayers.map(layer => layer.resourcePath).filter(Boolean))],
       layoutCreateRequest: {
@@ -725,6 +758,7 @@
       baseScene: { name: state.canvas.baseScene, visible: state.canvas.baseSceneVisible, opacity: state.canvas.baseSceneOpacity },
       references: { embeddedAssets: assetSummary().count, note: "Reference images are preserved in .bwui project/template bundles; do not distribute vanilla game assets." },
       bindings: state.layers.filter(layer => layer.binding).map(layer => ({ id: layer.binding, contract: bindingFor(layer) })),
+      callbacks: state.layers.filter(layer => layer.functionId).map(layer => ({ id: layer.functionId, contract: functionFor(layer) })),
       bundleIntegrity: bundleIntegrity(state),
       note: "Anchors are normalized left/top/right/bottom. Pixel bounds remain the visual authority. Build the final .layout in Workbench Layout Editor and validate Live Preview at target resolutions.",
       layers: state.layers.map(layer => ({
@@ -732,7 +766,7 @@
         boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
         anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
         style: { fill: layer.fill, color: layer.color, border: layer.borderColor, opacity: layer.opacity, fontSize: layer.fontSize, locked: layer.locked }, text: layer.text,
-        reforgerResource: layer.resourcePath || undefined, binding: layer.binding || undefined, bindingContract: bindingFor(layer) || undefined, referenceName: layer.referenceName || undefined
+        reforgerResource: layer.resourcePath || undefined, binding: layer.binding || undefined, bindingContract: bindingFor(layer) || undefined, functionId: layer.functionId || undefined, functionContract: functionFor(layer) || undefined, referenceName: layer.referenceName || undefined
       }))
     };
     try {
@@ -905,6 +939,12 @@
     if (references.some(layer => !layer.locked)) warnings.push("One or more visual-reference layers are unlocked and can be moved accidentally.");
     if (references.some(layer => !layer.image)) warnings.push("One or more visual-reference layers have no embedded image.");
     if (state.layers.some(layer => layer.type === "reforger" && !layer.resourcePath)) warnings.push("A Reforger reference card is missing its resource path.");
+    if (state.layers.some(layer => layer.type === "player" && !layer.binding)) warnings.push("One or more player rows are design-only; assign Connected players (engine) to read actual PlayerManager values at runtime.");
+    state.layers.forEach(layer => {
+      if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
+      if (layer.functionId && functionFor(layer) && !functionFor(layer).targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);
+      if (layer.functionId === "player.row.select" && layer.binding !== "player.list.connected") warnings.push(`${layer.name || "The player row"} needs the Connected players engine binding before its playerId callback can be wired.`);
+    });
     if (!state.layers.length) warnings.push("Project has no UI layers.");
     if (!state.handoff.layoutName.trim()) warnings.push("Give the Workbench layout a name before exporting its import plan.");
     const assets = assetSummary();
@@ -995,7 +1035,10 @@
   window.addEventListener("pointerup", () => { interaction = null; });
   window.addEventListener("pointercancel", () => { interaction = null; });
 
-  $$("[data-add]").forEach(button => button.addEventListener("click", () => addLayer(button.dataset.add, button.dataset.binding ? { binding: button.dataset.binding } : {})));
+  $$("[data-add]").forEach(button => button.addEventListener("click", () => addLayer(button.dataset.add, {
+    ...(button.dataset.binding ? { binding: button.dataset.binding } : {}),
+    ...(button.dataset.function ? { functionId: button.dataset.function } : {})
+  })));
   $$("[data-template]").forEach(button => button.addEventListener("click", () => applyTemplate(button.dataset.template)));
   $$("[data-scene]").forEach(button => button.addEventListener("click", () => setBaseScene(button.dataset.scene)));
   $("#sceneSelect").addEventListener("change", event => setBaseScene(event.target.value));
@@ -1044,6 +1087,16 @@
     render();
     const binding = bindingFor(layer);
     setStatus(binding ? "Engine binding assigned: " + binding.label : "Engine binding removed; layer is design-only");
+  });
+
+  $("#functionSelect").addEventListener("change", event => {
+    const layer = selectedLayer();
+    if (!layer) return;
+    checkpoint();
+    layer.functionId = event.target.value;
+    render();
+    const callback = functionFor(layer);
+    setStatus(callback ? "Engine callback assigned: " + callback.label : "Engine callback removed; layer is visual-only");
   });
 
   $("#backgroundBtn").addEventListener("click", () => $("#backgroundInput").click());

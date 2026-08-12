@@ -1,6 +1,6 @@
 {
   "name": "bushwar-ui-composer",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Visual Arma Reforger UI prototyping studio by Sgt.James",
   "author": "Sgt.James",
   "private": true,
@@ -34,6 +34,7 @@
       "app.js",
       "release-notes.js",
       "reforger-bindings.js",
+      "reforger-functions.js",
       "reforger-catalog.js",
       "desktop-main.js",
       "assets/**/*",
