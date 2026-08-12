@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.4",
-  published: "12 August 2026",
-  title: "Runtime contracts and real engine values",
-  summary: "The Composer now exposes compatible engine bindings for scalar widgets, reports the imported GM editor state, and validates binding/widget mismatches before handoff.",
+  version: "0.10.5",
+  published: "13 August 2026",
+  title: "Live engine refresh contracts",
+  summary: "The Composer can now design explicit live-refresh controls and connected-player counts while keeping runtime values in the game session.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -32,6 +32,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Generated PlayerManager calls now use the compile-valid GetPlayers(playerIds) call syntax for the API's out array parameter.",
     "Text and badge widgets can bind to Player display name or GM editor state; the preview shows the imported value or an explicit unknown-state placeholder.",
     "Binding selectors are filtered to compatible widget types and handoff validation warns before a binding is attached to an incompatible layer.",
-    "The disposable Workbench controller fixture was recompiled after the GetPlayers signature correction; its fresh Game module log contains no BWUIC script errors."
+    "The disposable Workbench controller fixture was recompiled after the GetPlayers signature correction; its fresh Game module log contains no BWUIC script errors.",
+    "Connected player count is now a real PlayerManager-backed scalar binding for text and badge widgets; without an imported snapshot the browser shows an explicit unknown value.",
+    "The new Refresh live engine values callback re-queries connected rows and scalar bindings in memory when a designed refresh button is clicked; it does not export player data to disk."
   ]
 };

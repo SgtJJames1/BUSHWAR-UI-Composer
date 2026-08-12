@@ -36,6 +36,19 @@
       preview: "scalar"
     },
     {
+      id: "player.count",
+      label: "Connected player count",
+      category: "Players",
+      valueType: "int",
+      sourceClass: "PlayerManager",
+      sourceMethods: ["GetPlayers(playerIds) [out parameter]"],
+      targetKinds: ["text", "badge"],
+      updateEvents: ["player joined", "player left"],
+      authority: "client-read",
+      runtime: "Read the current PlayerManager ID array and show its valid non-empty-name count; never show a design-time placeholder count.",
+      preview: "scalar"
+    },
+    {
       id: "editor.gm.open",
       label: "GM editor is open",
       category: "Game Master",

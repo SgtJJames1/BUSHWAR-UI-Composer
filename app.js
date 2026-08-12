@@ -143,6 +143,7 @@
     const binding = bindingFor(layer);
     if (!binding) return layer.text;
     if (binding.id === "player.name") return selectedRuntimePlayer()?.name || "NO WORKBENCH PLAYER SNAPSHOT";
+    if (binding.id === "player.count") return enginePlayers().length ? String(enginePlayers().length) : "NO WORKBENCH PLAYER SNAPSHOT";
     if (binding.id === "editor.gm.open") {
       if (typeof state.engineContext?.editorOpen !== "boolean") return "GM EDITOR STATE UNKNOWN";
       return state.engineContext.editorOpen ? "GM EDITOR OPEN" : "GM EDITOR CLOSED";
@@ -865,7 +866,7 @@
   function controllerSourceFor(classStem, layoutName, widgets) {
     const className = `BWUIC_${classStem}Controller`;
     const connected = widgets.find(widget => widget.binding === "player.list.connected");
-    const scalarBindings = widgets.filter(widget => ["player.name", "editor.gm.open"].includes(widget.binding));
+    const scalarBindings = widgets.filter(widget => ["player.name", "player.count", "editor.gm.open"].includes(widget.binding));
     const callbackIds = [...new Set(widgets.map(widget => widget.functionId).filter(Boolean))];
     const callbackRoutes = [];
     let needsWidgetClickHook = false;
@@ -877,6 +878,10 @@
       if (widget.functionId === "ui.layout.close") callbackRoutes.push("\t\t\tClose();");
       else if (widget.functionId === "ui.layout.open") callbackRoutes.push("\t\t\tOpen();");
       else if (widget.functionId === "player.list.refresh" && connected) callbackRoutes.push("\t\t\tRefreshConnectedPlayers();");
+      else if (widget.functionId === "engine.context.refresh") {
+        if (connected) callbackRoutes.push("\t\t\tRefreshConnectedPlayers();");
+        if (scalarBindings.length) callbackRoutes.push("\t\t\tRefreshRuntimeBindings();");
+      }
       else if (widget.functionId === "player.list.refresh") { callbackRoutes.push("\t\t\treturn OnReviewRequiredCallback(\"player.list.refresh\", w);"); needsReviewHook = true; directReturn = true; }
       else if (widget.functionId === "player.row.teleport") callbackRoutes.push("\t\t\tRequestTeleportSelectedPlayer();");
       else if (widget.functionId === "ui.widget.click") { callbackRoutes.push("\t\t\treturn OnWidgetClickContract(w, x, y, button);"); needsWidgetClickHook = true; directReturn = true; }
@@ -1087,26 +1092,32 @@
 
     }
     if (scalarBindings.length) {
+      const needsPlayerName = scalarBindings.some(widget => widget.binding === "player.name");
+      const needsPlayerCount = scalarBindings.some(widget => widget.binding === "player.count");
       lines.push(
         "\tprotected void RefreshRuntimeBindings()",
         "\t{",
         "\t\tif (!m_wRoot)",
         "\t\t\treturn;",
         "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\tstring runtimePlayerName;" : "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\tPlayerManager playerManager = GetGame().GetPlayerManager();" : "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\tif (playerManager)": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t{": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\tarray<int> runtimePlayerIds = {};": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\tplayerManager.GetPlayers(runtimePlayerIds);": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\tfor (int runtimeIndex = 0; runtimeIndex < runtimePlayerIds.Count(); runtimeIndex++)": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t{": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t\truntimePlayerName = playerManager.GetPlayerName(runtimePlayerIds[runtimeIndex]);": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t\tif (!runtimePlayerName.IsEmpty()) break;": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t\t}": "",
-        scalarBindings.some(widget => widget.binding === "player.name") ? "\t\t}": "",
+        needsPlayerName ? "\t\tstring runtimePlayerName;" : "",
+        needsPlayerCount ? "\t\tint runtimePlayerCount;" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\tPlayerManager playerManager = GetGame().GetPlayerManager();" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\tif (playerManager)" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t{" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\tarray<int> runtimePlayerIds = {};" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\tplayerManager.GetPlayers(runtimePlayerIds);" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\tfor (int runtimeIndex = 0; runtimeIndex < runtimePlayerIds.Count(); runtimeIndex++)" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\t{" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\t\tstring currentPlayerName = playerManager.GetPlayerName(runtimePlayerIds[runtimeIndex]);" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\t\tif (currentPlayerName.IsEmpty()) continue;" : "",
+        needsPlayerName ? "\t\t\t\tif (runtimePlayerName.IsEmpty()) runtimePlayerName = currentPlayerName;" : "",
+        needsPlayerCount ? "\t\t\t\truntimePlayerCount++;" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\t}" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t}" : "",
         ...scalarBindings.map(widget => {
           if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
+          if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerCount.ToString());`;
           return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${widget.name}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance() ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
         }),
         "\t}",

@@ -63,6 +63,17 @@
       implementation: { status: "generated", method: "RefreshConnectedPlayers", notes: "The controller carries each playerId beside its native row and never scans guessed IDs." }
     },
     {
+      id: "engine.context.refresh",
+      label: "Refresh live engine values",
+      category: "Engine diagnostics",
+      kind: "engine-api",
+      targetKinds: ["button", "panel", "context", "window", "table"],
+      callback: "PlayerManager.GetPlayers(playerIds) + bound widget refresh",
+      authority: "client-local",
+      runtime: "Re-query the current local engine state and repaint bound widgets in memory; no browser snapshot or file export is treated as runtime authority.",
+      implementation: { status: "generated", method: "RefreshRuntimeBindings", notes: "The generated controller refreshes connected rows and scalar bindings when this route is invoked." }
+    },
+    {
       id: "player.row.select",
       label: "Connected-player row selected",
       category: "Player actions",
