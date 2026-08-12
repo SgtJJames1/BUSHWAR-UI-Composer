@@ -22,7 +22,7 @@
     button: { name: "Button", x: 160, y: 240, w: 190, h: 52, text: "ACTION", fill: "#303a3f", color: "#ffffff", borderColor: "#f47b36", accent: "#f47b36", fontSize: 19, radius: 2 },
     icon: { name: "Icon", x: 160, y: 320, w: 64, h: 64, text: "", fill: "#152128", color: "#eaf7fb", borderColor: "#53636a", accent: "#17bfe9", fontSize: 18, radius: 3 },
     image: { name: "Image", x: 160, y: 410, w: 260, h: 150, text: "", fill: "#1a252a", color: "#ffffff", borderColor: "#43525a", accent: "#f47b36", fontSize: 18, radius: 2 },
-    player: { name: "Player row", x: 160, y: 590, w: 560, h: 60, text: "Sgt.James", fill: "#202a2f", color: "#ffffff", borderColor: "#39474d", accent: "#f47b36", fontSize: 19, radius: 1 },
+    player: { name: "Player row", x: 160, y: 590, w: 560, h: 60, text: "PLAYER NAME FROM ENGINE", fill: "#202a2f", color: "#ffffff", borderColor: "#39474d", accent: "#f47b36", fontSize: 19, radius: 1 },
     divider: { name: "Divider", x: 160, y: 680, w: 420, h: 3, text: "", fill: "#f47b36", color: "#ffffff", borderColor: "#f47b36", accent: "#f47b36", fontSize: 12, radius: 0 },
     badge: { name: "Badge", x: 160, y: 720, w: 130, h: 38, text: "GAME MASTER", fill: "#f47b36", color: "#131a1d", borderColor: "#f47b36", accent: "#f47b36", fontSize: 15, radius: 19 },
     window: { name: "Window", x: 620, y: 130, w: 460, h: 360, text: "ENTITY BROWSER", fill: "#11191d", color: "#ffffff", borderColor: "#435058", accent: "#f47b36", fontSize: 20, radius: 2 },
@@ -299,12 +299,13 @@
       if (layer.image) element.style.backgroundImage = `url("${layer.image}")`;
       else if (layer.type === "image") element.classList.add("no-image");
     } else if (layer.type === "player") {
-      const initial = (layer.text || "P").trim().slice(0, 1).toUpperCase();
       const binding = bindingFor(layer);
       const callback = functionFor(layer);
+      const displayText = binding?.id === "player.list.connected" ? "PLAYER NAME FROM ENGINE" : layer.text;
+      const initial = (displayText || "P").trim().slice(0, 1).toUpperCase();
       const engineLabel = binding ? `<small class="binding-badge">${escapeHtml(binding.label)}</small>` : "";
       const callbackLabel = callback ? `<small class="binding-badge callback-badge">${escapeHtml(callback.label)}</small>` : "";
-      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${text}</span>${engineLabel}${callbackLabel}<span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
+      element.innerHTML = `<span class="avatar">${escapeHtml(initial)}</span><span class="player-name">${escapeHtml(displayText || "PLAYER NAME FROM ENGINE")}</span>${engineLabel}${callbackLabel}<span class="row-action">BRING ME</span><span class="row-action">BRING PLAYER</span>`;
     } else if (layer.type === "window") {
       element.innerHTML = `<div class="comp-header"><span>${text}</span><span class="comp-close">×</span></div><div class="comp-body"><strong>Window content</strong>Place lists, controls, previews, and custom widgets inside this frame.</div><div class="comp-footer"><span class="comp-button">CLOSE</span><span class="comp-button primary">APPLY</span></div>`;
     } else if (layer.type === "dialog") {
@@ -611,6 +612,7 @@
       functionContract: functionFor(layer) || undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
       anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
+      geometry: { mode: "pixel-fixed", rootWidth: state.canvas.width, rootHeight: state.canvas.height },
       properties: { text: layer.text, fill: layer.fill, color: layer.color, borderColor: layer.borderColor, accent: layer.accent, opacity: layer.opacity, fontSize: layer.fontSize, visible: layer.visible },
       reforgerProfile: layer.type === "reforger" ? (layer.reforgerVisual || reforgerVisualFor(layer)) : undefined,
       resourceReference: layer.resourcePath || undefined
@@ -627,12 +629,23 @@
 
   function layoutCreateNodeFor(layer, index) {
     const widget = workbenchWidgetFor(layer, index);
+    // The Composer canvas is pixel-authored. Keep the generated Workbench
+    // scaffold pixel-accurate instead of silently converting a 360 px panel
+    // into a proportionally resizing anchor-only widget. The plan still
+    // carries normalized anchors for responsive handoff review.
+    const pixelSlot = {
+      anchor: "0 0 0 0",
+      positionX: Math.round(layer.x),
+      positionY: Math.round(layer.y),
+      sizeX: Math.round(layer.w),
+      sizeY: Math.round(layer.h)
+    };
     if (layer.type === "table" && widget.binding === "player.list.connected") {
       return {
         type: "Frame",
         name: widget.name,
         props: { Color: reforgerColor(layer.fill, layer.opacity) },
-        slot: { anchor: widget.anchors.join(" ") },
+        slot: pixelSlot,
         children: [
           {
             type: "Text",
@@ -657,7 +670,7 @@
       type: "Frame",
       name: widget.name,
       props: { Color: reforgerColor(layer.fill, layer.opacity) },
-      slot: { anchor: widget.anchors.join(" ") },
+      slot: pixelSlot,
       children: [{
         type: "Text",
         name: `${widget.name}Text`,
@@ -684,7 +697,7 @@
       rowLayoutCreateRequest: widget.binding === "player.list.connected" ? {
         name: `${layoutName}-player-row`,
         description: "Native row scaffold for a connected-player callback. Keep the playerId in controller state, not in display text.",
-        root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "Player", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 0 0 0" } }] }
+        root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "Player", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 6 12 6" } }] }
       } : undefined,
       requiredWidgetNames: widget.binding === "player.list.connected" ? {
         count: `${widget.name}Count`,
@@ -694,7 +707,7 @@
         rowName: "NameText"
       } : undefined,
       implementation: widget.binding === "player.list.connected"
-        ? "Read PlayerManager.GetPlayerCount(), enumerate valid IDs with GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, and refresh on join/left changes. If a row callback is assigned, carry the actual playerId alongside the row."
+        ? "Read PlayerManager.GetPlayerCount(), enumerate valid IDs with GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, set TextWidget.SetExactFontSize from the Composer font contract, and refresh on join/left changes. If a row callback is assigned, carry the actual playerId alongside the row."
         : "Implement the listed engine contract in the generated controller; the Composer does not invent callbacks or authority."
     }));
     return {
@@ -718,7 +731,7 @@
         name: layoutName,
         description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
         root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
-        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. For any widget with a source path, replace the scaffold frame with the listed vanilla/WLib layout in Layout Editor."
+        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Pixel-fixed slots preserve the Composer canvas at the exported root size; open and resave in Workbench Layout Editor before production. For any widget with a source path, replace the scaffold frame with the listed vanilla/WLib layout in Layout Editor."
       },
       safety: {
         layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",
@@ -940,6 +953,11 @@
     if (references.some(layer => !layer.image)) warnings.push("One or more visual-reference layers have no embedded image.");
     if (state.layers.some(layer => layer.type === "reforger" && !layer.resourcePath)) warnings.push("A Reforger reference card is missing its resource path.");
     if (state.layers.some(layer => layer.type === "player" && !layer.binding)) warnings.push("One or more player rows are design-only; assign Connected players (engine) to read actual PlayerManager values at runtime.");
+    const staticPlayerLabels = state.layers.filter(layer => {
+      const label = `${layer.name || ""} ${layer.text || ""}`.toLowerCase();
+      return !layer.binding && /\b(player\s+(alpha|bravo|charlie)|sgt\.?\s*james)\b/.test(label);
+    });
+    if (staticPlayerLabels.length) warnings.push("Static player-name text was found without an engine binding; replace it with Connected players (engine) so Workbench cannot show fake or empty rows.");
     state.layers.forEach(layer => {
       if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
       if (layer.functionId && functionFor(layer) && !functionFor(layer).targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);

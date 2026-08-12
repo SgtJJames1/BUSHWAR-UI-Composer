@@ -61,7 +61,9 @@ The **What's new** toolbar button remains available to reopen it.
 - A structured **Workbench import plan** export with target kind, layout path,
   root/widget instructions, resource sources, anchors, and reusable widget
   names. It also carries a `layoutCreateRequest` for a native-widget scaffold
-  in the Enfusion `layout_create` tool. Open and resave that scaffold in
+  in the Enfusion `layout_create` tool. Its scaffold slots are pixel-fixed to
+  the exported root size, so fixed bounds such as 24 px / 360 px remain
+  faithful. Open and resave that scaffold in
   Workbench Layout Editor, then replace source-backed scaffold frames with the
   listed WLib/vanilla layouts; never treat generated text serialization as a
   finished production layout.
@@ -109,7 +111,10 @@ This is a design/prototyping tool, not a replacement for the Reforger Layout Edi
    order or display text.
 5. Use **Validate Workbench handoff** and fix any warnings. Then copy the
    specification or use the exported PNG as a visual brief.
-6. Recreate the finished UI in Workbench's **Layout Editor** using the listed
+6. If your addon includes the optional BUSHWAR validation plug-in, run
+   **BUSHWAR UI Composer → Review import plan**. It accepts schema 2 plans and
+   confirms the binding/callback contract before authoring.
+7. Recreate the finished UI in Workbench's **Layout Editor** using the listed
    WLib resource paths and test the actual `.layout` with **Live Preview** at
    the resolutions you support. The bundle is a reliable design reference, not
    a runtime UI package.
