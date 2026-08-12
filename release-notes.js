@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.9",
+  version: "0.10.10",
   published: "13 August 2026",
-  title: "Runtime contract audit",
-  summary: "Workbench handoff validation now shows the exact engine source, native target, callback, and authority boundary for every runtime-bound layer.",
+  title: "Interactive callback preview",
+  summary: "Preview mode now exercises safe callback contracts locally while keeping Workbench and server authority explicit.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -40,6 +40,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Player display-name bindings on Player-row Buttons now target the generated Text child instead of casting the Button root as a TextWidget.",
     "Generated callback routes walk the clicked widget's parent chain, so WLib buttons and nested source-backed controls reach the assigned Composer callback contract.",
     "Validate Workbench handoff now includes a per-layer runtime contract audit with native target widget, engine source, callback, authority, and READY/REVIEW/ERROR status.",
-    "Hidden runtime-bound layers are warned because hidden layers are intentionally omitted from the exported Workbench layout."
+    "Hidden runtime-bound layers are warned because hidden layers are intentionally omitted from the exported Workbench layout.",
+    "Preview mode now exercises safe callback contracts locally (refresh, open/close, and click) and labels review-required actions without claiming to mutate game state."
   ]
 };

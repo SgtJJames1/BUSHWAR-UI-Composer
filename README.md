@@ -113,6 +113,9 @@ The **What's new** toolbar button remains available to reopen it.
   authority boundary, and whether the generated route is READY, REVIEW, or
   ERROR. Hidden runtime-bound layers are called out because they are omitted
   from the Workbench export.
+- Preview mode exercises safe assigned callbacks locally (for example refresh
+  and layout open/close) and labels server/editor actions as review-only; it
+  never claims that a browser click changed Reforger state.
 - Engine binding contracts for runtime-backed compositions. The first live
   contract is Connected players (engine): it maps to
   PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId), filters

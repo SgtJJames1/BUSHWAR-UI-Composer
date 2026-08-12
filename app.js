@@ -1746,6 +1746,30 @@
     });
   }
 
+  function previewCallback(layer) {
+    const callback = functionFor(layer);
+    if (!callback) return false;
+    const prefix = `Browser preview only · ${callback.label}`;
+    if (callback.implementation?.status === "review-required") {
+      setStatus(`${prefix} requires reviewed ${callback.authority} implementation in Workbench; no game state was changed`);
+      return true;
+    }
+    if (["engine.context.refresh", "player.list.refresh"].includes(layer.functionId)) {
+      render();
+      setStatus(`${prefix} · imported context re-rendered; PlayerManager remains authoritative in WR`);
+      return true;
+    }
+    if (layer.functionId === "ui.layout.open" || layer.functionId === "ui.layout.close") {
+      setStatus(`${prefix} · the exported controller will create/delete the registered layout in WR`);
+      return true;
+    }
+    if (layer.functionId === "ui.widget.click" || layer.functionId === "gm.context-action.perform") {
+      setStatus(`${prefix} · the browser recorded the contract; the generated controller owns the WR event`);
+      return true;
+    }
+    return false;
+  }
+
   function showReleaseNoticeIfNew() {
     const dialog = $("#updateDialog");
     try {
@@ -1815,6 +1839,16 @@
     selectedId = layer.id;
     render();
     setStatus(`Preview selected ${player.name} · PlayerManager ID ${playerId}; generated OnPlayerRowClicked will receive this ID`);
+  });
+  stage.addEventListener("click", event => {
+    if (!preview) return;
+    if (event.target.closest(".engine-scaffold-row")) return;
+    const element = event.target.closest(".layer");
+    const layer = element ? state.layers.find(item => item.id === element.dataset.id) : null;
+    if (!layer || !layer.functionId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    previewCallback(layer);
   });
   window.addEventListener("pointerup", () => { interaction = null; });
   window.addEventListener("pointercancel", () => { interaction = null; });
