@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.11",
+  version: "0.10.12",
   published: "13 August 2026",
-  title: "Runtime-ready GM starter",
-  summary: "The built-in GM template now starts with a live player count binding and a Refresh live values callback instead of a static roster mock.",
+  title: "Runtime-contract parity pass",
+  summary: "Workbench handoffs now preserve the Composer font contract and one canonical player-row identity, while engine bindings declare their live source, empty-value policy, and snapshot-only preview boundary.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -42,6 +42,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Validate Workbench handoff now includes a per-layer runtime contract audit with native target widget, engine source, callback, authority, and READY/REVIEW/ERROR status.",
     "Hidden runtime-bound layers are warned because hidden layers are intentionally omitted from the exported Workbench layout.",
     "Preview mode now exercises safe callback contracts locally (refresh, open/close, and click) and labels review-required actions without claiming to mutate game state.",
-    "The GM admin template now includes a PlayerManager-backed connected-count badge and a Refresh live values button wired to the generated engine.context.refresh route."
+    "The GM admin template now includes a PlayerManager-backed connected-count badge and a Refresh live values button wired to the generated engine.context.refresh route.",
+    "Generated controllers now apply each layer's Composer font size with TextWidget.SetExactFontSize when the native layout opens, reducing the visual gap between the website and Workbench.",
+    "Connected-player controllers keep exactly one native row per valid PlayerManager ID; nested WLib/Text children resolve through the row's parent chain instead of becoming duplicate rows.",
+    "Runtime bindings now declare their live source of truth, empty-value policy, identity field, and snapshot-only browser preview policy in the handoff contract."
   ]
 };

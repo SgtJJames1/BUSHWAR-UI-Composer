@@ -31,7 +31,11 @@ assert(source.includes("runtimePlayerCount++"), "player.count must be computed f
 assert(source.includes('IsWidgetNamedOrChild(w, "Refresh")'), "named refresh widget route must be generated");
 assert(source.includes('FindAnyWidget("SelectedPlayerText")'), "player.name on a Player row must target its generated Text child");
 assert(!source.includes('FindAnyWidget("SelectedPlayer"))'), "player.name must not cast the Button root as a TextWidget");
+assert(source.includes("m_iSelectedPlayerId >= 0"), "player.name must read the selected PlayerManager ID when one is selected");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
+assert(source.includes("SetReadableFont(m_wRoot, \"NameText\""), "generated controller must carry the Composer font contract into the native row");
+assert(source.includes("FindPlayerRowIndex(w)"), "nested row children must resolve to one canonical row identity");
+assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "nested row text must not become a duplicate player row");
 
 console.log("controller-source.test.js: PASS");

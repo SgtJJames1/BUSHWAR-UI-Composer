@@ -83,6 +83,9 @@
       authority: "client-local",
       runtime: "Carry the actual PlayerManager ID alongside the row; never recover identity from display text or row position.",
       requiresBinding: ["player.list.connected"],
+      inputs: ["native row widget", "PlayerManager playerId"],
+      outputs: ["selectedPlayerId", "selected player label"],
+      sideEffects: "none",
       implementation: { status: "generated", method: "OnPlayerRowClicked", notes: "Selection stores the real playerId and updates the named selection TextWidget." }
     },
     {

@@ -20,6 +20,10 @@
       updateEvents: ["player joined", "player left"],
       authority: "client-read",
       runtime: "Read the authoritative connected-player ID array (the API parameter is out, but the EnforceScript call is GetPlayers(playerIds)), resolve each name, and omit empty values; never scan a guessed ID range or create placeholder rows.",
+      sourceOfTruth: "live PlayerManager",
+      emptyValuePolicy: "omit-row",
+      identityField: "playerId",
+      previewPolicy: "snapshot-only",
       preview: "engine-list"
     },
     {
@@ -33,6 +37,10 @@
       updateEvents: ["player identity changed"],
       authority: "client-read",
       runtime: "Read the selected player record; empty values must render as unavailable, not as a fake name.",
+      sourceOfTruth: "live PlayerManager",
+      emptyValuePolicy: "unavailable-label",
+      identityField: "playerId",
+      previewPolicy: "snapshot-only",
       preview: "scalar"
     },
     {
@@ -46,6 +54,10 @@
       updateEvents: ["player joined", "player left"],
       authority: "client-read",
       runtime: "Read the current PlayerManager ID array and show its valid non-empty-name count; never show a design-time placeholder count.",
+      sourceOfTruth: "live PlayerManager",
+      emptyValuePolicy: "count-valid-names",
+      identityField: "playerId",
+      previewPolicy: "snapshot-only",
       preview: "scalar"
     },
     {
@@ -59,6 +71,9 @@
       updateEvents: ["editor opened", "editor closed"],
       authority: "client-read",
       runtime: "Hide GM-only widgets when the local editor is closed or limited.",
+      sourceOfTruth: "live SCR_EditorManagerEntity",
+      emptyValuePolicy: "unknown-state",
+      previewPolicy: "snapshot-only",
       preview: "scalar"
     },
   ];

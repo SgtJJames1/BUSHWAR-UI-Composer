@@ -750,6 +750,10 @@
         dataSource: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "client UI event",
         authority: callback?.authority || binding?.authority || "client-local",
         refreshEvents: binding?.updateEvents || callback?.updateEvents || [],
+        sourceOfTruth: binding?.sourceOfTruth || (callback ? "generated controller route" : "client UI event"),
+        emptyValuePolicy: binding?.emptyValuePolicy || undefined,
+        identityField: binding?.identityField || undefined,
+        previewPolicy: binding?.previewPolicy || (binding ? "snapshot-only" : "not-applicable"),
         rowIdentity: binding?.id === "player.list.connected" ? "PlayerManager playerId carried beside each native row" : undefined,
         nativePreviewShape: binding?.id === "player.list.connected" ? "Frame > count Text + selection Text + ScrollLayout > VerticalLayout > Button Row > Text NameText" : undefined,
         valueWidgetName: binding && layer.type === "player" ? `${widgetName}Text` : widgetName,
@@ -870,8 +874,29 @@
   function controllerSourceFor(classStem, layoutName, widgets) {
     const className = `BWUIC_${classStem}Controller`;
     const connected = widgets.find(widget => widget.binding === "player.list.connected");
+    const connectedRowFontSize = Math.max(10, Math.round(Number(connected?.properties?.fontSize) || 17));
     const scalarBindings = widgets.filter(widget => ["player.name", "player.count", "editor.gm.open"].includes(widget.binding));
     const callbackIds = [...new Set(widgets.map(widget => widget.functionId).filter(Boolean))];
+    const fontTargets = new Map();
+    const addFontTarget = (name, size) => {
+      if (!name || fontTargets.has(name)) return;
+      fontTargets.set(name, Math.max(10, Math.round(Number(size) || 16)));
+    };
+    widgets.forEach(widget => {
+      const size = widget.properties?.fontSize || 16;
+      if (widget.binding === "player.list.connected") {
+        addFontTarget(`${widget.name}Count`, Math.max(12, size * 0.85));
+        addFontTarget(`${widget.name}Selection`, Math.max(12, size * 0.85));
+        addFontTarget("NameText", size);
+      } else if (["button", "player"].includes(widget.layerType)) {
+        addFontTarget(`${widget.name}Text`, size);
+      } else if (["text", "badge"].includes(widget.layerType)) {
+        addFontTarget(widget.name, size);
+      } else if (["tabs", "toolbar", "categorybar"].includes(widget.layerType)) {
+        [1, 2, 3].forEach(index => addFontTarget(`${widget.name}Item${index}Text`, size));
+      }
+    });
+    const fontLines = [...fontTargets.entries()].map(([name, size]) => `\t\tSetReadableFont(m_wRoot, "${name}", ${size});`);
     const callbackRoutes = [];
     let needsWidgetClickHook = false;
     let needsReviewHook = false;
@@ -907,6 +932,7 @@
       `\tprotected static const ResourceName LAYOUT = \"UI/layouts/${layoutName}.layout\";`,
       "\tprotected ref Widget m_wRoot;",
       "\tprotected int m_iSelectedPlayerId = -1;",
+      scalarBindings.length ? "\tprotected int m_iRuntimeBindingUpdateCounter;" : "",
       "",
       "\tvoid Open()",
       "\t{",
@@ -918,6 +944,7 @@
       "\t\t\treturn;",
       "",
       "\t\tm_wRoot.AddHandler(this);",
+      ...fontLines,
       "\t\tInputManager inputManager = GetGame().GetInputManager();",
       "\t\tif (inputManager)",
       "\t\t\tinputManager.AddActionListener(\"MenuBack\", EActionTrigger.DOWN, Close);",
@@ -1019,17 +1046,13 @@
         "\t\t\tif (nameText)",
         "\t\t\t{",
         "\t\t\t\tnameText.SetText(playerName);",
-        "\t\t\t\tnameText.SetExactFontSize(17);",
+        `\t\t\t\tnameText.SetExactFontSize(${connectedRowFontSize});`,
         "\t\t\t}",
         "\t\t\trow.AddHandler(this);",
         "\t\t\tm_aPlayerRows.Insert(row);",
         "\t\t\tm_aPlayerRowIds.Insert(playerId);",
         "\t\t\tif (nameText)",
-        "\t\t\t{",
         "\t\t\t\tnameText.AddHandler(this);",
-        "\t\t\t\tm_aPlayerRows.Insert(nameText);",
-        "\t\t\t\tm_aPlayerRowIds.Insert(playerId);",
-        "\t\t\t}",
         "\t\t\tif (playerId == previousSelectedPlayerId)",
         "\t\t\t\tm_iSelectedPlayerId = playerId;",
         "\t\t\trenderedPlayers++;",
@@ -1082,7 +1105,12 @@
         "\t\t\t\tRefreshConnectedPlayers();",
         "\t\t\t}",
         "\t\t}",
-        scalarBindings.length ? "\t\tRefreshRuntimeBindings();" : "",
+        scalarBindings.length ? "\t\tm_iRuntimeBindingUpdateCounter++;" : "",
+        scalarBindings.length ? "\t\tif (m_iRuntimeBindingUpdateCounter >= 30)" : "",
+        scalarBindings.length ? "\t\t{" : "",
+        scalarBindings.length ? "\t\t\tm_iRuntimeBindingUpdateCounter = 0;" : "",
+        scalarBindings.length ? "\t\t\tRefreshRuntimeBindings();" : "",
+        scalarBindings.length ? "\t\t}" : "",
         "\t\treturn false;",
         "\t}",
         "",
@@ -1123,11 +1151,13 @@
         (needsPlayerName || needsPlayerCount) ? "\t\t{" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tarray<int> runtimePlayerIds = {};" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tplayerManager.GetPlayers(runtimePlayerIds);" : "",
+        needsPlayerName ? "\t\t\tif (m_iSelectedPlayerId >= 0)" : "",
+        needsPlayerName ? "\t\t\t\truntimePlayerName = playerManager.GetPlayerName(m_iSelectedPlayerId);" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tfor (int runtimeIndex = 0; runtimeIndex < runtimePlayerIds.Count(); runtimeIndex++)" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\t{" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\t\tstring currentPlayerName = playerManager.GetPlayerName(runtimePlayerIds[runtimeIndex]);" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\t\tif (currentPlayerName.IsEmpty()) continue;" : "",
-        needsPlayerName ? "\t\t\t\tif (runtimePlayerName.IsEmpty()) runtimePlayerName = currentPlayerName;" : "",
+        needsPlayerName ? "\t\t\t\tif (m_iSelectedPlayerId < 0 && runtimePlayerName.IsEmpty()) runtimePlayerName = currentPlayerName;" : "",
         needsPlayerCount ? "\t\t\t\truntimePlayerCount++;" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\t}" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t}" : "",
@@ -1146,7 +1176,12 @@
           "\t{",
           "\t\tif (w != m_wRoot)",
           "\t\t\treturn false;",
-          "\t\tRefreshRuntimeBindings();",
+          "\t\tm_iRuntimeBindingUpdateCounter++;",
+          "\t\tif (m_iRuntimeBindingUpdateCounter >= 30)",
+          "\t\t{",
+          "\t\t\tm_iRuntimeBindingUpdateCounter = 0;",
+          "\t\t\tRefreshRuntimeBindings();",
+          "\t\t}",
           "\t\treturn false;",
           "\t}",
           ""
@@ -1189,10 +1224,27 @@
         ""
       );
     }
+    if (connected) {
+      lines.push(
+        "\tprotected int FindPlayerRowIndex(Widget widget)",
+        "\t{",
+        "\t\tWidget current = widget;",
+        "\t\twhile (current)",
+        "\t\t{",
+        "\t\t\tint rowIndex = m_aPlayerRows.Find(current);",
+        "\t\t\tif (rowIndex >= 0)",
+        "\t\t\t\treturn rowIndex;",
+        "\t\t\tcurrent = current.GetParent();",
+        "\t\t}",
+        "\t\treturn -1;",
+        "\t}",
+        ""
+      );
+    }
     lines.push(
       "\toverride bool OnClick(Widget w, int x, int y, int button)",
       "\t{",
-      connected ? "\t\tint rowIndex = m_aPlayerRows.Find(w);" : "\t\t// Route named buttons and callbacks here.",
+      connected ? "\t\tint rowIndex = FindPlayerRowIndex(w);" : "\t\t// Route named buttons and callbacks here.",
       connected ? "\t\tif (rowIndex >= 0)" : "",
       connected ? "\t\t{" : "",
       connected ? "\t\t\tOnPlayerRowClicked(m_aPlayerRowIds[rowIndex]);" : "",
@@ -1269,7 +1321,9 @@
         playerCount: enginePlayers().length,
         previewPlayers: enginePlayers().map(player => ({ id: player.id, name: player.name })),
         runtimeAuthoritative: true,
-        note: "Preview values are optional evidence only. The generated controller must re-query PlayerManager in Reforger at runtime."
+        previewPolicy: "snapshot-only",
+        runtimeSource: "PlayerManager / SCR_EditorManagerEntity queried by generated controller",
+        note: "Preview values are optional evidence only. The generated controller must re-query PlayerManager in Reforger at runtime; no browser value is copied into a live row."
       },
       bindings: widgets.filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
       callbacks: widgets.filter(widget => widget.functionId).map(widget => ({ id: widget.functionId, contract: widget.functionContract })),
@@ -1645,7 +1699,7 @@
       return {
         layer: layer.name || layer.id,
         target: widget?.runtimeContract?.valueWidgetName || widget?.name || "not exported",
-        source: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "Client UI event",
+        source: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")} · ${binding.sourceOfTruth || "live engine"} · empty=${binding.emptyValuePolicy || "engine-defined"}` : "Client UI event",
         callback: callback?.label || "No callback assigned",
         authority: callback?.authority || binding?.authority || "client-local",
         status,

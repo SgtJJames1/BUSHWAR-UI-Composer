@@ -103,9 +103,10 @@ The **What's new** toolbar button remains available to reopen it.
   this mapping, preventing an apparently valid visual handoff from silently
   becoming a generic Frame-only layout.
 - Runtime-backed widgets also carry `runtimeContract` metadata: engine source
-  methods, authority, refresh events, row identity, and callback implementation
-  status. Server-authoritative actions export reviewable hooks; the browser never
-  pretends to execute a server RPC.
+  methods, live source of truth, empty-value policy, identity field, refresh
+  events, snapshot-only preview boundary, row identity, and callback
+  implementation status. Server-authoritative actions export reviewable hooks;
+  the browser never pretends to execute a server RPC.
 - A one-click **Copy layout scaffold request** helper for handing that native
   scaffold request to a Workbench/Codex import task; always target a disposable
   addon first, then inspect and resave the result in Layout Editor.
@@ -125,6 +126,10 @@ The **What's new** toolbar button remains available to reopen it.
   empty names, and exports the contract in the project and Workbench-plan JSON.
   The API metadata labels `playerIds` as an out parameter; the EnforceScript
   call itself must omit the `out` keyword.
+- The generated controller applies the Composer font-size contract when the
+  native layout opens. A connected-player row has one canonical Button identity;
+  clicks from its nested `NameText` walk up to that row and cannot create a
+  duplicate player entry or ID mapping.
 - Scalar bindings are target-filtered: Player display name is valid on text,
   badge, or player widgets, connected player count is valid on text or badge,
   and GM editor state is valid on text or badge widgets. The generated

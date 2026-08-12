@@ -20,5 +20,7 @@ assert(source.includes("if (playerName.IsEmpty())"), "validation controller must
 assert(source.includes("IsWidgetNamedOrChild"), "validation controller must support nested WLib callback targets");
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wClose")'), "close callback must use the nested-widget route");
 assert(source.includes("RefreshRuntimeBindings()"), "validation controller must refresh scalar runtime bindings");
+assert(source.includes("FindPlayerRowIndex(w)"), "validation controller must resolve nested row clicks to one row identity");
+assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "validation controller must not duplicate rows for nested name widgets");
 
 console.log("validation-controller.test.js: PASS");
