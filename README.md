@@ -48,7 +48,7 @@ The **What's new** toolbar button remains available to reopen it.
 - Drag, resize, grid snapping, keyboard nudging, visibility, locking, ordering, duplicate, delete, undo, and redo
 - Named local templates: save the current canvas as a reusable template, reload it later, update it by saving with the same name, or remove it from the template list
 - A clear lock toggle in every layer row plus a lock badge beside the selected layer's pixel-bounds label; locked layers cannot be dragged, resized, or nudged
-- A searchable, categorized Reforger UI reference database: Widget Library (`WLib`) layout prefabs, HUD/Game Master layouts, and vanilla icon-atlas families, each carrying its exact resource path for Workbench handoff
+- A searchable, categorized Reforger UI reference database: Widget Library (`WLib`) layout prefabs, HUD/Game Master layouts, and vanilla icon-atlas families, each carrying its exact resource path, native widget-class hint, and Workbench action for the handoff
 - A GM admin-panel template using the approved left 24 px / top 15% / width 360 px / bottom 80% bounds
 - Portable `.bwui.json` project and `.bwui-template.json` template bundles:
   they embed imported reference images and record a layer/asset manifest so a
@@ -63,7 +63,9 @@ The **What's new** toolbar button remains available to reopen it.
   names. It also carries a `layoutCreateRequest` for a native-widget scaffold
   in the Enfusion `layout_create` tool. Its scaffold slots are pixel-fixed to
   the exported root size, so fixed bounds such as 24 px / 360 px remain
-  faithful. Open and resave that scaffold in
+  faithful, and palette elements map to native Button/Text/Image/ProgressBar/
+  EditBox/CheckBox/layout-container classes instead of every element collapsing
+  to a generic Frame. Open and resave that scaffold in
   Workbench Layout Editor, then replace source-backed scaffold frames with the
   listed WLib/vanilla layouts; never treat generated text serialization as a
   finished production layout.
@@ -74,6 +76,10 @@ The **What's new** toolbar button remains available to reopen it.
   `playerId`, and updates a named `SELECTED:` label on row selection. It is
   intentionally reviewable source, not an automatically trusted or privileged
   mod.
+- Schema 3 also records `nativeProfileSchema` and the native widget classes used
+  by the scaffold. The disposable validation plug-in rejects a plan that omits
+  this mapping, preventing an apparently valid visual handoff from silently
+  becoming a generic Frame-only layout.
 - A one-click **Copy layout scaffold request** helper for handing that native
   scaffold request to a Workbench/Codex import task; always target a disposable
   addon first, then inspect and resave the result in Layout Editor.

@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.9.1",
+  version: "0.9.2",
   published: "12 August 2026",
-  title: "Authoritative connected-player refresh",
-  summary: "Generated controllers now consume Reforger's real connected-player ID list and refresh the table when the live roster changes.",
+  title: "Native widget handoff profiles",
+  summary: "Composer elements now carry the actual Workbench widget class and scaffold native controls instead of flattening every element into a Frame.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(out playerIds) + GetPlayerName(playerId), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -16,6 +16,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Schema 3 Workbench plans include controllerPath and controllerSource, plus a one-click EnforceScript controller export.",
     "Connected-player scaffolds include a named selection label; generated OnPlayerRowClicked writes SELECTED: <engine name> while retaining the real playerId.",
     "Generated controllers include a throttled OnUpdate signature check so joins, leaves, and name changes refresh the native rows without rebuilding every frame.",
+    "The widget profile database maps palette elements to native Frame, Text, Button, Image, ProgressBar, EditBox, CheckBox, and layout-container classes.",
+    "Reforger catalogue cards now show their native widget-class hint and the Workbench action required to use the source-backed prefab or atlas.",
+    "Schema 3 plans carry nativeProfileSchema/nativeWidgetClasses, and the disposable Workbench review plug-in rejects handoffs that omit the mapping.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract."
   ]
 };

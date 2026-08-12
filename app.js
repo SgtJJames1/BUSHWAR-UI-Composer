@@ -100,6 +100,16 @@
     return window.BUSHWAR_REFORGER_FUNCTIONS || { entries: [], byId: () => null, forLayer: () => [] };
   }
 
+  function widgetProfileCatalog() {
+    return window.BUSHWAR_REFORGER_WIDGET_PROFILES || { entries: {}, forType: () => ({ label: "Frame panel", layoutType: "Frame", runtimeClass: "FrameWidgetClass" }) };
+  }
+
+  function widgetProfileFor(layer) {
+    const profile = widgetProfileCatalog().forType(layer?.type || "panel");
+    if (layer?.type === "reforger" && layer.catalogNativeWidgetClass) return { ...profile, runtimeClass: layer.catalogNativeWidgetClass, label: `${profile.label} (${layer.catalogNativeWidgetClass})` };
+    return profile;
+  }
+
   function functionFor(layer) {
     return layer?.functionId ? functionCatalog().byId(layer.functionId) : null;
   }
@@ -425,6 +435,18 @@
     $("#imageControls").hidden = !["image", "reference"].includes(layer.type);
     $("#resourceControls").hidden = layer.type !== "reforger";
     if (layer.type === "reforger") $("#resourcePath").value = layer.resourcePath || "";
+    const profile = widgetProfileFor(layer);
+    const nativeControls = $("#nativeWidgetControls");
+    nativeControls.hidden = layer.type === "reference";
+    if (!nativeControls.hidden) {
+      $("#nativeWidgetType").value = profile.runtimeClass || "FrameWidgetClass";
+      const sourceHint = layer.type === "reforger" && layer.resourcePath
+        ? `Source-backed layout: ${layer.resourcePath}. Keep this prefab as the visual authority in Workbench.`
+        : profile.sourceRecommended
+          ? `${profile.label}. Recommended vanilla source: ${profile.sourceRecommended}.`
+          : `${profile.label}. The Composer will scaffold this native class; Workbench owns the final serialization.`;
+      $("#nativeWidgetNote").textContent = sourceHint;
+    }
     const bindingControls = $("#bindingControls");
     bindingControls.hidden = !["player", "table"].includes(layer.type);
     if (!bindingControls.hidden) {
@@ -591,19 +613,16 @@
   }
 
   function workbenchWidgetFor(layer, index) {
-    const base = {
-      panel: "FrameWidget", text: "TextWidget", button: "ButtonWidget", icon: "ImageWidget", image: "ImageWidget",
-      player: "FrameWidget", divider: "FrameWidget", badge: "TextWidget", window: "FrameWidget", dialog: "FrameWidget",
-      prompt: "FrameWidget", toast: "FrameWidget", context: "FrameWidget", tooltip: "FrameWidget", tabs: "FrameWidget",
-      table: "FrameWidget", toolbar: "FrameWidget", progress: "FrameWidget", input: "FrameWidget", toggle: "FrameWidget",
-      assetcard: "FrameWidget", squadtile: "FrameWidget", inventory: "FrameWidget", categorybar: "FrameWidget"
-    };
+    const profile = widgetProfileFor(layer);
     const source = layer.type === "reforger" && /\.layout$/i.test(layer.resourcePath || "") ? layer.resourcePath : "";
-    const widgetType = source ? "Layout prefab" : (base[layer.type] || "FrameWidget");
+    const widgetType = source ? "Layout prefab" : (profile.runtimeClass || "FrameWidgetClass");
     return {
       id: layer.id,
       name: `m_w${safeName(layer.name || `Widget${index + 1}`).replace(/-([a-z])/g, (_, character) => character.toUpperCase()) || `Widget${index + 1}`}`,
       widgetType,
+      nativeType: source ? "Layout prefab" : profile.layoutType,
+      widgetProfile: profile.label,
+      sourceRecommended: profile.sourceRecommended,
       source: source || undefined,
       importMode: source ? "Drag this WLib/vanilla layout into the root, then apply the bounds below." : "Create this native widget under the root FrameWidget.",
       binding: layer.binding || "",
@@ -615,7 +634,8 @@
       geometry: { mode: "pixel-fixed", rootWidth: state.canvas.width, rootHeight: state.canvas.height },
       properties: { text: layer.text, fill: layer.fill, color: layer.color, borderColor: layer.borderColor, accent: layer.accent, opacity: layer.opacity, fontSize: layer.fontSize, visible: layer.visible },
       reforgerProfile: layer.type === "reforger" ? (layer.reforgerVisual || reforgerVisualFor(layer)) : undefined,
-      resourceReference: layer.resourcePath || undefined
+      resourceReference: layer.resourcePath || undefined,
+      resourceWorkbenchAction: layer.catalogWorkbenchAction || undefined
     };
   }
 
@@ -627,8 +647,40 @@
     return [red / 255, green / 255, blue / 255, clamp(alpha, 0, 1)].map(component => Number(component.toFixed(3))).join(" ");
   }
 
+  function nativeLayoutPropsFor(layer, profile) {
+    const color = reforgerColor(layer.color, layer.opacity);
+    if (["text", "badge"].includes(layer.type)) return { Text: layer.text || layer.name, Color: color };
+    // Workbench accepts EditBoxWidgetClass as a native root, but its editable
+    // value is runtime state; serializing a Text property produces the
+    // `Unknown keyword/data 'Text'` parse error. CheckBoxWidgetClass likewise
+    // has no portable visual property in this scaffold, so let Layout Editor
+    // own its final styling.
+    if (["input", "toggle"].includes(layer.type)) return {};
+    if (layer.type === "progress") return { Current: "0", Maximum: "100", Color: reforgerColor(layer.accent, layer.opacity) };
+    if (layer.type === "divider") return { Color: reforgerColor(layer.fill, layer.opacity) };
+    if (["image", "icon"].includes(layer.type)) return { Color: color };
+    return { Color: reforgerColor(layer.fill, layer.opacity) };
+  }
+
+  function nativeLayoutChildrenFor(layer, widget) {
+    const buttonText = (name, value) => ({
+      type: "Text",
+      name,
+      props: { Text: value || layer.text || layer.name, Color: reforgerColor(layer.color) },
+      slot: { sizeMode: "FILL", padding: "12 6 12 6" }
+    });
+    if (["button", "player"].includes(layer.type)) return [buttonText(`${widget.name}Text`, layer.text)];
+    if (["tabs", "toolbar", "categorybar"].includes(layer.type)) {
+      const labels = layer.type === "tabs" ? [layer.text || "PLAYERS", "ENTITIES", "SYSTEMS"] : layer.type === "categorybar" ? [layer.text || "ALL", "CHARACTERS", "VEHICLES"] : ["TOOLS", "SPAWN", "DELETE"];
+      return labels.map((label, index) => ({ type: "Button", name: `${widget.name}Item${index + 1}`, children: [buttonText(`${widget.name}Item${index + 1}Text`, label)], slot: { sizeMode: "FILL", fillWeight: 1 } }));
+    }
+    if (["text", "badge", "image", "icon", "progress", "input", "toggle", "divider"].includes(layer.type)) return [];
+    return [{ type: "Text", name: `${widget.name}Text`, props: { Text: layer.text || layer.name, Color: reforgerColor(layer.color) }, slot: { anchor: "0 0 1 1" } }];
+  }
+
   function layoutCreateNodeFor(layer, index) {
     const widget = workbenchWidgetFor(layer, index);
+    const profile = widgetProfileFor(layer);
     // The Composer canvas is pixel-authored. Keep the generated Workbench
     // scaffold pixel-accurate instead of silently converting a 360 px panel
     // into a proportionally resizing anchor-only widget. The plan still
@@ -673,16 +725,11 @@
       };
     }
     return {
-      type: "Frame",
+      type: profile.layoutType || "Frame",
       name: widget.name,
-      props: { Color: reforgerColor(layer.fill, layer.opacity) },
+      props: nativeLayoutPropsFor(layer, profile),
       slot: pixelSlot,
-      children: [{
-        type: "Text",
-        name: `${widget.name}Text`,
-        props: { Text: layer.text || layer.name, Color: reforgerColor(layer.color) },
-        slot: { anchor: "0 0 1 1" }
-      }]
+      children: nativeLayoutChildrenFor(layer, widget)
     };
   }
 
@@ -942,6 +989,8 @@
       controllerSource,
       root: { width: state.canvas.width, height: state.canvas.height, widgetType: "FrameWidget", name: "m_wRoot" },
       widgets,
+      nativeProfileSchema: 1,
+      nativeWidgetClasses: [...new Set(widgets.map(widget => widget.widgetType))].join(","),
       bindings: widgets.filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
       callbacks: widgets.filter(widget => widget.functionId).map(widget => ({ id: widget.functionId, contract: widget.functionContract })),
       runtimeScaffolds,
@@ -950,14 +999,14 @@
         name: layoutName,
         description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
         root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
-        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Pixel-fixed slots preserve the Composer canvas at the exported root size; open and resave in Workbench Layout Editor before production. For any widget with a source path, replace the scaffold frame with the listed vanilla/WLib layout in Layout Editor."
+        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container) and pixel-fixed slots preserve the Composer canvas at the exported root size. Open and resave in Workbench Layout Editor before production. For any widget with a source path, replace the native scaffold with the listed vanilla/WLib layout in Layout Editor."
       },
       safety: {
         layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",
         visualReferences: "Reference-board images are intentionally excluded from this import plan. Keep them in the .bwui project bundle.",
         nextSteps: [
           "Use layoutCreateRequest with the Enfusion layout_create tool to generate a native-widget scaffold in an isolated addon, or create the target GUI layout manually at the listed layoutPath.",
-          "Open the scaffold in Layout Editor, set root size, and replace source-backed frames with their listed WLib/vanilla layout prefabs using the plan's names, anchors, and bounds.",
+          "Open the scaffold in Layout Editor, set root size, and confirm each mapped native widget class before replacing source-backed scaffolds with their listed WLib/vanilla layout prefabs using the plan's names, anchors, and bounds.",
           "Use Workbench's Generate Class from Layout after naming script-bound widgets with m_w prefixes.",
           "Run Layout Editor Live Preview at supported resolutions, then wire gameplay behaviour in the generated controller using runtimeScaffolds.requiredWidgetNames."
         ]
@@ -1140,11 +1189,11 @@
       const button = document.createElement("button");
       const visual = reforgerVisualFor(item);
       button.className = "catalog-entry";
-      button.title = `Add reference for ${item.path}`;
-      button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(item.path)}</small></span>`;
+       button.title = `Add ${item.nativeWidgetClass || "source-backed"} reference for ${item.path}`;
+       button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(item.nativeWidgetClass || "LayoutResource")}</small><small>${escapeHtml(item.path)}</small></span>`;
       button.addEventListener("click", () => addLayer("reforger", {
-        name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.path,
-        catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview, reforgerVisual: visual, ...reforgerBoundsFor(visual)
+       name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.path,
+         catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview, catalogNativeWidgetClass: item.nativeWidgetClass || "LayoutResource", catalogWorkbenchAction: item.workbenchAction || "Use this source in Workbench Layout Editor", reforgerVisual: visual, ...reforgerBoundsFor(visual)
       }));
       root.append(button);
     });

@@ -7,12 +7,24 @@
 (() => {
   "use strict";
   const entries = [];
-  const layouts = (category, directory, names, preview = "▣") => names.forEach(name => entries.push({
-    category, kind: "Layout prefab", name, path: `UI/layouts/${directory}/${name}.layout`, preview
-  }));
-  const refs = (category, kind, directory, names, preview) => names.forEach(name => entries.push({
-    category, kind, name, path: `${directory}/${name}`, preview
-  }));
+  const nativeClassFor = (name, kind) => {
+    if (kind === "Texture atlas") return "ImageWidgetClass";
+    const value = name.toLowerCase();
+    if (value.includes("button") || value.includes("navigation") || value.includes("paging") || value.includes("checkbox")) return "ButtonWidgetClass";
+    if (value.includes("slider") || value.includes("progress")) return "ProgressBarWidgetClass";
+    if (value.includes("editbox") || value.includes("input")) return "EditBoxWidgetClass";
+    if (value.includes("combo") || value.includes("spinbox")) return "ComboBoxWidgetClass";
+    if (value.includes("tab") || value.includes("toolbar")) return "HorizontalLayoutWidgetClass";
+    if (value.includes("label") || value.includes("text") || value.includes("heading")) return "TextWidgetClass";
+    return "LayoutResource";
+  };
+  const entryFor = (category, kind, name, path, preview) => ({
+    category, kind, name, path, preview,
+    nativeWidgetClass: nativeClassFor(name, kind),
+    workbenchAction: kind === "Texture atlas" ? "Use as ImageWidget source in Layout Editor" : "Drag this registered layout prefab into the target layout, then preserve its named children"
+  });
+  const layouts = (category, directory, names, preview = "▣") => names.forEach(name => entries.push(entryFor(category, "Layout prefab", name, `UI/layouts/${directory}/${name}.layout`, preview)));
+  const refs = (category, kind, directory, names, preview) => names.forEach(name => entries.push(entryFor(category, kind, name, `${directory}/${name}`, preview)));
 
   layouts("Widgets · Base", "WidgetLibrary/BaseElements", [
     "WLib_Base", "WLib_Blur", "WLib_CoreMenuBase", "WLib_CoreMenuTabbed", "WLib_DynamicFooter", "WLib_IconText",
