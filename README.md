@@ -6,21 +6,29 @@ A dependency-free visual prototyping tool for planning BUSHWAR/Arma Reforger int
 
 The desktop edition is now the preferred way to run the composer:
 
-- Installer: `release/BUSHWAR-UI-Composer-Setup-0.4.0.exe`
-- Portable: `release/BUSHWAR-UI-Composer-Portable-0.4.0.exe`
+- Installer: `release/BUSHWAR-UI-Composer-Setup-0.4.1.exe`
+- Portable: `release/BUSHWAR-UI-Composer-Portable-0.4.1.exe`
 
 The NSIS setup executable creates a conventional per-user Windows
 installation. From v0.4 onward, installed copies automatically check the
 project's public `SgtJJames1/BUSHWAR-UI-Composer` GitHub Releases page, download a newer release, and offer a
 restart to install it. The portable executable runs directly without
-installation and is intentionally updated manually. Local development
-artifacts are ignored by Git and can be rebuilt from the checked-in source and
-lockfile.
+installation and is intentionally updated manually.
+
+The preferred no-install route is the GitHub Pages web edition. Once Pages is
+enabled for the public Composer repository, visitors open the site URL and
+always use the current version—there is no Windows installer or Smart App
+Control check. Local development artifacts are ignored by Git and can be
+rebuilt from the checked-in source and lockfile.
 
 The v0.3 MSI has no updater, so anyone already using it must manually install
 v0.4 once (and uninstall the old MSI entry if Windows leaves it listed). Every
 subsequent NSIS release can update in place without downloading an installer
 by hand.
+
+> GitHub Releases provide free hosting and automatic in-app updates, but they
+> do not make an unsigned Windows EXE trusted by Smart App Control. Use the
+> GitHub Pages edition when you want users to avoid that Windows prompt.
 
 These first local artifacts are not certificate-signed, so Windows may show
 an unknown-publisher warning. Production distribution should add a trusted
@@ -55,6 +63,18 @@ in source control or the desktop app.
    is not an automatic-update payload.
 4. Publish the release. Existing installed NSIS copies will discover it at
    their next launch, download it, and ask to restart.
+
+### GitHub Pages web edition
+
+The repository includes a Pages workflow that publishes only the browser app
+runtime files, not the Electron dependency folders or release executables.
+After pushing this repository, enable **Settings → Pages → Source: GitHub
+Actions**. The site will be available at:
+
+`https://sgtjames1.github.io/BUSHWAR-UI-Composer/`
+
+Every push to `main` republishes the web edition. Browser autosave and saved
+templates remain local to each user's browser profile.
 
 Electron is used as a security-isolated shell with Node
 integration disabled, context isolation and renderer sandboxing enabled, and
