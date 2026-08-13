@@ -156,7 +156,9 @@
   }
 
   function reforgerCatalogEntries() {
-    return window.BUSHWAR_REFORGER_CATALOG?.entries || [];
+    const coreEntries = window.BUSHWAR_REFORGER_CORE_LIBRARY?.entries || [];
+    const vanillaEntries = window.BUSHWAR_REFORGER_CATALOG?.entries || [];
+    return [...coreEntries, ...vanillaEntries];
   }
 
   function recommendedSourceFor(layer) {
@@ -818,11 +820,13 @@
       importMode: source ? "Drag this WLib/vanilla layout into the root, then apply the bounds below." : "Create this native widget under the root FrameWidget.",
       binding: layer.binding || "",
       bindingContract: binding || undefined,
+      coreLibraryId: layer.coreLibraryId || undefined,
+      runtimeContracts: layer.runtimeContracts || undefined,
       functionId: layer.functionId || "",
       functionContract: callback || undefined,
       functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
       recipeCallbacks: layer.recipeCallbacks || [],
-      runtimeContract: binding || callback || runtimeChildNames ? {
+      runtimeContract: binding || callback || runtimeChildNames || layer.runtimeContracts?.length ? {
         dataSource: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "client UI event",
         authority: callback?.authority || binding?.authority || "client-local",
         refreshEvents: binding?.updateEvents || callback?.updateEvents || [],
@@ -837,6 +841,8 @@
         preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values",
         sourceBacked: sourceBackedLayer(layer),
         sourcePath: source || undefined,
+        coreLibraryId: layer.coreLibraryId || undefined,
+        declaredRuntimeContracts: layer.runtimeContracts || undefined,
         requiredNamedChildren: runtimeChildNames,
         recipeId: layer.engineRecipeId || undefined,
         workbenchRecipe: layer.workbenchRecipe || undefined,
@@ -1845,7 +1851,12 @@
   }
 
   function renderReforgerCatalog() {
-    const catalog = window.BUSHWAR_REFORGER_CATALOG || { entries: [], disclaimer: "Catalogue unavailable." };
+    const vanillaCatalog = window.BUSHWAR_REFORGER_CATALOG || { entries: [], disclaimer: "Catalogue unavailable." };
+    const coreCatalog = window.BUSHWAR_REFORGER_CORE_LIBRARY || { entries: [], disclaimer: "" };
+    const catalog = {
+      entries: [...coreCatalog.entries, ...vanillaCatalog.entries],
+      disclaimer: `${coreCatalog.disclaimer} ${vanillaCatalog.disclaimer}`.trim()
+    };
     const root = $("#reforgerCatalog");
     const query = $("#componentSearch").value.trim().toLowerCase();
     const family = $("#catalogCategoryFilter").value;
@@ -1863,8 +1874,14 @@
        button.title = `Add ${nativeLabel} reference for ${item.path}`;
        button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(nativeLabel)}</small><small>${escapeHtml(item.path)}</small></span>`;
        button.addEventListener("click", () => addLayer("reforger", {
-       name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.path,
-         catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview, catalogNativeWidgetClass: item.nativeWidgetClass || "LayoutResource", catalogNativeChildHint: item.nativeChildHint || "", catalogWorkbenchAction: item.workbenchAction || "Use this source in Workbench Layout Editor", reforgerVisual: visual, ...reforgerBoundsFor(visual)
+         name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.path,
+         catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview,
+         catalogNativeWidgetClass: item.nativeWidgetClass || "LayoutResource", catalogNativeChildHint: item.nativeChildHint || "",
+         catalogWorkbenchAction: item.workbenchAction || "Use this source in Workbench Layout Editor", reforgerVisual: visual,
+         coreLibraryId: item.coreLibraryId || undefined,
+         requiredChildren: item.requiredChildren ? clone(item.requiredChildren) : undefined,
+         runtimeContracts: item.runtimeContracts ? clone(item.runtimeContracts) : undefined,
+         ...reforgerBoundsFor(visual)
        }));
       root.append(button);
     });

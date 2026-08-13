@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.24",
+  version: "0.10.25",
   published: "13 August 2026",
-  title: "Blank workspace landing page",
-  summary: "WCA now opens on a clean blank canvas by default, while preserving the previous meaningful session behind an explicit restore action.",
+  title: "Composer Core library manifest",
+  summary: "WCA now exposes the companion BUSHWAR UI Composer Core layouts as a separate, contract-aware Reforger catalog category while keeping the blank workspace startup.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -66,6 +66,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The function catalogue no longer publishes duplicate Set text entries.",
     "WCA now boots to a blank 1920 × 1080 workspace instead of automatically loading the GM template.",
     "A landing dialog makes restoring the previous meaningful session explicit, so saved work is preserved without making the default canvas non-blank.",
-    "The landing page offers direct access to the template library while keeping base scenes and templates as deliberate choices."
+    "The landing page offers direct access to the template library while keeping base scenes and templates as deliberate choices.",
+    "The companion BUSHWAR-UIComposer-Core addon now has a matching website manifest for the admin panel and connected-player row layout resources.",
+    "Core catalog layers preserve their addon identity, required named children, and runtime contract declarations in the Workbench handoff instead of treating them as generic visual references.",
+    "The Reforger database filter separates BUSHWAR Core resources from vanilla path references; Core layouts still require fresh Workbench registration and metadata generation."
   ]
 };
