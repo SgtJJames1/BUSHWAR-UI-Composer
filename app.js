@@ -1082,7 +1082,15 @@
 
   function normalizeLayoutGuid(value) {
     const guid = String(value || "").replace(/[{}]/g, "").trim().toUpperCase();
-    return /^[0-9A-F]{16}$/.test(guid) ? guid : "";
+    return /^[0-9A-F]{16}$/.test(guid) && !/^0{16}$/.test(guid) ? guid : "";
+  }
+
+  function parseWorkbenchLayoutMeta(text) {
+    const value = String(text || "");
+    const match = value.match(/Name\s+"\{([0-9A-Fa-f]{16})\}([^"\r\n]+\.layout)"/i);
+    const guid = normalizeLayoutGuid(match?.[1]);
+    if (!match || !guid) throw new Error("No GUID-qualified .layout ResourceName was found in this metadata file");
+    return { guid, path: match[2] };
   }
 
   function controllerSourceFor(classStem, layoutName, widgets, layoutGuid = "") {
@@ -2623,6 +2631,28 @@
   $("#workbenchTarget").addEventListener("change", event => { state.handoff.target = event.target.value; persist(); });
   $("#workbenchLayoutName").addEventListener("change", event => { state.handoff.layoutName = event.target.value; persist(); });
   $("#workbenchLayoutGuid").addEventListener("change", event => { state.handoff.layoutGuid = normalizeLayoutGuid(event.target.value); event.target.value = state.handoff.layoutGuid; persist(); });
+  $("#workbenchMetaInput").addEventListener("change", event => {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const meta = parseWorkbenchLayoutMeta(reader.result);
+        checkpoint();
+        state.handoff.layoutGuid = meta.guid;
+        const pathName = meta.path.replace(/^.*[\\/]/, "").replace(/\.layout$/i, "");
+        if (pathName) state.handoff.layoutName = pathName;
+        $("#workbenchLayoutGuid").value = meta.guid;
+        $("#workbenchLayoutName").value = state.handoff.layoutName;
+        persist();
+        setStatus(`Registered Workbench layout loaded: ${meta.path}`);
+      } catch (error) {
+        alert(`Could not read layout metadata: ${error.message}`);
+      }
+    };
+    reader.readAsText(file);
+  });
   $("#whatsNewBtn").addEventListener("click", () => {
     const dialog = $("#updateDialog");
     dialog.dataset.autoNotice = "";
