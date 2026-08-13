@@ -69,6 +69,8 @@ assert(source.includes('snapshot.playerCountKnown = true;'), "generated context 
 assert(source.includes('RegV(\"playerCountKnown\");'), "generated context snapshots must register playerCountKnown for JSON export");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
+assert(source.includes("int enginePlayerCount = playerManager.GetPlayerCount();"), "connected-player table headers must use the authoritative engine count");
+assert(source.includes('countText.SetText(enginePlayerCount.ToString() + " CONNECTED");'), "connected-player table headers must display the authoritative engine count");
 assert(source.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "generated controllers must deduplicate PlayerManager IDs before creating rows");
 assert(source.includes("array<int> capturedPlayerIds = {};"), "generated context snapshots must deduplicate PlayerManager IDs");
 assert(source.includes("array<int> countedPlayerIds = {};"), "generated scalar player counts must deduplicate PlayerManager IDs");

@@ -38,6 +38,8 @@ assert(source.includes("IsWidgetNamedOrChild"), "validation controller must supp
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wClose")'), "close callback must use the nested-widget route");
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wRefresh")'), "refresh callback must use the nested-widget route");
 assert(source.includes("RefreshRuntimeBindings()"), "validation controller must refresh scalar runtime bindings");
+assert(source.includes("int enginePlayerCount = playerManager.GetPlayerCount();"), "validation connected-player header must use the authoritative engine count");
+assert(source.includes('countText.SetText(enginePlayerCount.ToString() + " CONNECTED");'), "validation connected-player header must display the engine count");
 assert(source.includes("FindPlayerRowIndex(w)"), "validation controller must resolve nested row clicks to one row identity");
 assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "validation controller must not duplicate rows for nested name widgets");
 assert(adminMenuSource.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "admin-menu fixture must deduplicate PlayerManager IDs before creating rows");

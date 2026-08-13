@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.52",
+  version: "0.10.53",
   published: "13 August 2026",
-  title: "Keep engine count separate from valid player rows",
-  summary: "Workbench context snapshots now carry PlayerManager.GetPlayerCount() separately from the filtered ID/name rows, so WCA mirrors the engine count without rendering empty entries.",
+  title: "Keep runtime table counts authoritative",
+  summary: "Connected-player table headers now use PlayerManager.GetPlayerCount() directly while row creation remains filtered to valid named IDs.",
   changes: [
     "Generic Connected players (engine) tables now use the registered BUSHWAR Core Button Row > NameText prefab by default, so PlayerManager rows can actually instantiate in Reforger instead of silently failing on a bare path.",
     "Schema-3 handoffs now list runtime row resources and the required BUSHWAR-UIComposer-Core dependency; validation warns when a custom row layout is not GUID-qualified.",
@@ -104,6 +104,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Widget update callbacks now attach the generated controller to the exact target widget, throttle OnUpdate to 30 ticks, refresh linked engine-backed values when available, and expose a compile-safe target-addon seam without misrouting the callback through OnClick.",
     "Handoff validation and controller-source tests now fail when a Widget update assignment loses its target-widget route.",
     "Player count bindings now emit PlayerManager.GetPlayerCount() in the native controller; the connected table still uses GetPlayers(playerIds) and GetPlayerName(playerId) to create only valid named rows.",
-    "Runtime context snapshots now carry playerCount/playerCountKnown from PlayerManager.GetPlayerCount(); browser previews display that authoritative scalar separately from filtered validNamedPlayerRows and show unknown when the engine cannot provide it."
+    "Runtime context snapshots now carry playerCount/playerCountKnown from PlayerManager.GetPlayerCount(); browser previews display that authoritative scalar separately from filtered validNamedPlayerRows and show unknown when the engine cannot provide it.",
+    "Generated connected-player table headers now use the same PlayerManager.GetPlayerCount() scalar as standalone count bindings; invalid or unnamed IDs still never create visual rows."
   ]
 };
