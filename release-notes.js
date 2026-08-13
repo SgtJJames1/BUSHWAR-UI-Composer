@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.35",
+  version: "0.10.36",
   published: "13 August 2026",
-  title: "Core registration parity guard",
-  summary: "WCA now checks the website manifest, Workbench-generated Core .meta GUIDs, and the disposable validation controller as one registered-resource contract.",
+  title: "Authoritative player roster guard",
+  summary: "WCA and the generated Workbench controller now keep one row and one count per unique, named PlayerManager ID.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -82,6 +82,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Validate Workbench handoff now treats the registered BUSHWAR Core child tree as manifest-verified while preserving manual child-name warnings for unverified vanilla/source-backed runtime layouts.",
     "Opening or restoring an older project/template now hydrates matching Core layers from the current manifest, including the GUID-qualified player-row ResourceName and runtime callback contracts.",
     "The Composer test suite now constructs a Core admin layer and verifies its exported widget, native count/selection/scroll/list children, GUID-qualified source, and registered row layout agree as one contract.",
-    "Core library tests now compare each manifest ResourceName with the actual .layout.meta file and validation controller, catching null or stale GUID registration before a Workbench handoff is used."
+    "Core library tests now compare each manifest ResourceName with the actual .layout.meta file and validation controller, catching null or stale GUID registration before a Workbench handoff is used.",
+    "Generated controllers and the disposable validation admin menu now deduplicate PlayerManager IDs before creating rows or calculating connected counts, while still skipping empty names.",
+    "Exported runtime-context snapshots and roster signatures use the same unique-ID rule, so browser previews cannot gain duplicate or placeholder player entries from a malformed engine list."
   ]
 };
