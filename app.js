@@ -926,6 +926,18 @@
     };
   }
 
+  function connectedChildNamesFor(widget) {
+    const names = widget?.requiredNamedChildren || {};
+    return {
+      count: names.count || `${widget.name}Count`,
+      selection: names.selection || `${widget.name}Selection`,
+      scroll: names.scroll || `${widget.name}Scroll`,
+      list: names.list || `${widget.name}List`,
+      rowRoot: names.rowRoot || "Row",
+      rowName: names.rowName || "NameText"
+    };
+  }
+
   function reforgerColor(hex, alpha = 1) {
     const value = String(hex || "#ffffff").replace("#", "");
     const red = parseInt(value.slice(0, 2), 16) || 0;
@@ -987,31 +999,34 @@
       offsetBottom: -(top + Math.round(layer.h))
     };
     if (widget.binding === "player.list.connected") {
+      const names = connectedChildNamesFor(widget);
       return {
         type: "Frame",
         name: widget.name,
+        source: widget.source || undefined,
+        sourceBacked: !!widget.source,
         props: { Color: reforgerColor(layer.fill, layer.opacity) },
         slot: pixelSlot,
         children: [
           {
             type: "Text",
-            name: `${widget.name}Count`,
+            name: names.count,
             props: { Text: "0 CONNECTED", Color: reforgerColor(layer.accent) },
             slot: { anchor: "0 0 1 0.12" }
           },
           {
             type: "Text",
-            name: `${widget.name}Selection`,
+            name: names.selection,
             props: { Text: "SELECTED: NONE", Color: reforgerColor(layer.color) },
             slot: { anchor: "0 0.12 1 0.24" }
           },
           {
             type: "ScrollLayout",
-            name: `${widget.name}Scroll`,
+            name: names.scroll,
             slot: { anchor: "0 0.28 1 1" },
             children: [{
               type: "VerticalLayout",
-              name: `${widget.name}List`,
+              name: names.list,
               slot: { sizeMode: "FILL" }
             }]
           }
@@ -1032,6 +1047,17 @@
   function controllerSourceFor(classStem, layoutName, widgets) {
     const className = `BWUIC_${classStem}Controller`;
     const connected = widgets.find(widget => widget.binding === "player.list.connected");
+    const connectedNames = connected ? (() => {
+      const names = connected.requiredNamedChildren || {};
+      return {
+        count: names.count || `${connected.name}Count`,
+        selection: names.selection || `${connected.name}Selection`,
+        scroll: names.scroll || `${connected.name}Scroll`,
+        list: names.list || `${connected.name}List`,
+        rowRoot: names.rowRoot || "Row",
+        rowName: names.rowName || "NameText"
+      };
+    })() : null;
     const connectedRowFontSize = Math.max(10, Math.round(Number(connected?.properties?.fontSize) || 17));
     const scalarBindings = widgets.filter(widget => ["player.name", "player.count", "editor.gm.open"].includes(widget.binding));
     const callbackIds = [...new Set(widgets.map(widget => widget.functionId).filter(Boolean))];
@@ -1044,9 +1070,9 @@
     widgets.forEach(widget => {
       const size = widget.properties?.fontSize || 16;
       if (widget.binding === "player.list.connected") {
-        addFontTarget(`${widget.name}Count`, Math.max(12, size * 0.85));
-        addFontTarget(`${widget.name}Selection`, Math.max(12, size * 0.85));
-        addFontTarget("NameText", size);
+        addFontTarget(connectedNames.count, Math.max(12, size * 0.85));
+        addFontTarget(connectedNames.selection, Math.max(12, size * 0.85));
+        addFontTarget(connectedNames.rowName, size);
       } else if (["button", "player"].includes(widget.layerType)) {
         addFontTarget(`${widget.name}Text`, size);
       } else if (["text", "badge"].includes(widget.layerType)) {
