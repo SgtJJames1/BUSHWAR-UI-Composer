@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.41",
+  version: "0.10.42",
   published: "13 August 2026",
-  title: "Pixel-fixed runtime scaffold",
-  summary: "Connected-player count, selection, and scroll children now use explicit pixel rectangles in the native handoff instead of fractional anchors.",
+  title: "Core catalog geometry aligned",
+  summary: "Adding the registered BUSHWAR Core admin panel or player row now starts with the same dimensions and placement as the native Workbench layouts.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -90,6 +90,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Generated controllers and validation fixtures reject non-positive PlayerManager IDs before name lookup, row creation, scalar counts, signatures, or context export.",
     "Connected-player canvas and PNG previews now show ENGINE SNAPSHOT REQUIRED when no Workbench context exists, and WORKBENCH REPORTS 0 PLAYERS when an imported snapshot is genuinely empty.",
     "Workbench plans and runtime contracts now carry snapshotLoaded and playerCountKnown flags, so downstream import tooling can distinguish unknown engine state from a verified empty roster.",
-    "Generated connected-player child slots now use signed OffsetLeft/Top/Right/Bottom rectangles, matching the fixed-pixel root geometry and preventing fractional-anchor drift in Workbench."
+    "Generated connected-player child slots now use signed OffsetLeft/Top/Right/Bottom rectangles, matching the fixed-pixel root geometry and preventing fractional-anchor drift in Workbench.",
+    "Core catalog entries now use the native 360 px admin panel, 15%-80% vertical slot, and compact 332 px player-row geometry instead of the generic reference-card fallback."
   ]
 };

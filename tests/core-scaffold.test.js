@@ -12,7 +12,7 @@ const admin = core.entries.find(entry => entry.id === "core.admin-panel");
 assert(admin, "Core admin panel fixture must exist");
 
 const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
-const start = appSource.indexOf("function normalizeRequiredChildren");
+const start = appSource.indexOf("function reforgerBoundsFor");
 const end = appSource.indexOf("function controllerSourceFor", start);
 assert(start >= 0 && end > start, "Composer scaffold functions must remain present");
 
@@ -35,7 +35,7 @@ const sandbox = {
   reforgerVisualFor: () => "core-admin-panel"
 };
 vm.createContext(sandbox);
-vm.runInContext(`${appSource.slice(start, end)}; this.workbenchWidgetFor = workbenchWidgetFor; this.layoutCreateNodeFor = layoutCreateNodeFor;`, sandbox, { filename: "app-core-scaffold.js" });
+vm.runInContext(`${appSource.slice(start, end)}; this.workbenchWidgetFor = workbenchWidgetFor; this.layoutCreateNodeFor = layoutCreateNodeFor; this.reforgerBoundsFor = reforgerBoundsFor; this.reforgerPlacementFor = reforgerPlacementFor;`, sandbox, { filename: "app-core-scaffold.js" });
 
 const layer = {
   id: "core-admin-fixture",
@@ -79,5 +79,16 @@ assert.strictEqual(node.children[1].slot.anchor, "0 0 0 0", "connected selection
 assert.strictEqual(node.children[2].slot.anchor, "0 0 0 0", "connected scroll child must use a point-anchored pixel slot");
 assert(node.children[2].slot.offsetRight < 0 && node.children[2].slot.offsetBottom < 0, "connected scroll child must use signed pixel insets instead of fractional anchors");
 assert.strictEqual(node.children[2].children[0].name, "m_wPlayerList", "native scaffold list child must match Core");
+
+const catalogAdminBounds = sandbox.reforgerPlacementFor({ id: "core.admin-panel" }, "core-admin-panel");
+assert.strictEqual(catalogAdminBounds.x, 24, "catalog-added Core admin must start 24px from the left");
+assert.strictEqual(catalogAdminBounds.y, 162, "catalog-added Core admin must start at 15% of a 1080px canvas");
+assert.strictEqual(catalogAdminBounds.w, 360, "catalog-added Core admin must retain the native 360px width");
+assert.strictEqual(catalogAdminBounds.h, 702, "catalog-added Core admin must span the native 15%-80% slot");
+const catalogRowBounds = sandbox.reforgerPlacementFor({ id: "core.player-row" }, "core-player-row");
+assert.strictEqual(catalogRowBounds.x, 36, "catalog-added Core row must use the native list inset");
+assert.strictEqual(catalogRowBounds.y, 320, "catalog-added Core row must sit below the native list header");
+assert.strictEqual(catalogRowBounds.w, 332, "catalog-added Core row must use the native row width");
+assert.strictEqual(catalogRowBounds.h, 32, "catalog-added Core row must use the native compact row height");
 
 console.log("core-scaffold.test.js: PASS");

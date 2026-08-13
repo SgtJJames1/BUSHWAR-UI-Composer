@@ -569,9 +569,20 @@
   }
 
   function reforgerBoundsFor(visual) {
-    const bounds = { button: [270, 58], checkbox: [260, 46], slider: [350, 56], progress: [370, 64], selector: [300, 58], input: [340, 70], tabs: [480, 58], list: [430, 220], "vehicle-hud": [420, 160], map: [390, 240], chat: [400, 160], action: [360, 78], "gm-hud": [470, 110], "icon-atlas": [240, 120], "map-marker": [220, 170], text: [360, 58], panel: [420, 110] };
+    const bounds = { button: [270, 58], checkbox: [260, 46], slider: [350, 56], progress: [370, 64], selector: [300, 58], input: [340, 70], tabs: [480, 58], list: [430, 220], "vehicle-hud": [420, 160], map: [390, 240], chat: [400, 160], action: [360, 78], "gm-hud": [470, 110], "icon-atlas": [240, 120], "map-marker": [220, 170], "core-admin-panel": [360, Math.round(state.canvas.height * 0.65)], "core-player-row": [332, 32], text: [360, 58], panel: [420, 110] };
     const [w, h] = bounds[visual] || bounds.panel;
     return { w, h };
+  }
+
+  function reforgerPlacementFor(item, visual) {
+    const bounds = reforgerBoundsFor(visual);
+    if (item.id === "core.admin-panel") {
+      return { ...bounds, x: 24, y: Math.round(state.canvas.height * 0.15) };
+    }
+    if (item.id === "core.player-row") {
+      return { ...bounds, x: 36, y: Math.round(state.canvas.height * 0.15) + 158 };
+    }
+    return bounds;
   }
 
   function renderReforgerReference(layer, element, text) {
@@ -2032,7 +2043,7 @@
          functionHints: item.functionHints ? clone(item.functionHints) : undefined,
          requiredChildren: item.requiredChildren ? clone(item.requiredChildren) : undefined,
          runtimeContracts: item.runtimeContracts ? clone(item.runtimeContracts) : undefined,
-         ...reforgerBoundsFor(visual)
+         ...reforgerPlacementFor(item, visual)
        }));
       root.append(button);
     });
