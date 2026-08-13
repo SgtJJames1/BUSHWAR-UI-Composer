@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.44",
+  version: "0.10.45",
   published: "13 August 2026",
-  title: "Workbench ResourceName handoff",
-  summary: "WCA now accepts the registered target layout GUID and carries a GUID-qualified ResourceName into the generated controller and handoff plan.",
+  title: "Qualified handoff validation",
+  summary: "The WCA handoff and disposable Workbench validator now require the target layout ResourceName metadata before a controller can be treated as import-ready.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -94,6 +94,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Core catalog entries now use the native 360 px admin panel, 15%-80% vertical slot, and compact 332 px player-row geometry instead of the generic reference-card fallback.",
     "Connected-player runtime controllers now reject row prefabs missing the required NameText child, start native rows without a placeholder name, and report PLAYER DATA UNAVAILABLE when PlayerManager cannot be read instead of claiming zero players.",
     "The validation admin menu now routes nested row clicks through their canonical row, exposes the native refresh button, and clears/imports zero-player context without confusing it with an unavailable engine snapshot.",
-    "Handoff settings now accept the target layout's registered 16-character Workbench GUID; the generated controller and plan use the qualified ResourceName, while validation warns before compiling a bare relative path."
+    "Handoff settings now accept the target layout's registered 16-character Workbench GUID; the generated controller and plan use the qualified ResourceName, while validation warns before compiling a bare relative path.",
+    "The disposable Workbench import-plan plugin now rejects schema-3 plans missing layoutResourceReference, preventing a visually correct browser design from being treated as a compiled runtime handoff without a registered layout."
   ]
 };

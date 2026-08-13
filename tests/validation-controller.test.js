@@ -54,5 +54,9 @@ assert(contextActionSource.includes("array<int> capturedPlayerIds = {};"), "runt
 assert(contextActionSource.includes("if (playerId <= 0)"), "runtime context exporter must reject non-positive PlayerManager IDs");
 assert(contextActionSource.includes('PackToFile("$profile:BUSHWAR-UIComposer/runtime-context.json")'), "runtime context exporter must write the documented profile snapshot path");
 assert(contextActionSource.includes("class BWUIC_ExportEngineContextContextAction"), "GM context menu must expose the runtime context export action");
+const importPlanPluginPath = path.resolve(__dirname, "../../../Reforger-Workbench-Mods/BUSHWAR-UIComposer-Validation/Scripts/WorkbenchGame/BWUIC_ImportPlanPlugin.c");
+assert(fs.existsSync(importPlanPluginPath), "validation addon import-plan plugin must be present beside this Composer checkout");
+const importPlanPluginSource = fs.readFileSync(importPlanPluginPath, "utf8");
+assert(importPlanPluginSource.includes("layoutResourceReference"), "Workbench import validation must require the target layout ResourceName");
 
 console.log("validation-controller.test.js: PASS");
