@@ -781,7 +781,6 @@
   function syncControls() {
     $("#screenWidth").value = state.canvas.width;
     $("#screenHeight").value = state.canvas.height;
-    $("#sceneSelect").value = state.canvas.baseScene;
     $("#sceneOpacity").value = state.canvas.baseSceneOpacity;
     $("#backgroundOpacity").value = state.canvas.backgroundOpacity;
     $("#gridToggle").checked = state.settings.grid;
@@ -794,6 +793,7 @@
     const visible = state.canvas.baseSceneVisible;
     $("#sceneToggleBtn").textContent = visible ? "Scene on" : "Scene off";
     $("#sceneToggleBtn").classList.toggle("ghost", !visible);
+    $("#sceneToggleBtn").setAttribute("aria-pressed", visible ? "true" : "false");
     $$("[data-scene]").forEach(button => button.classList.toggle("active", button.dataset.scene === state.canvas.baseScene));
   }
 
@@ -1991,44 +1991,6 @@
     setStatus("Layout scaffold request downloaded · open it in Workbench Layout Editor or feed it to layout_create in an isolated addon");
   }
 
-  async function copySpec() {
-    const spec = {
-      format: "BUSHWAR UI Composer Workbench handoff",
-      appVersion: APP_VERSION,
-      canvas: `${state.canvas.width}x${state.canvas.height}`,
-      baseScene: { name: state.canvas.baseScene, visible: state.canvas.baseSceneVisible, opacity: state.canvas.baseSceneOpacity },
-      references: { embeddedAssets: assetSummary().count, note: "Reference images are preserved in .bwui project/template bundles; do not distribute vanilla game assets." },
-      engineContext: {
-        source: state.engineContext?.source || "none",
-        capturedAt: state.engineContext?.capturedAt || "",
-        engineVersion: state.engineContext?.engineVersion || "",
-        playerCount: hasEnginePlayerCount() ? enginePlayerCount() : null,
-        playerCountKnown: hasEnginePlayerCount(),
-        validNamedPlayerRows: enginePlayers().length,
-        previewPlayers: enginePlayers().map(player => ({ id: player.id, name: player.name })),
-        runtimeAuthoritative: true
-      },
-      bindings: state.layers.filter(layer => layer.binding).map(layer => ({ id: layer.binding, contract: bindingFor(layer) })),
-      callbacks: state.layers.filter(layer => layer.functionId).map(layer => ({ id: layer.functionId, contract: functionFor(layer) })),
-      bundleIntegrity: bundleIntegrity(state),
-      note: "Anchors are normalized left/top/right/bottom. Pixel bounds remain the visual authority. Build the final .layout in Workbench Layout Editor and validate Live Preview at target resolutions.",
-      layers: state.layers.map(layer => ({
-        name: layer.name, type: layer.type,
-        boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
-        anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
-        style: { fill: layer.fill, color: layer.color, border: layer.borderColor, opacity: layer.opacity, fontSize: layer.fontSize, locked: layer.locked }, text: layer.text,
-        reforgerResource: layer.resourcePath || undefined, binding: layer.binding || undefined, bindingContract: bindingFor(layer) || undefined, functionId: layer.functionId || undefined, functionContract: functionFor(layer) || undefined, referenceName: layer.referenceName || undefined
-      }))
-    };
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(spec, null, 2));
-      setStatus("Design specification copied");
-    } catch {
-      download(`${safeName(state.title)}-spec.json`, JSON.stringify(spec, null, 2), "application/json");
-      setStatus("Clipboard unavailable; specification downloaded");
-    }
-  }
-
   async function exportPng() {
     const canvas = document.createElement("canvas");
     canvas.width = state.canvas.width;
@@ -2734,7 +2696,6 @@
   })));
   $$("[data-template]").forEach(button => button.addEventListener("click", () => applyTemplate(button.dataset.template)));
   $$("[data-scene]").forEach(button => button.addEventListener("click", () => setBaseScene(button.dataset.scene)));
-  $("#sceneSelect").addEventListener("change", event => setBaseScene(event.target.value));
   $("#sceneToggleBtn").addEventListener("click", () => {
     checkpoint();
     state.canvas.baseSceneVisible = !state.canvas.baseSceneVisible;
@@ -2934,7 +2895,6 @@
     dialog.dataset.autoNotice = "";
     if (!dialog.open) dialog.showModal();
   });
-  $("#copySpecBtn").addEventListener("click", copySpec);
   $("#validateBtn").addEventListener("click", validateHandoff);
   $("#exportTemplateBtn").addEventListener("click", exportTemplate);
   $("#importTemplateBtn").addEventListener("click", () => $("#templateInput").click());
@@ -2942,7 +2902,7 @@
     const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader(); reader.onload = () => { try { const bundle = readBundle(JSON.parse(reader.result)); if (bundle.kind !== "template" && bundle.format === bundleFormat) throw new Error("This is a project bundle; use Open project instead"); checkpoint(); state = normalizeState(bundle.design); state.title = bundle.name || state.title; selectedId = null; syncControls(); render(); const saved = saveUserTemplate(bundle.name || file.name.replace(/\.json$/i, "")); setStatus(saved ? `Template imported and saved locally: ${bundle.name || file.name}` : `Template opened: ${bundle.name || file.name} · export a bundle to keep its embedded references`); } catch (error) { alert(`Could not import template: ${error.message}`); } }; reader.readAsText(file);
   });
-  $("#previewBtn").addEventListener("click", () => { preview = !preview; document.body.classList.toggle("preview-mode", preview); $("#previewBtn").textContent = preview ? "Exit preview" : "Preview"; render(); });
+  $("#previewBtn").addEventListener("click", () => { preview = !preview; document.body.classList.toggle("preview-mode", preview); $("#previewBtn").textContent = preview ? "Exit preview" : "Preview"; $("#previewBtn").setAttribute("aria-pressed", preview ? "true" : "false"); render(); });
   $("#saveTemplateBtn").addEventListener("click", () => {
     const dialog = $("#templateDialog");
     $("#templateName").value = state.title === "Untitled BUSHWAR UI" ? "" : state.title;

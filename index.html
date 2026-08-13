@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-workflow">
+    <link rel="stylesheet" href="styles.css?v=20260813-cleanup">
 </head>
 <body>
   <header class="topbar">
@@ -18,13 +18,7 @@
       <button id="undoBtn" title="Ctrl+Z">Undo</button>
       <button id="redoBtn" title="Ctrl+Y">Redo</button>
       <span class="separator"></span>
-      <label class="scene-picker">Scene
-        <select id="sceneSelect" aria-label="Base UI scene">
-          <option value="blank">Blank</option>
-          <option value="vanilla-gm">Vanilla GM</option>
-        </select>
-      </label>
-      <button id="sceneToggleBtn" title="Show or hide the base scene">Scene on</button>
+      <button id="sceneToggleBtn" title="Show or hide the base scene" aria-label="Toggle base scene visibility">Scene on</button>
       <span class="separator"></span>
       <label class="check"><input id="gridToggle" type="checkbox" checked> Grid</label>
       <label class="check"><input id="snapToggle" type="checkbox" checked> Snap</label>
@@ -127,7 +121,7 @@
       </section>
 
       <section class="layers-section">
-        <div class="section-title row-title"><span>Layers</span><span class="layer-actions"><button id="layerUpBtn" title="Move forward">↑</button><button id="layerDownBtn" title="Move backward">↓</button></span></div>
+        <div class="section-title row-title"><span>Layers</span><span class="layer-actions"><button id="layerUpBtn" title="Move layer forward" aria-label="Move layer forward">↑</button><button id="layerDownBtn" title="Move layer backward" aria-label="Move layer backward">↓</button></span></div>
         <div id="layerList" class="layer-list"></div>
       </section>
     </aside>
@@ -228,11 +222,14 @@
           <div class="field"><label for="workbenchMetaInput">Load registered .layout.meta</label><input id="workbenchMetaInput" type="file" accept=".meta,.layout.meta"><small class="hint">Choose the target metadata file to read its GUID automatically. The file stays local and is not uploaded.</small></div>
         </div>
         <button id="exportWorkbenchPlanBtn" class="wide workbench-export">Export Workbench import plan</button>
-        <button id="exportWorkbenchBundleBtn" class="wide ghost">Export complete Workbench handoff</button>
-        <button id="exportControllerBtn" class="wide ghost">Export EnforceScript controller scaffold</button>
-        <button id="copyLayoutCreateBtn" class="wide ghost">Copy layout scaffold request</button>
-        <button id="downloadLayoutCreateBtn" class="wide ghost">Download layout scaffold request</button>
-        <button id="copySpecBtn" class="wide">Copy design specification</button>
+        <div class="two-grid handoff-export-row">
+          <button id="exportWorkbenchBundleBtn" class="ghost">Export handoff bundle</button>
+          <button id="exportControllerBtn" class="ghost">Export controller</button>
+        </div>
+        <div class="two-grid handoff-export-row">
+          <button id="copyLayoutCreateBtn" class="ghost">Copy scaffold</button>
+          <button id="downloadLayoutCreateBtn" class="ghost">Download scaffold</button>
+        </div>
         <button id="validateBtn" class="wide handoff-validate">Validate Workbench handoff</button>
         <div id="workbenchWorkflow" class="workbench-workflow" aria-label="Workbench workflow"></div>
         <button id="workflowHelpBtn" class="wide ghost">Workbench workflow guide</button>
@@ -248,7 +245,7 @@
     </aside>
   </main>
 
-  <footer class="statusbar"><span id="statusText">Ready</span><span>Delete · Ctrl+D duplicate · arrows nudge · Shift+arrows ×10</span></footer>
+  <footer class="statusbar"><span id="statusText" aria-live="polite">Ready</span><span>Delete · Ctrl+D duplicate · arrows nudge · Shift+arrows ×10</span></footer>
 
   <input id="backgroundInput" type="file" accept="image/*" hidden>
   <input id="referenceInput" type="file" accept="image/*" multiple hidden>
@@ -308,13 +305,13 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-workflow"></script>
-  <script src="reforger-catalog.js?v=20260813-workflow"></script>
-  <script src="reforger-core-library.js?v=20260813-workflow"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-workflow"></script>
-  <script src="reforger-bindings.js?v=20260813-workflow"></script>
-  <script src="reforger-functions.js?v=20260813-workflow"></script>
-  <script src="reforger-recipes.js?v=20260813-workflow"></script>
-  <script src="app.js?v=20260813-workflow"></script>
+  <script src="release-notes.js?v=20260813-cleanup"></script>
+  <script src="reforger-catalog.js?v=20260813-cleanup"></script>
+  <script src="reforger-core-library.js?v=20260813-cleanup"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-cleanup"></script>
+  <script src="reforger-bindings.js?v=20260813-cleanup"></script>
+  <script src="reforger-functions.js?v=20260813-cleanup"></script>
+  <script src="reforger-recipes.js?v=20260813-cleanup"></script>
+  <script src="app.js?v=20260813-cleanup"></script>
 </body>
 </html>

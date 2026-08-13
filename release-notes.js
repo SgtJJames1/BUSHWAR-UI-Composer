@@ -1,9 +1,14 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.55",
+  version: "0.10.56",
   published: "13 August 2026",
-  title: "Guided Workbench workflow for Composer handoffs",
-  summary: "The Composer now walks you through the WR pipeline (design, export, validate, Layout Editor, register, GUID, controller, smoke), exports a self-describing handoff-readiness contract, and can download the layout scaffold request.",
+  title: "UI cleanup, accessibility, and design refresh",
+  summary: "Removed redundant controls (duplicate scene picker and design-spec copy), grouped Handoff actions into compact rows, and modernised the UI with visible focus rings, hover states, reduced-motion support, and screen-reader status announcements.",
   changes: [
+    "Removed the duplicate topbar Scene picker (the Base scene cards are now the single picker) and the redundant Copy design specification action; the schema-3 plan and handoff bundle already carry the same information.",
+    "Handoff actions are grouped into compact rows: Export handoff bundle + Export controller, and Copy scaffold + Download scaffold, with shorter labels.",
+    "Design refresh: rounded buttons, hover states on primary actions, visible :focus-visible rings for keyboard navigation, and prefers-reduced-motion support.",
+    "Accessibility: the status bar announces changes to screen readers (aria-live), icon-only layer buttons carry aria-labels, and toggle buttons expose aria-pressed state.",
+    "A new ui-audit regression test locks the cleanup in place: every button must be wired or a delegated/dialog action, and no orphaned or dead controls may return.",
     "A Workbench workflow tracker in the Handoff panel shows the eight-step WR pipeline with live status; the four automatic steps turn green as your design and Handoff fields are ready, and the four Workbench-side steps stay marked manual.",
     "Exported schema-3 plans now embed a handoff readiness block (ready, issues, layoutGuidSet, controllerGuidQualified, and GUID-qualified row resources) so the Workbench import-plan plugin can reject not-ready handoffs programmatically.",
     "New Download layout scaffold request button saves the layoutCreateRequest JSON as a file next to the existing clipboard copy.",

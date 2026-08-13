@@ -207,7 +207,7 @@ The **What's new** toolbar button remains available to reopen it.
 
 ## Workbench boundary
 
-This is a design/prototyping tool, not a replacement for the Reforger Layout Editor. The copied design specification is intended as a precise implementation handoff. Build the final `.layout` with Workbench-owned widget-library assets and verify it through Layout Editor Live Preview at the supported aspect ratios. Workbench documents a minimum 1920×1080 root size; the composer warns when a canvas is smaller.
+This is a design/prototyping tool, not a replacement for the Reforger Layout Editor. The exported schema-3 import plan and handoff bundle are intended as the precise implementation handoff. Build the final `.layout` with Workbench-owned widget-library assets and verify it through Layout Editor Live Preview at the supported aspect ratios. Workbench documents a minimum 1920×1080 root size; the composer warns when a canvas is smaller.
 
 ### Reliable Reforger workflow
 
