@@ -18,6 +18,10 @@ assert.strictEqual(website.entries.length, addon.entries.length, "website and ad
 assert(website.entries.length >= 2, "Core library must expose the admin panel and player row resources");
 for (const entry of website.entries) {
   assert(entry.path.endsWith(".layout"), `${entry.id} must point at a registered layout resource`);
+  assert(/^[0-9A-F]{16}$/.test(entry.resourceGuid || ""), `${entry.id} must carry the Workbench-generated resource GUID`);
+  assert(entry.resourceReference === `{${entry.resourceGuid}}${entry.path}`, `${entry.id} must carry a GUID-qualified resource reference`);
+  assert(/^[0-9A-F]{16}$/.test(entry.resourceGuid || ""), `${entry.id} must carry the Workbench-generated resource GUID`);
+  assert(entry.resourceReference === `{${entry.resourceGuid}}${entry.path}`, `${entry.id} must carry a GUID-qualified resource reference`);
   assert(entry.coreLibraryId === website.projectId, `${entry.id} must identify the companion Core addon`);
   assert(Object.keys(entry.requiredChildren || {}).length > 0, `${entry.id} must preserve named-child contracts`);
   assert(Array.isArray(entry.runtimeContracts) && entry.runtimeContracts.length > 0, `${entry.id} must declare runtime contracts`);
@@ -31,5 +35,8 @@ assert(app.includes("coreLibraryId: layer.coreLibraryId"), "Workbench widgets mu
 assert(app.includes("declaredRuntimeContracts: layer.runtimeContracts"), "Workbench contracts must preserve Core runtime declarations");
 assert(index.includes("reforger-core-library.js"), "index must load the Core library manifest");
 assert(index.includes('value="BUSHWAR Core"'), "catalog must expose a separate BUSHWAR Core filter");
+assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultBinding === "player.list.connected", "Core admin panel must default to the authoritative connected-player binding");
+assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultFunctionTarget === "m_wRefresh", "Core admin panel refresh contract must target the named refresh button");
+assert(website.entries.find(entry => entry.id === "core.player-row")?.runtimeValueWidgetName === "NameText", "Core row must declare the actual TextWidget child used for player names");
 
 console.log("core-library.test.js: PASS");

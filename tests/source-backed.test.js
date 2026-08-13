@@ -8,7 +8,7 @@ assert(source.includes("function sourceBackedLayer(layer)"), "source-backed laye
 assert(source.includes("sourceBacked: !!widget.source"), "layout nodes must carry source-backed metadata");
 assert(source.includes('if (sourceBackedLayer(layer) && !["table", "player"].includes(layer.type))'), "source-backed palette visuals must render before generic mock content");
 assert(index.includes("useRecommendedSourceBtn"), "inspector must expose the recommended source action");
-assert(source.includes("layer.resourcePath = entry.path"), "recommended source action must preserve the registered layout path");
+assert(source.includes("layer.resourcePath = entry.resourceReference || entry.path"), "recommended source action must preserve the registered layout path or GUID-qualified resource reference");
 assert(source.includes("requiredNamedChildren: runtimeChildNames"), "runtime source contracts must carry required named children");
 assert(source.includes("confirm Count/Selection/Scroll/List and row NameText names"), "source-backed connected lists must require named-child verification");
 assert(source.includes("sourceChildVerificationRequired:"), "Workbench plans must summarize source-child verification requirements");

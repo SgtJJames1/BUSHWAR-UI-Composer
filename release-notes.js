@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.25",
+  version: "0.10.26",
   published: "13 August 2026",
-  title: "Composer Core library manifest",
-  summary: "WCA now exposes the companion BUSHWAR UI Composer Core layouts as a separate, contract-aware Reforger catalog category while keeping the blank workspace startup.",
+  title: "Runtime-backed Core UI parity",
+  summary: "WCA now previews the registered BUSHWAR Core admin panel and player row with the same named-child/runtime contracts used by the validation addon, while empty player data stays empty.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -69,6 +69,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The landing page offers direct access to the template library while keeping base scenes and templates as deliberate choices.",
     "The companion BUSHWAR-UIComposer-Core addon now has a matching website manifest for the admin panel and connected-player row layout resources.",
     "Core catalog layers preserve their addon identity, required named children, and runtime contract declarations in the Workbench handoff instead of treating them as generic visual references.",
-    "The Reforger database filter separates BUSHWAR Core resources from vanilla path references; Core layouts still require fresh Workbench registration and metadata generation."
+    "The Reforger database filter separates BUSHWAR Core resources from vanilla path references; Core layouts still require fresh Workbench registration and metadata generation.",
+    "Selecting a Core admin panel or player row now attaches its real layout path, Core addon identity, named children, row layout, binding, and callback metadata to the Workbench handoff.",
+    "The Core admin panel preview mirrors its native title, refresh control, count, selection label, and zero-or-real-player list instead of using the generic reference-card mock.",
+    "The disposable validation controller now consumes the registered Core layout GUIDs and declares the Core addon dependency, exercising the same resource path the website exports."
   ]
 };

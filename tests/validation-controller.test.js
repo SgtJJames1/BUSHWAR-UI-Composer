@@ -21,6 +21,8 @@ assert(contextActionPath, "validation addon context-action source must be presen
 const contextActionSource = fs.readFileSync(contextActionPath, "utf8");
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "validation controller must use compile-valid GetPlayers syntax");
+assert(source.includes('{92829430AE6EAD05}UI/layouts/BWUIC_CoreAdminPanel.layout'), "validation controller must use the registered BUSHWAR Core admin layout GUID");
+assert(source.includes('{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout'), "validation controller must use the registered BUSHWAR Core row layout GUID");
 assert(!source.includes("GetPlayers(out"), "validation controller must not emit the API metadata out keyword");
 assert(source.includes('GetPlayerName(playerId)'), "validation controller must resolve each returned player ID");
 assert(source.includes("if (playerName.IsEmpty())"), "validation controller must filter empty player names");

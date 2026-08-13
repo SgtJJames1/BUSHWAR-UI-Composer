@@ -108,6 +108,20 @@
         layer.reforgerVisual = reforgerVisualFor(source);
       }
     }
+    const coreSource = layer.resourcePath && window.BUSHWAR_REFORGER_CORE_LIBRARY?.entries?.find(entry => entry.path === layer.resourcePath || entry.resourceReference === layer.resourcePath);
+    if (coreSource) {
+      layer.coreLibraryId = coreSource.coreLibraryId || window.BUSHWAR_REFORGER_CORE_LIBRARY.projectId;
+      layer.coreLibraryEntryId = coreSource.id;
+      layer.reforgerVisual = coreSource.visual || layer.reforgerVisual;
+      layer.nativeTree = coreSource.nativeTree || layer.nativeTree;
+      layer.rowLayoutPath = coreSource.rowLayoutPath || layer.rowLayoutPath;
+      layer.requiredChildren = layer.requiredChildren || (coreSource.requiredChildren ? clone(coreSource.requiredChildren) : undefined);
+      layer.runtimeContracts = layer.runtimeContracts || (coreSource.runtimeContracts ? clone(coreSource.runtimeContracts) : undefined);
+      if (!layer.binding && coreSource.defaultBinding) layer.binding = coreSource.defaultBinding;
+      if (!layer.functionId && coreSource.defaultFunction) layer.functionId = coreSource.defaultFunction;
+      if (!layer.functionTargetWidgetName && coreSource.defaultFunctionTarget) layer.functionTargetWidgetName = coreSource.defaultFunctionTarget;
+      if (!layer.runtimeValueWidgetName && coreSource.runtimeValueWidgetName) layer.runtimeValueWidgetName = coreSource.runtimeValueWidgetName;
+    }
     return layer;
   }
 
@@ -464,7 +478,15 @@
 
   function renderLayerContent(layer, element) {
     const text = escapeHtml(layer.text);
+    if (layer.coreLibraryEntryId === "core.admin-panel") {
+      renderReforgerReference(layer, element, text);
+      return;
+    }
     if (sourceBackedLayer(layer) && !["table", "player"].includes(layer.type)) {
+      renderReforgerReference(layer, element, text);
+      return;
+    }
+    if (layer.coreLibraryEntryId === "core.player-row") {
       renderReforgerReference(layer, element, text);
       return;
     }
@@ -515,6 +537,7 @@
   }
 
   function reforgerVisualFor(item) {
+    if (item.visual) return item.visual;
     const category = item.category || item.catalogCategory || "";
     const value = `${item.name} ${category} ${item.kind || item.catalogKind || ""}`.toLowerCase();
     if (category.startsWith("Icons")) return value.includes("map") ? "map-marker" : "icon-atlas";
@@ -545,10 +568,23 @@
     const visual = layer.reforgerVisual || reforgerVisualFor(layer);
     element.classList.add(`reforger-${visual}`);
     const title = text || "Reforger reference";
+    const corePlayerTitle = layer.coreLibraryEntryId === "core.player-row"
+      ? escapeHtml(runtimeDisplayValue(layer) || "NO WORKBENCH PLAYER SNAPSHOT")
+      : title;
     const body = {
-      button: `<span class="rr-button">${title}<i>›</i></span>`, checkbox: `<span class="rr-check checked">✓</span><span class="rr-label">${title}</span>`, slider: `<span class="rr-label">${title}</span><span class="rr-slider"><i></i></span>`, progress: `<span class="rr-label">${title}</span><span class="rr-progress"><i></i></span>`, selector: `<span class="rr-select">${title}<b>⌄</b></span>`, input: `<span class="rr-input"><b>${title}</b><i>Search / enter value</i></span>`, tabs: `<span class="rr-tabs"><b>${title}</b><i>DETAILS</i><i>OPTIONS</i></span>`, list: `<span class="rr-list"><b>${title}</b><i></i><i></i><i></i></span>`, "vehicle-hud": `<span class="rr-gauge">62</span><span class="rr-vehicle"><b>${title}</b><i>GEAR 3 · 48 km/h</i><em></em></span>`, map: `<span class="rr-map"><i>⌖</i><b>${title}</b><em></em></span>`, chat: `<span class="rr-chat"><b>${title}</b><i>PLAYER: Ready on your mark.</i><i>GM: Entity placed.</i></span>`, action: `<span class="rr-action"><b>F</b><span>${title}<i>Hold to interact</i></span></span>`, "gm-hud": `<span class="rr-gm"><b>◆</b><span>${title}<i>GAME MASTER / EDITOR</i></span><em>⌘</em></span>`, "icon-atlas": `<span class="rr-atlas"><i>⌁</i><i>⚙</i><i>◇</i><i>⌖</i><i>◉</i><i>▣</i></span>`, "map-marker": `<span class="rr-marker">⌖</span><span class="rr-label">${title}</span>`, text: `<span class="rr-text">${title}</span>`, panel: `<span class="rr-panel"><b>${title}</b><i>Workbench layout reference</i></span>`
+      button: `<span class="rr-button">${title}<i>›</i></span>`, checkbox: `<span class="rr-check checked">✓</span><span class="rr-label">${title}</span>`, slider: `<span class="rr-label">${title}</span><span class="rr-slider"><i></i></span>`, progress: `<span class="rr-label">${title}</span><span class="rr-progress"><i></i></span>`, selector: `<span class="rr-select">${title}<b>⌄</b></span>`, input: `<span class="rr-input"><b>${title}</b><i>Search / enter value</i></span>`, tabs: `<span class="rr-tabs"><b>${title}</b><i>DETAILS</i><i>OPTIONS</i></span>`, list: `<span class="rr-list"><b>${title}</b><i></i><i></i><i></i></span>`, "vehicle-hud": `<span class="rr-gauge">62</span><span class="rr-vehicle"><b>${title}</b><i>GEAR 3 · 48 km/h</i><em></em></span>`, map: `<span class="rr-map"><i>⌖</i><b>${title}</b><em></em></span>`, chat: `<span class="rr-chat"><b>${title}</b><i>PLAYER: Ready on your mark.</i><i>GM: Entity placed.</i></span>`, action: `<span class="rr-action"><b>F</b><span>${title}<i>Hold to interact</i></span></span>`, "gm-hud": `<span class="rr-gm"><b>◆</b><span>${title}<i>GAME MASTER / EDITOR</i></span><em>⌘</em></span>`, "icon-atlas": `<span class="rr-atlas"><i>⌁</i><i>⚙</i><i>◇</i><i>⌖</i><i>◉</i><i>▣</i></span>`, "map-marker": `<span class="rr-marker">⌖</span><span class="rr-label">${title}</span>`, "core-admin-panel": `<span class="rr-core-admin"><span class="rr-core-head"><b>${title}</b><button type="button" class="rr-core-refresh core-action" data-core-action="refresh">REFRESH</button><button type="button" class="rr-core-close" aria-label="Close">×</button></span><span class="rr-core-label">CONNECTED PLAYERS <b class="rr-core-count">0 CONNECTED</b></span><span class="rr-core-selection">SELECTED: NONE</span><span class="rr-core-list"></span></span>`, "core-player-row": `<button type="button" class="engine-scaffold-row rr-core-player-row"><span class="engine-row-name">${corePlayerTitle}</span></button>`, text: `<span class="rr-text">${title}</span>`, panel: `<span class="rr-panel"><b>${title}</b><i>Workbench layout reference</i></span>`
     }[visual] || `<span class="rr-panel"><b>${title}</b></span>`;
     element.innerHTML = `<div class="reforger-reference rf-${visual}" role="img" aria-label="${escapeHtml(title)} Reforger UI reference">${body}</div>`;
+    if (visual === "core-admin-panel") {
+      const players = enginePlayers();
+      const selected = selectedPreviewPlayer(layer);
+      const count = element.querySelector(".rr-core-count");
+      const selection = element.querySelector(".rr-core-selection");
+      const list = element.querySelector(".rr-core-list");
+      if (count) count.textContent = `${players.length} CONNECTED`;
+      if (selection) selection.textContent = `SELECTED: ${selected ? selected.name : "NONE"}`;
+      if (list) list.innerHTML = players.length ? players.map(player => `<button type="button" class="engine-scaffold-row rr-core-player-row" data-player-id="${escapeHtml(player.id)}"><span class="engine-row-name">${escapeHtml(player.name)}</span></button>`).join("") : `<span class="engine-scaffold-empty">No imported Workbench players. Runtime opens with zero rows until PlayerManager returns a valid connected player.</span>`;
+    }
   }
 
   function renderLayers() {
@@ -821,10 +857,12 @@
       binding: layer.binding || "",
       bindingContract: binding || undefined,
       coreLibraryId: layer.coreLibraryId || undefined,
+      coreLibraryEntryId: layer.coreLibraryEntryId || undefined,
       runtimeContracts: layer.runtimeContracts || undefined,
       functionId: layer.functionId || "",
       functionContract: callback || undefined,
       functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
+      rowLayoutPath: layer.rowLayoutPath || undefined,
       recipeCallbacks: layer.recipeCallbacks || [],
       runtimeContract: binding || callback || runtimeChildNames || layer.runtimeContracts?.length ? {
         dataSource: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "client UI event",
@@ -847,6 +885,7 @@
         recipeId: layer.engineRecipeId || undefined,
         workbenchRecipe: layer.workbenchRecipe || undefined,
         nativeTree: layer.nativeTree || undefined,
+        rowLayoutPath: layer.rowLayoutPath || undefined,
         recipeCallbacks: layer.recipeCallbacks || undefined,
         functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
         sourceChildVerification
@@ -924,7 +963,7 @@
       offsetRight: -(left + Math.round(layer.w)),
       offsetBottom: -(top + Math.round(layer.h))
     };
-    if (layer.type === "table" && widget.binding === "player.list.connected") {
+    if (widget.binding === "player.list.connected") {
       return {
         type: "Frame",
         name: widget.name,
@@ -998,7 +1037,8 @@
     let needsWidgetClickHook = false;
     let needsReviewHook = false;
     widgets.filter(widget => widget.functionId && widget.functionId !== "player.row.select").forEach(widget => {
-      callbackRoutes.push(`\t\tif (IsWidgetNamedOrChild(w, "${widget.name}"))`);
+      const callbackTarget = widget.functionTargetWidgetName?.trim() || widget.name;
+      callbackRoutes.push(`\t\tif (IsWidgetNamedOrChild(w, "${callbackTarget}"))`);
       callbackRoutes.push("\t\t{");
       let directReturn = false;
       if (widget.functionId === "ui.layout.close") callbackRoutes.push("\t\t\tClose();");
@@ -1483,16 +1523,19 @@
       functionId: widget.functionId || undefined,
       functionContract: widget.functionContract,
       functionTargetWidgetName: widget.functionTargetWidgetName,
+      coreLibraryId: widget.coreLibraryId,
+      coreLibraryEntryId: widget.coreLibraryEntryId,
       sourceBacked: !!widget.source,
       sourcePath: widget.source,
       sourceChildVerification: widget.sourceChildVerification,
       widgetName: widget.name,
       controllerClass: `BWUIC_${classStem}Controller`,
       layoutPath: `UI/layouts/${layoutName}.layout`,
-      rowLayoutPath: widget.binding === "player.list.connected" ? `UI/layouts/${layoutName}-player-row.layout` : undefined,
+      rowLayoutPath: widget.binding === "player.list.connected" ? (widget.rowLayoutPath || `UI/layouts/${layoutName}-player-row.layout`) : undefined,
       rowLayoutCreateRequest: widget.binding === "player.list.connected" ? {
         name: `${layoutName}-player-row`,
         description: "Native row scaffold for a connected-player callback. Keep the playerId in controller state, not in display text.",
+        sourcePath: widget.rowLayoutPath || undefined,
         root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "Player", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 6 12 6" } }] }
       } : undefined,
       requiredWidgetNames: widget.requiredNamedChildren,
@@ -1873,12 +1916,19 @@
        button.className = "catalog-entry";
        button.title = `Add ${nativeLabel} reference for ${item.path}`;
        button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(nativeLabel)}</small><small>${escapeHtml(item.path)}</small></span>`;
-       button.addEventListener("click", () => addLayer("reforger", {
-         name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.path,
+       button.addEventListener("click", () => addLayer(item.id === "core.admin-panel" ? "table" : item.id === "core.player-row" ? "player" : "reforger", {
+         name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.resourceReference || item.path,
          catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview,
          catalogNativeWidgetClass: item.nativeWidgetClass || "LayoutResource", catalogNativeChildHint: item.nativeChildHint || "",
          catalogWorkbenchAction: item.workbenchAction || "Use this source in Workbench Layout Editor", reforgerVisual: visual,
          coreLibraryId: item.coreLibraryId || undefined,
+         coreLibraryEntryId: item.id || undefined,
+         rowLayoutPath: item.rowLayoutPath || undefined,
+         nativeTree: item.nativeTree || undefined,
+         binding: item.defaultBinding || undefined,
+         functionId: item.defaultFunction || undefined,
+         functionTargetWidgetName: item.defaultFunctionTarget || undefined,
+         runtimeValueWidgetName: item.runtimeValueWidgetName || undefined,
          requiredChildren: item.requiredChildren ? clone(item.requiredChildren) : undefined,
          runtimeContracts: item.runtimeContracts ? clone(item.runtimeContracts) : undefined,
          ...reforgerBoundsFor(visual)
@@ -2372,7 +2422,7 @@
     const entry = layer && recommendedSourceFor(layer);
     if (!layer || !entry) return;
     checkpoint();
-    layer.resourcePath = entry.path;
+    layer.resourcePath = entry.resourceReference || entry.path;
     layer.catalogName = entry.name;
     layer.catalogCategory = entry.category;
     layer.catalogKind = entry.kind;
@@ -2381,6 +2431,16 @@
     layer.catalogNativeChildHint = entry.nativeChildHint || "";
     layer.catalogWorkbenchAction = entry.workbenchAction || "Drag this registered layout prefab into the target layout";
     layer.reforgerVisual = reforgerVisualFor({ ...layer, name: entry.name, catalogCategory: entry.category, catalogKind: entry.kind });
+    layer.coreLibraryId = entry.coreLibraryId || undefined;
+    layer.coreLibraryEntryId = entry.id || undefined;
+    layer.rowLayoutPath = entry.rowLayoutPath || undefined;
+    layer.nativeTree = entry.nativeTree || undefined;
+    if (!layer.binding && entry.defaultBinding) layer.binding = entry.defaultBinding;
+    if (!layer.functionId && entry.defaultFunction) layer.functionId = entry.defaultFunction;
+    if (!layer.functionTargetWidgetName && entry.defaultFunctionTarget) layer.functionTargetWidgetName = entry.defaultFunctionTarget;
+    if (!layer.runtimeValueWidgetName && entry.runtimeValueWidgetName) layer.runtimeValueWidgetName = entry.runtimeValueWidgetName;
+    if (entry.requiredChildren) layer.requiredChildren = clone(entry.requiredChildren);
+    if (entry.runtimeContracts) layer.runtimeContracts = clone(entry.runtimeContracts);
     render();
     setStatus(`Source-backed layer: ${entry.name}. Workbench remains the final visual authority.`);
   });
