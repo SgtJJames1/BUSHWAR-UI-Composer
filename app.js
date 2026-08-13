@@ -86,7 +86,7 @@
     const layerOverrides = { ...overrides };
     const useNativeSource = layerOverrides.useNativeSource !== false;
     delete layerOverrides.useNativeSource;
-    const layer = { id: uid(), type, opacity: 1, visible: true, locked: false, image: "", binding: "", bindingMode: "engine", functionId: "", ...clone(defaults[type]), ...layerOverrides };
+    const layer = { id: uid(), type, opacity: 1, visible: true, locked: false, image: "", binding: "", bindingMode: "engine", functionId: "", functionTargetWidgetName: "", ...clone(defaults[type]), ...layerOverrides };
     // The browser cannot load Bohemia's packaged assets, so a generic CSS
     // mock is only a design approximation. Prefer the registered vanilla/WLib
     // source for palette/template layers so the Workbench handoff has the same
@@ -116,7 +116,7 @@
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
     clean.engineContext = { ...freshState().engineContext, ...(value.engineContext || {}) };
     clean.engineContext.players = normalizeEnginePlayers(clean.engineContext.players);
-    clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", functionId: "", ...layer })) : [];
+    clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", functionId: "", functionTargetWidgetName: "", ...layer })) : [];
     return clean;
   }
 
@@ -624,6 +624,10 @@
       const callback = functionFor(layer);
       $("#functionContract").textContent = callback ? `${callback.callback} · ${callback.authority}. ${callback.runtime}${callback.implementation ? ` Implementation: ${callback.implementation.status} via ${callback.implementation.method}.` : ""}` : "Choose a callback contract to tell Workbench what this widget should do when used.";
     }
+    const functionTargetControls = $("#functionTargetControls");
+    const selectedCallback = functionFor(layer);
+    functionTargetControls.hidden = !selectedCallback?.requiresTarget;
+    if (!functionTargetControls.hidden) $("#functionTargetWidgetName").value = layer.functionTargetWidgetName || "";
     const runtimeValueControls = $("#runtimeValueControls");
     runtimeValueControls.hidden = !layer.binding || layer.binding === "player.list.connected";
     if (!runtimeValueControls.hidden) $("#runtimeValueWidgetName").value = layer.runtimeValueWidgetName || "";
@@ -814,6 +818,7 @@
       bindingContract: binding || undefined,
       functionId: layer.functionId || "",
       functionContract: callback || undefined,
+      functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
       recipeCallbacks: layer.recipeCallbacks || [],
       runtimeContract: binding || callback || runtimeChildNames ? {
         dataSource: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "client UI event",
@@ -835,6 +840,7 @@
         workbenchRecipe: layer.workbenchRecipe || undefined,
         nativeTree: layer.nativeTree || undefined,
         recipeCallbacks: layer.recipeCallbacks || undefined,
+        functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
         sourceChildVerification
       } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
@@ -991,6 +997,10 @@
         if (connected) callbackRoutes.push("\t\t\tRefreshConnectedPlayers();");
         if (scalarBindings.length) callbackRoutes.push("\t\t\tRefreshRuntimeBindings();");
       }
+      else if (widget.functionId === "ui.widget.toggle-visibility") {
+        const targetName = widget.functionTargetWidgetName?.trim() || widget.name;
+        callbackRoutes.push(`\t\t\tToggleWidgetVisibility(${JSON.stringify(targetName)}, w);`);
+      }
       else if (widget.functionId === "player.list.refresh") { callbackRoutes.push("\t\t\treturn OnReviewRequiredCallback(\"player.list.refresh\", w);"); needsReviewHook = true; directReturn = true; }
       else if (widget.functionId === "player.row.teleport") callbackRoutes.push("\t\t\tRequestTeleportSelectedPlayer();");
       else if (widget.functionId === "ui.widget.click") { callbackRoutes.push("\t\t\treturn OnWidgetClickContract(w, x, y, button);"); needsWidgetClickHook = true; directReturn = true; }
@@ -1064,6 +1074,15 @@
       "\t\t\tcurrent = current.GetParent();",
       "\t\t}",
       "\t\treturn false;",
+      "\t}",
+      "",
+      "\tprotected void ToggleWidgetVisibility(string targetName, Widget fallbackWidget)",
+      "\t{",
+      "\t\tWidget target = m_wRoot.FindAnyWidget(targetName);",
+      "\t\tif (!target)",
+      "\t\t\ttarget = fallbackWidget;",
+      "\t\tif (target)",
+      "\t\t\ttarget.SetVisible(!target.IsVisible());",
       "\t}",
       ""
     ];
@@ -1245,7 +1264,7 @@
           const valueWidgetName = widget.runtimeContract?.valueWidgetName || (widget.layerType === "player" ? `${widget.name}Text` : widget.name);
           if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
           if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerCount.ToString());`;
-          return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance() ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
+          return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance(true) ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
         }),
         "\t}",
         ""
@@ -1356,6 +1375,7 @@
       contract: widget.bindingContract,
       functionId: widget.functionId || undefined,
       functionContract: widget.functionContract,
+      functionTargetWidgetName: widget.functionTargetWidgetName,
       sourceBacked: !!widget.source,
       sourcePath: widget.source,
       sourceChildVerification: widget.sourceChildVerification,
@@ -1968,6 +1988,19 @@
       setStatus(`${prefix} · the exported controller will create/delete the registered layout in WR`);
       return true;
     }
+    if (layer.functionId === "ui.widget.toggle-visibility") {
+      const targetName = layer.functionTargetWidgetName?.trim();
+      const target = targetName ? state.layers.find(item => item.name === targetName) : layer;
+      if (!target) {
+        setStatus(`${prefix} · target widget '${targetName}' was not found in this design`);
+        return true;
+      }
+      checkpoint();
+      target.visible = !target.visible;
+      render();
+      setStatus(`${prefix} · browser preview toggled ${target.name}; Workbench will toggle the named widget at runtime`);
+      return true;
+    }
     if (layer.functionId === "ui.widget.click" || layer.functionId === "gm.context-action.perform") {
       setStatus(`${prefix} · the browser recorded the contract; the generated controller owns the WR event`);
       return true;
@@ -2120,6 +2153,14 @@
     render();
     const callback = functionFor(layer);
     setStatus(callback ? "Engine callback assigned: " + callback.label : "Engine callback removed; layer is visual-only");
+  });
+  $("#functionTargetWidgetName").addEventListener("change", event => {
+    const layer = selectedLayer();
+    if (!layer) return;
+    checkpoint();
+    layer.functionTargetWidgetName = event.target.value.trim();
+    render();
+    setStatus(layer.functionTargetWidgetName ? `Action target set to ${layer.functionTargetWidgetName}` : "Action target cleared; clicked widget will be used");
   });
   $("#runtimeValueWidgetName").addEventListener("change", event => {
     const layer = selectedLayer();

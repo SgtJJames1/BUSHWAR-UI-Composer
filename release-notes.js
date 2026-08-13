@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.18",
+  version: "0.10.19",
   published: "13 August 2026",
-  title: "Workbench offset geometry handoff repair",
-  summary: "Workbench exports now describe the supported Offset* geometry explicitly, preventing legacy Position/Size scaffolds from collapsing the admin panel into a cramped top-left cluster.",
+  title: "Concrete engine actions and stricter runtime contracts",
+  summary: "The Composer now generates a real widget-visibility action, passes the GM editor API argument correctly, and exposes exact target widget names in the handoff.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -55,6 +55,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Any source-backed runtime binding now carries a manual child-name verification gate, and scalar bindings can override the exact runtime TextWidget child name in the inspector.",
     "The schema-3 runtime scaffold preserves layer type, widget properties, and runtime contracts before controller generation; verified child overrides are no longer dropped from the generated EnforceScript.",
     "Pixel-authored layout slots now export OffsetLeft/Top/Right/Bottom rectangles, matching Workbench's anchored FrameWidgetSlot form and preserving the requested 24 px / 360 px GM panel bounds.",
-    "Native Reforger recipes add proven info-panel, status, progress, timer, icon-overlay, and GM connected-player trees with named child contracts; applying one creates editable layers plus the callback metadata used by the Workbench handoff."
+    "Native Reforger recipes add proven info-panel, status, progress, timer, icon-overlay, and GM connected-player trees with named child contracts; applying one creates editable layers plus the callback metadata used by the Workbench handoff.",
+    "The GM editor binding now emits SCR_EditorManagerEntity.IsOpenedInstance(true), matching the engine contract's includeLimited parameter.",
+    "Toggle widget visibility is a generated client-local action: choose an exact Workbench widget name or leave the target blank to toggle the clicked widget, with the same behavior represented in browser preview."
   ]
 };

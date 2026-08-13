@@ -70,7 +70,7 @@
       targetKinds: ["text", "badge"],
       updateEvents: ["editor opened", "editor closed"],
       authority: "client-read",
-      runtime: "Hide GM-only widgets when the local editor is closed or limited.",
+      runtime: "Hide GM-only widgets when the local editor is closed or limited; generated source calls IsOpenedInstance(true) to include the engine's limited-editor argument.",
       sourceOfTruth: "live SCR_EditorManagerEntity",
       emptyValuePolicy: "unknown-state",
       previewPolicy: "snapshot-only",

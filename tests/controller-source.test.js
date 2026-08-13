@@ -21,7 +21,9 @@ const source = sandbox.controllerSourceFor("TestLayout", "TestLayout", [
   },
   { name: "PlayerCount", binding: "player.count", functionId: "engine.context.refresh", runtimeContract: { valueWidgetName: "CountText" } },
   { name: "SelectedPlayer", layerType: "player", binding: "player.name" },
-  { name: "Refresh", functionId: "engine.context.refresh" }
+  { name: "GmState", layerType: "text", binding: "editor.gm.open" },
+  { name: "Refresh", functionId: "engine.context.refresh" },
+  { name: "ToggleDetails", functionId: "ui.widget.toggle-visibility", functionTargetWidgetName: "DetailsPanel" }
 ]);
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "generated source must use compile-valid GetPlayers call syntax");
@@ -33,6 +35,9 @@ assert(source.includes('FindAnyWidget("SelectedPlayerText")'), "player.name on a
 assert(source.includes('FindAnyWidget("CountText")'), "scalar runtime child override must flow into generated controller source");
 assert(!source.includes('FindAnyWidget("SelectedPlayer"))'), "player.name must not cast the Button root as a TextWidget");
 assert(source.includes("m_iSelectedPlayerId >= 0"), "player.name must read the selected PlayerManager ID when one is selected");
+assert(source.includes("SCR_EditorManagerEntity.IsOpenedInstance(true)"), "GM editor binding must pass the includeLimited argument required by the engine API");
+assert(source.includes('ToggleWidgetVisibility("DetailsPanel", w);'), "targeted visibility actions must carry the exact Workbench widget name into generated source");
+assert(source.includes("target.SetVisible(!target.IsVisible());"), "visibility action must generate a concrete native widget operation");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
 assert(source.includes("SetReadableFont(m_wRoot, \"NameText\""), "generated controller must carry the Composer font contract into the native row");

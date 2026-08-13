@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-native-recipes">
+    <link rel="stylesheet" href="styles.css?v=20260813-runtime-actions">
 </head>
 <body>
   <header class="topbar">
@@ -197,6 +197,10 @@
             <div class="field"><label for="functionSelect">Engine callback / action</label><select id="functionSelect"></select></div>
             <p id="functionContract" class="hint"></p>
           </div>
+          <div id="functionTargetControls" hidden>
+            <div class="field"><label for="functionTargetWidgetName">Action target widget name</label><input id="functionTargetWidgetName" type="text" placeholder="Blank = clicked widget"></div>
+            <p class="hint">For targetable engine actions, enter the exact named widget from Workbench Layout Editor. The target name travels into the generated controller.</p>
+          </div>
         </div>
       </section>
 
@@ -268,12 +272,12 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-native-recipes"></script>
-  <script src="reforger-catalog.js?v=20260813-native-recipes"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-native-recipes"></script>
-  <script src="reforger-bindings.js?v=20260813-native-recipes"></script>
-  <script src="reforger-functions.js?v=20260813-native-recipes"></script>
-  <script src="reforger-recipes.js?v=20260813-native-recipes"></script>
-  <script src="app.js?v=20260813-native-recipes"></script>
+  <script src="release-notes.js?v=20260813-runtime-actions"></script>
+  <script src="reforger-catalog.js?v=20260813-runtime-actions"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-runtime-actions"></script>
+  <script src="reforger-bindings.js?v=20260813-runtime-actions"></script>
+  <script src="reforger-functions.js?v=20260813-runtime-actions"></script>
+  <script src="reforger-recipes.js?v=20260813-runtime-actions"></script>
+  <script src="app.js?v=20260813-runtime-actions"></script>
 </body>
 </html>

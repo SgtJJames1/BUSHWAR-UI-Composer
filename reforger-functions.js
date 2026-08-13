@@ -32,6 +32,18 @@
       implementation: { status: "generated-route", method: "OnUpdate", notes: "Connected-player scaffolds compare a PlayerManager signature every 30 updates." }
     },
     {
+      id: "ui.widget.toggle-visibility",
+      label: "Toggle widget visibility",
+      category: "UI actions",
+      kind: "engine-api",
+      targetKinds: ["button", "panel", "window", "dialog", "context", "prompt", "toast", "toolbar", "tabs", "categorybar", "text", "badge", "icon", "image", "table", "input", "toggle"],
+      callback: "Widget.SetVisible(!Widget.IsVisible())",
+      authority: "client-local",
+      runtime: "Toggle the named target widget in the registered layout. Leave the target blank to toggle the clicked widget itself.",
+      requiresTarget: true,
+      implementation: { status: "generated", method: "ToggleWidgetVisibility", notes: "The controller resolves the target by its exact Workbench widget name and never changes server/game state." }
+    },
+    {
       id: "ui.layout.open",
       label: "Open native layout",
       category: "UI actions",
