@@ -3,6 +3,7 @@
 
   const storageKey = "bushwar-ui-composer-by-sgt-james";
   const legacyStorageKey = "bushwar-ui-composer";
+  const previousSessionStorageKey = "bushwar-ui-composer-previous-session-v1";
   const templatesStorageKey = "bushwar-ui-composer-user-templates-v1";
   const updateSeenStorageKey = "bushwar-ui-composer-last-seen-release";
   const release = window.BUSHWAR_COMPOSER_RELEASE || { version: "0.5.1", published: "", title: "Latest improvements", summary: "", changes: [] };
@@ -60,6 +61,7 @@
   let interaction = null;
   let preview = false;
   let userTemplates = [];
+  let persistedSession = null;
   // Browser-only selection state for engine-backed preview rows. It is never
   // exported as runtime authority; the generated controller re-reads the
   // PlayerManager ID when the real layout is opened in Reforger.
@@ -2053,10 +2055,44 @@
   }
 
   function loadPersisted() {
+    persistedSession = null;
     try {
       const saved = localStorage.getItem(storageKey) || localStorage.getItem(legacyStorageKey);
-      if (saved) state = normalizeState(JSON.parse(saved));
-    } catch { state = freshState(); }
+      const previous = localStorage.getItem(previousSessionStorageKey);
+      const savedState = saved ? normalizeState(JSON.parse(saved)) : null;
+      // Keep the last meaningful session available for an explicit restore,
+      // while normal boot remains a clean blank canvas. This avoids destroying
+      // a user's work merely because the landing page is blank.
+      if (savedState && hasMeaningfulDesign(savedState)) {
+        localStorage.setItem(previousSessionStorageKey, JSON.stringify(savedState));
+        persistedSession = savedState;
+      } else if (previous) {
+        const previousState = normalizeState(JSON.parse(previous));
+        if (hasMeaningfulDesign(previousState)) persistedSession = previousState;
+      }
+    } catch {
+      persistedSession = null;
+    }
+    state = freshState();
+  }
+
+  function hasMeaningfulDesign(design) {
+    if (!design) return false;
+    return Boolean(
+      (Array.isArray(design.layers) && design.layers.length) ||
+      design.canvas?.background ||
+      (design.canvas?.baseScene && design.canvas.baseScene !== "blank") ||
+      design.canvas?.backgroundName ||
+      (design.title && design.title !== "Untitled BUSHWAR UI")
+    );
+  }
+
+  function showLandingPage() {
+    const dialog = $("#landingDialog");
+    if (!dialog) return;
+    const restore = $("#landingRestoreBtn");
+    if (restore) restore.hidden = !persistedSession;
+    if (!dialog.open) dialog.showModal();
   }
 
   function renderReleaseNotice() {
@@ -2133,7 +2169,9 @@
       if (localStorage.getItem(updateSeenStorageKey) === release.version) return;
     } catch { /* If browser storage is unavailable, show the update for this visit. */ }
     dialog.dataset.autoNotice = "true";
-    window.setTimeout(() => { if (!dialog.open) dialog.showModal(); }, 180);
+    window.setTimeout(() => {
+      if (!dialog.open && !$("#landingDialog")?.open) dialog.showModal();
+    }, 180);
   }
 
   function markReleaseAsSeen() {
@@ -2400,6 +2438,31 @@
     if ($("#updateDialog").dataset.autoNotice === "true") markReleaseAsSeen();
     $("#updateDialog").dataset.autoNotice = "";
   });
+  $("#landingDialog").addEventListener("close", () => {
+    const choice = $("#landingDialog").returnValue;
+    if (choice === "restore" && persistedSession) {
+      checkpoint();
+      state = normalizeState(clone(persistedSession));
+      selectedId = null;
+      syncControls();
+      render();
+      setStatus("Previous session restored");
+    } else {
+      // Blank is the default and also the safe fallback if the dialog is
+      // dismissed with Escape or if a stored session is unavailable.
+      state = freshState();
+      selectedId = null;
+      syncControls();
+      render();
+      if (choice === "templates") {
+        $("#templatesSection")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setStatus("Blank workspace ready · choose a template or base scene");
+      } else {
+        setStatus("Blank workspace ready");
+      }
+    }
+    window.setTimeout(showReleaseNoticeIfNew, 80);
+  });
 
   window.addEventListener("keydown", event => {
     const editing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName);
@@ -2436,6 +2499,7 @@
   renderEngineRecipes();
   renderReforgerCatalog();
   updateUndoButtons();
-  if (!state.layers.length) applyTemplate("gm-admin"); else render();
+  render();
+  showLandingPage();
   showReleaseNoticeIfNew();
 })();

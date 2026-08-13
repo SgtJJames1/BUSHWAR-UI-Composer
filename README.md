@@ -12,6 +12,12 @@ Share that link in Discord, on a website, or in a workshop description. There
 is no installer, download, account, or Smart App Control prompt. Each visit
 loads the currently deployed version automatically.
 
+WCA opens on a blank 1920 × 1080 workspace by default. The landing dialog keeps
+the previous meaningful browser session available through **Restore previous
+session**, while **Browse templates** and the base-scene cards remain explicit
+choices. This prevents an old GM design from appearing as a new project's
+starting canvas without discarding the user's saved work.
+
 The browser app runs entirely on the user's device. Browser autosave and named
 templates stay in that user's browser profile, while exported `.bwui.json` and
 `.bwui-template.json` bundles are the shareable/portable files.

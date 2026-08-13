@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.23",
+  version: "0.10.24",
   published: "13 August 2026",
-  title: "Engine context export and callback-only handoff routes",
-  summary: "Composer actions now survive into the generated controller even without a data binding, and a concrete engine-context export action captures filtered PlayerManager data for browser preview.",
+  title: "Blank workspace landing page",
+  summary: "WCA now opens on a clean blank canvas by default, while preserving the previous meaningful session behind an explicit restore action.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -63,6 +63,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Pixel-authored Workbench layout slots now negate OffsetRight/OffsetBottom for point anchors; positive right/bottom values collapse a rectangle past the top-left origin.",
     "Engine context export generates a JsonApiStruct snapshot at $profile:BUSHWAR-UIComposer/runtime-context.json, filtering empty PlayerManager names before writing; import that file in the website to preview real engine evidence.",
     "Callback-only controls are now retained in schema-3 runtimeScaffolds, so actions such as visibility, text, refresh, and context export cannot disappear simply because the layer has no data binding.",
-    "The function catalogue no longer publishes duplicate Set text entries."
+    "The function catalogue no longer publishes duplicate Set text entries.",
+    "WCA now boots to a blank 1920 × 1080 workspace instead of automatically loading the GM template.",
+    "A landing dialog makes restoring the previous meaningful session explicit, so saved work is preserved without making the default canvas non-blank.",
+    "The landing page offers direct access to the template library while keeping base scenes and templates as deliberate choices."
   ]
 };

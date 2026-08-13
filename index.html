@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-context-export">
+    <link rel="stylesheet" href="styles.css?v=20260813-blank-landing">
 </head>
 <body>
   <header class="topbar">
@@ -61,7 +61,7 @@
         <button id="clearBackgroundBtn" class="wide ghost">Clear temporary screenshot</button>
       </section>
 
-      <section>
+      <section id="templatesSection">
         <div class="section-title">Templates</div>
         <div class="template-grid">
           <button data-template="gm-scene">Vanilla GM + admin overlay</button>
@@ -250,6 +250,18 @@
   <input id="templateInput" type="file" accept="application/json,.json,.bwui-template.json" hidden>
   <input id="engineContextInput" type="file" accept="application/json,.json" hidden>
   <input id="layerImageInput" type="file" accept="image/*" hidden>
+  <dialog id="landingDialog" class="template-dialog landing-dialog" aria-labelledby="landingTitle">
+    <form method="dialog">
+      <div class="update-heading"><span class="update-badge">NEW PROJECT</span><span class="update-version">WCA</span></div>
+      <h2 id="landingTitle">Blank workspace ready</h2>
+      <p>The Website Composer opens on an empty canvas so you can start from your own layout. Choose a base scene or template from the left panel when you are ready.</p>
+      <div class="landing-actions">
+        <button id="landingBlankBtn" class="accent" value="blank">Start blank</button>
+        <button id="landingRestoreBtn" value="restore" hidden>Restore previous session</button>
+        <button id="landingTemplatesBtn" value="templates">Browse templates</button>
+      </div>
+    </form>
+  </dialog>
   <dialog id="validationDialog" class="template-dialog validation-dialog">
     <form method="dialog"><h2>Workbench handoff check</h2><div id="validationReport"></div><div class="dialog-actions"><button class="accent" value="close">Close</button></div></form>
   </dialog>
@@ -272,12 +284,12 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-context-export"></script>
-  <script src="reforger-catalog.js?v=20260813-context-export"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-context-export"></script>
-  <script src="reforger-bindings.js?v=20260813-context-export"></script>
-  <script src="reforger-functions.js?v=20260813-context-export"></script>
-  <script src="reforger-recipes.js?v=20260813-context-export"></script>
-  <script src="app.js?v=20260813-context-export"></script>
+  <script src="release-notes.js?v=20260813-blank-landing"></script>
+  <script src="reforger-catalog.js?v=20260813-blank-landing"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-blank-landing"></script>
+  <script src="reforger-bindings.js?v=20260813-blank-landing"></script>
+  <script src="reforger-functions.js?v=20260813-blank-landing"></script>
+  <script src="reforger-recipes.js?v=20260813-blank-landing"></script>
+  <script src="app.js?v=20260813-blank-landing"></script>
 </body>
 </html>
