@@ -79,7 +79,7 @@
       canvas: { width: 1920, height: 1080, baseScene: "blank", baseSceneVisible: true, baseSceneOpacity: 1, background: "", backgroundName: "", backgroundOpacity: 0.45 },
       settings: { grid: true, snap: true, gridSize: 10 },
       handoff: { target: "Menu", layoutName: "BUSHWAR_ComposerLayout", layoutGuid: "", layoutPath: "" },
-      engineContext: { schema: 1, source: "none", capturedAt: "", engineVersion: "", editorOpen: null, players: [], note: "No Workbench context loaded; runtime data remains authoritative." },
+      engineContext: { schema: 1, source: "none", capturedAt: "", engineVersion: "", editorOpen: null, playerCount: null, playerCountKnown: false, players: [], note: "No Workbench context loaded; runtime data remains authoritative." },
       layers: []
     };
   }
@@ -138,6 +138,9 @@
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
     clean.engineContext = { ...freshState().engineContext, ...(value.engineContext || {}) };
     clean.engineContext.players = normalizeEnginePlayers(clean.engineContext.players);
+    const importedPlayerCount = clean.engineContext.playerCount;
+    clean.engineContext.playerCount = importedPlayerCount !== null && importedPlayerCount !== undefined && importedPlayerCount !== "" && Number.isInteger(Number(importedPlayerCount)) && Number(importedPlayerCount) >= 0 ? Number(importedPlayerCount) : null;
+    clean.engineContext.playerCountKnown = clean.engineContext.playerCountKnown === true || (clean.engineContext.playerCountKnown !== false && clean.engineContext.playerCount !== null);
     clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => hydrateCoreLayer({ binding: "", bindingMode: "engine", functionId: "", functionTargetWidgetName: "", ...layer })) : [];
     return clean;
   }
@@ -225,7 +228,7 @@
     const binding = bindingFor(layer);
     if (!binding) return layer.text;
     if (binding.id === "player.name") return selectedRuntimePlayer()?.name || (hasEngineContextSnapshot() ? "PLAYER UNAVAILABLE" : "NO WORKBENCH PLAYER SNAPSHOT");
-    if (binding.id === "player.count") return hasEngineContextSnapshot() ? String(enginePlayers().length) : "NO WORKBENCH PLAYER SNAPSHOT";
+    if (binding.id === "player.count") return hasEngineContextSnapshot() ? (hasEnginePlayerCount() ? String(enginePlayerCount()) : "ENGINE PLAYER COUNT UNKNOWN") : "NO WORKBENCH PLAYER SNAPSHOT";
     if (binding.id === "editor.gm.open") {
       if (typeof state.engineContext?.editorOpen !== "boolean") return "GM EDITOR STATE UNKNOWN";
       return state.engineContext.editorOpen ? "GM EDITOR OPEN" : "GM EDITOR CLOSED";
@@ -244,6 +247,15 @@
 
   function enginePlayers() {
     return normalizeEnginePlayers(state.engineContext?.players);
+  }
+
+  function enginePlayerCount() {
+    const value = state.engineContext?.playerCount;
+    return Number.isInteger(value) && value >= 0 ? value : enginePlayers().length;
+  }
+
+  function hasEnginePlayerCount() {
+    return hasEngineContextSnapshot() && state.engineContext?.playerCountKnown === true && Number.isInteger(state.engineContext?.playerCount) && state.engineContext.playerCount >= 0;
   }
 
   function hasEngineContextSnapshot() {
@@ -267,9 +279,12 @@
   function engineContextLabel() {
     const context = state.engineContext || {};
     if (!hasEngineContextSnapshot()) return "No Workbench snapshot loaded";
+    const count = hasEnginePlayerCount() ? enginePlayerCount() : null;
+    const validRows = enginePlayers().length;
+    const rowNote = ` · ${validRows} valid named row${validRows === 1 ? "" : "s"}`;
     const version = context.engineVersion ? ` · WR ${context.engineVersion}` : "";
     const editor = typeof context.editorOpen === "boolean" ? ` · GM editor ${context.editorOpen ? "open" : "closed"}` : "";
-    return `${enginePlayers().length} connected player${enginePlayers().length === 1 ? "" : "s"} imported${editor}${version}`;
+    return `${count === null ? "Engine player count unknown" : `${count} connected player${count === 1 ? "" : "s"}`} imported${rowNote}${editor}${version}`;
   }
 
   function isConnectedPlayersBinding(layer) {
@@ -617,7 +632,7 @@
       const count = element.querySelector(".rr-core-count");
       const selection = element.querySelector(".rr-core-selection");
       const list = element.querySelector(".rr-core-list");
-       if (count) count.textContent = hasEngineContextSnapshot() ? `${players.length} CONNECTED` : "ENGINE SNAPSHOT REQUIRED";
+       if (count) count.textContent = hasEngineContextSnapshot() ? (hasEnginePlayerCount() ? `${enginePlayerCount()} CONNECTED` : "ENGINE COUNT UNKNOWN") : "ENGINE SNAPSHOT REQUIRED";
       if (selection) selection.textContent = `SELECTED: ${selected ? selected.name : "NONE"}`;
        if (list) list.innerHTML = players.length ? players.map(player => `<button type="button" class="engine-scaffold-row rr-core-player-row" data-player-id="${escapeHtml(player.id)}"><span class="engine-row-name">${escapeHtml(player.name)}</span></button>`).join("") : `<span class="engine-scaffold-empty">${hasEngineContextSnapshot() ? "Workbench reports 0 valid connected players." : "No imported Workbench players. Runtime opens with zero rows until PlayerManager returns a valid connected player."}</span>`;
     }
@@ -938,7 +953,7 @@
         actualValuesOnly: binding ? true : undefined,
          preview: hasEngineContextSnapshot() ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values",
          snapshotLoaded: hasEngineContextSnapshot(),
-         playerCountKnown: hasEngineContextSnapshot(),
+         playerCountKnown: hasEngineContextSnapshot() && state.engineContext?.playerCountKnown === true && Number.isInteger(state.engineContext?.playerCount),
         sourceBacked: sourceBackedLayer(layer),
         sourcePath: source || undefined,
         coreLibraryId: layer.coreLibraryId || undefined,
@@ -1247,6 +1262,8 @@
       "\tstring capturedAt;",
       "\tstring engineVersion;",
       "\tbool editorOpen;",
+      "\tint playerCount;",
+      "\tbool playerCountKnown;",
       `\tref array<ref BWUIC_${classStem}RuntimePlayerSnapshot> players = {};`,
       "\tstring note;",
       "",
@@ -1257,6 +1274,8 @@
       "\t\tRegV(\"capturedAt\");",
       "\t\tRegV(\"engineVersion\");",
       "\t\tRegV(\"editorOpen\");",
+      "\t\tRegV(\"playerCount\");",
+      "\t\tRegV(\"playerCountKnown\");",
       "\t\tRegV(\"players\");",
       "\t\tRegV(\"note\");",
       "\t}",
@@ -1384,10 +1403,14 @@
         "\t\tsnapshot.capturedAt = \"runtime\";",
         "\t\tsnapshot.engineVersion = string.Empty;",
         "\t\tsnapshot.editorOpen = SCR_EditorManagerEntity.IsOpenedInstance(true);",
+        "\t\tsnapshot.playerCount = 0;",
+        "\t\tsnapshot.playerCountKnown = false;",
         "\t\tsnapshot.note = \"Captured by the generated Reforger controller; live PlayerManager remains authoritative.\";",
         "\t\tPlayerManager playerManager = GetGame().GetPlayerManager();",
         "\t\tif (playerManager)",
         "\t\t{",
+        "\t\t\tsnapshot.playerCount = playerManager.GetPlayerCount();",
+        "\t\t\tsnapshot.playerCountKnown = true;",
         "\t\t\tarray<int> playerIds = {};",
         "\t\t\tarray<int> capturedPlayerIds = {};",
         "\t\t\tplayerManager.GetPlayers(playerIds);",
@@ -1864,8 +1887,9 @@
         capturedAt: state.engineContext?.capturedAt || "",
          engineVersion: state.engineContext?.engineVersion || "",
          snapshotLoaded: hasEngineContextSnapshot(),
-         playerCountKnown: hasEngineContextSnapshot(),
-         playerCount: enginePlayers().length,
+          playerCountKnown: hasEnginePlayerCount(),
+          playerCount: hasEnginePlayerCount() ? enginePlayerCount() : null,
+         validNamedPlayerRows: enginePlayers().length,
         previewPlayers: enginePlayers().map(player => ({ id: player.id, name: player.name })),
         runtimeAuthoritative: true,
         previewPolicy: "snapshot-only",
@@ -1954,7 +1978,9 @@
         source: state.engineContext?.source || "none",
         capturedAt: state.engineContext?.capturedAt || "",
         engineVersion: state.engineContext?.engineVersion || "",
-        playerCount: enginePlayers().length,
+        playerCount: hasEnginePlayerCount() ? enginePlayerCount() : null,
+        playerCountKnown: hasEnginePlayerCount(),
+        validNamedPlayerRows: enginePlayers().length,
         previewPlayers: enginePlayers().map(player => ({ id: player.id, name: player.name })),
         runtimeAuthoritative: true
       },
@@ -2165,6 +2191,8 @@
       capturedAt: String(value.capturedAt || new Date().toISOString()),
       engineVersion: String(value.engineVersion || ""),
       editorOpen: typeof value.editorOpen === "boolean" ? value.editorOpen : null,
+      playerCount: value.playerCount !== null && value.playerCount !== undefined && value.playerCount !== "" && Number.isInteger(Number(value.playerCount)) && Number(value.playerCount) >= 0 ? Number(value.playerCount) : null,
+      playerCountKnown: value.playerCountKnown === true || (value.playerCountKnown !== false && value.playerCount !== null && value.playerCount !== undefined && value.playerCount !== ""),
       players,
       note: String(value.note || "Imported from a trusted Workbench runtime snapshot.")
     };

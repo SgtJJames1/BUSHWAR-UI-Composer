@@ -48,7 +48,11 @@ assert(adminMenuSource.includes("FindPlayerRowIndex(w)"), "admin-menu fixture mu
 assert(adminMenuSource.includes('w.GetName() == "m_wRefresh"'), "admin-menu fixture must expose a real refresh callback");
 assert(contextActionSource.includes("class BWUIC_ValidationRuntimeContextSnapshot : JsonApiStruct"), "validation addon must define a JSON runtime context snapshot");
 assert(contextActionSource.includes('RegV("players")'), "runtime context snapshot must register its player array");
+assert(contextActionSource.includes('RegV("playerCount")'), "runtime context snapshot must register the authoritative player count");
 assert(contextActionSource.includes("playerManager.GetPlayers(playerIds);"), "runtime context exporter must read the authoritative PlayerManager IDs");
+assert(contextActionSource.includes("snapshot.playerCount = playerManager.GetPlayerCount();"), "runtime context exporter must capture PlayerManager.GetPlayerCount separately from filtered rows");
+assert(contextActionSource.includes('RegV("playerCountKnown")'), "runtime context snapshot must register the player-count availability flag");
+assert(contextActionSource.includes("snapshot.playerCountKnown = true;"), "runtime context exporter must mark the scalar known only when PlayerManager is available");
 assert(contextActionSource.includes("if (playerName.IsEmpty())"), "runtime context exporter must filter empty player names");
 assert(contextActionSource.includes("array<int> capturedPlayerIds = {};"), "runtime context exporter must deduplicate PlayerManager IDs");
 assert(contextActionSource.includes("if (playerId <= 0)"), "runtime context exporter must reject non-positive PlayerManager IDs");

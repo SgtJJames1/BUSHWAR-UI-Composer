@@ -63,6 +63,10 @@ assert(!updateOnlySource.includes('OnReviewRequiredCallback("ui.widget.update"')
 assert(rootUpdateSource.includes("m_aWidgetUpdateTargets.Insert(updateTarget_0);"), "widget update must support a root widget target without losing the handler");
 assert(source.includes('PackToFile("$profile:BUSHWAR-UIComposer/runtime-context.json")'), "engine context export must write the documented local snapshot path");
 assert(source.includes('snapshot.players.Insert(player);'), "engine context export must append only filtered runtime player records");
+assert(source.includes('snapshot.playerCount = playerManager.GetPlayerCount();'), "engine context export must preserve the authoritative PlayerManager count separately from filtered rows");
+assert(source.includes('RegV(\"playerCount\");'), "generated context snapshots must register playerCount for JSON export");
+assert(source.includes('snapshot.playerCountKnown = true;'), "generated context snapshots must mark the PlayerManager scalar as known only when the manager is available");
+assert(source.includes('RegV(\"playerCountKnown\");'), "generated context snapshots must register playerCountKnown for JSON export");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
 assert(source.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "generated controllers must deduplicate PlayerManager IDs before creating rows");

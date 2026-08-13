@@ -27,7 +27,10 @@ assert.deepStrictEqual(players.map(player => ({ id: player.id, name: player.name
   { id: 5, name: "Second real player" }
 ], "browser context must keep only unique positive IDs with non-empty names");
 assert(source.includes('return state.engineContext?.source === "workbench"'), "browser must distinguish an imported zero-player snapshot from no snapshot");
-assert(source.includes('hasEngineContextSnapshot() ? String(enginePlayers().length) : "NO WORKBENCH PLAYER SNAPSHOT"'), "player count preview must show zero for an imported empty roster and unknown only without a snapshot");
+assert(source.includes('hasEngineContextSnapshot() ? (hasEnginePlayerCount() ? String(enginePlayerCount()) : "ENGINE PLAYER COUNT UNKNOWN") : "NO WORKBENCH PLAYER SNAPSHOT"'), "player count preview must use the imported authoritative engine count and remain unknown when the engine count is unavailable");
+assert(source.includes("playerCount: value.playerCount !== null && value.playerCount !== undefined"), "context import must preserve the optional authoritative PlayerManager count");
+assert(source.includes("playerCountKnown: value.playerCountKnown === true"), "context import must preserve whether PlayerManager supplied the scalar count");
+assert(source.includes("validNamedPlayerRows: enginePlayers().length"), "handoff metadata must distinguish the authoritative count from filtered named rows");
 assert(source.includes('const countLabel = hasEngineContextSnapshot() ? `${players.length} CONNECTED` : "ENGINE SNAPSHOT REQUIRED";'), "connected-player canvas preview must not claim zero without an imported engine snapshot");
 assert(source.includes('status.className = `engine-context-status${hasEngineContextSnapshot() ? " loaded" : " warn"}`'), "engine context status must report loaded even when the imported roster is empty");
 assert(source.includes('preview: hasEngineContextSnapshot() ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values"'), "Workbench plans must mark snapshot provenance independently of player count");
