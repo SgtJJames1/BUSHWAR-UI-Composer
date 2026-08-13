@@ -117,6 +117,7 @@
       layer.rowLayoutPath = coreSource.rowLayoutPath || layer.rowLayoutPath;
       layer.requiredChildren = layer.requiredChildren || (coreSource.requiredChildren ? clone(coreSource.requiredChildren) : undefined);
       layer.runtimeContracts = layer.runtimeContracts || (coreSource.runtimeContracts ? clone(coreSource.runtimeContracts) : undefined);
+      layer.functionHints = layer.functionHints || (coreSource.functionHints ? clone(coreSource.functionHints) : undefined);
       if (!layer.binding && coreSource.defaultBinding) layer.binding = coreSource.defaultBinding;
       if (!layer.functionId && coreSource.defaultFunction) layer.functionId = coreSource.defaultFunction;
       if (!layer.functionTargetWidgetName && coreSource.defaultFunctionTarget) layer.functionTargetWidgetName = coreSource.defaultFunctionTarget;
@@ -859,9 +860,11 @@
       coreLibraryId: layer.coreLibraryId || undefined,
       coreLibraryEntryId: layer.coreLibraryEntryId || undefined,
       runtimeContracts: layer.runtimeContracts || undefined,
+      functionHints: layer.functionHints || undefined,
       functionId: layer.functionId || "",
       functionContract: callback || undefined,
       functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
+      availableCallbacks: layer.functionHints || undefined,
       rowLayoutPath: layer.rowLayoutPath || undefined,
       recipeCallbacks: layer.recipeCallbacks || [],
       runtimeContract: binding || callback || runtimeChildNames || layer.runtimeContracts?.length ? {
@@ -1523,6 +1526,7 @@
       functionId: widget.functionId || undefined,
       functionContract: widget.functionContract,
       functionTargetWidgetName: widget.functionTargetWidgetName,
+      availableCallbacks: widget.availableCallbacks,
       coreLibraryId: widget.coreLibraryId,
       coreLibraryEntryId: widget.coreLibraryEntryId,
       sourceBacked: !!widget.source,
@@ -1913,9 +1917,10 @@
        const button = document.createElement("button");
        const visual = reforgerVisualFor(item);
        const nativeLabel = [item.nativeWidgetClass || "LayoutResource", item.nativeChildHint ? `child hint: ${item.nativeChildHint}` : ""].filter(Boolean).join(" · ");
+       const callbackHints = (item.functionHints || []).join(" · ");
        button.className = "catalog-entry";
        button.title = `Add ${nativeLabel} reference for ${item.path}`;
-       button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(nativeLabel)}</small><small>${escapeHtml(item.path)}</small></span>`;
+       button.innerHTML = `<span class="catalog-preview preview-${visual}">${escapeHtml(item.preview)}</span><span class="catalog-copy"><strong>${escapeHtml(item.name.replace(/\.layout$|\.edds$/i, ""))}</strong><small>${escapeHtml(nativeLabel)}</small><small>${escapeHtml(item.path)}</small>${callbackHints ? `<small class="catalog-actions">Actions: ${escapeHtml(callbackHints)}</small>` : ""}</span>`;
        button.addEventListener("click", () => addLayer(item.id === "core.admin-panel" ? "table" : item.id === "core.player-row" ? "player" : "reforger", {
          name: item.name.replace(/\.layout$|\.edds$/i, ""), text: item.name.replace(/\.layout$|\.edds$/i, ""), resourcePath: item.resourceReference || item.path,
          catalogCategory: item.category, catalogKind: item.kind, catalogPreview: item.preview,
@@ -1929,6 +1934,7 @@
          functionId: item.defaultFunction || undefined,
          functionTargetWidgetName: item.defaultFunctionTarget || undefined,
          runtimeValueWidgetName: item.runtimeValueWidgetName || undefined,
+         functionHints: item.functionHints ? clone(item.functionHints) : undefined,
          requiredChildren: item.requiredChildren ? clone(item.requiredChildren) : undefined,
          runtimeContracts: item.runtimeContracts ? clone(item.runtimeContracts) : undefined,
          ...reforgerBoundsFor(visual)
@@ -2439,6 +2445,7 @@
     if (!layer.functionId && entry.defaultFunction) layer.functionId = entry.defaultFunction;
     if (!layer.functionTargetWidgetName && entry.defaultFunctionTarget) layer.functionTargetWidgetName = entry.defaultFunctionTarget;
     if (!layer.runtimeValueWidgetName && entry.runtimeValueWidgetName) layer.runtimeValueWidgetName = entry.runtimeValueWidgetName;
+    layer.functionHints = entry.functionHints ? clone(entry.functionHints) : undefined;
     if (entry.requiredChildren) layer.requiredChildren = clone(entry.requiredChildren);
     if (entry.runtimeContracts) layer.runtimeContracts = clone(entry.runtimeContracts);
     render();

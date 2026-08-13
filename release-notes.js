@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.26",
+  version: "0.10.27",
   published: "13 August 2026",
-  title: "Runtime-backed Core UI parity",
-  summary: "WCA now previews the registered BUSHWAR Core admin panel and player row with the same named-child/runtime contracts used by the validation addon, while empty player data stays empty.",
+  title: "Callback-aware Reforger catalog",
+  summary: "WCA now shows the engine callback contracts supported by each catalog resource and preserves those hints in the Workbench handoff alongside the runtime-backed Core previews.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -72,6 +72,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The Reforger database filter separates BUSHWAR Core resources from vanilla path references; Core layouts still require fresh Workbench registration and metadata generation.",
     "Selecting a Core admin panel or player row now attaches its real layout path, Core addon identity, named children, row layout, binding, and callback metadata to the Workbench handoff.",
     "The Core admin panel preview mirrors its native title, refresh control, count, selection label, and zero-or-real-player list instead of using the generic reference-card mock.",
-    "The disposable validation controller now consumes the registered Core layout GUIDs and declares the Core addon dependency, exercising the same resource path the website exports."
+    "The disposable validation controller now consumes the registered Core layout GUIDs and declares the Core addon dependency, exercising the same resource path the website exports.",
+    "Reforger catalog cards now list callback hints such as OnClick, OnUpdate, SetText, layout open/close, and connected-player selection; these hints travel with the selected layer into the schema-3 Workbench plan.",
+    "The BUSHWAR Core manifest is version 0.1.1 and records the same callback hints for its registered admin panel and player-row resources."
   ]
 };

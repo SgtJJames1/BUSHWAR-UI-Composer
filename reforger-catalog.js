@@ -7,6 +7,17 @@
 (() => {
   "use strict";
   const entries = [];
+  const functionHintsFor = (name, kind) => {
+    if (kind === "Texture atlas") return [];
+    const value = name.toLowerCase();
+    const hints = [];
+    if (value.includes("button") || value.includes("navigation") || value.includes("paging") || value.includes("checkbox") || value.includes("toolbox")) hints.push("ui.widget.click");
+    if (value.includes("editbox") || value.includes("input")) hints.push("ui.widget.set-text");
+    if (value.includes("listbutton") || value.includes("gallery") || value.includes("playerlist")) hints.push("player.row.select");
+    if (value.includes("progress") || value.includes("slider") || value.includes("hud") || value.includes("menu")) hints.push("ui.widget.update");
+    if (value.includes("menu") || value.includes("dialog") || value.includes("tab")) hints.push("ui.layout.open", "ui.layout.close");
+    return [...new Set(hints)];
+  };
   const nativeClassFor = (name, kind) => {
     if (kind === "Texture atlas") return "ImageWidgetClass";
     const value = name.toLowerCase();
@@ -25,7 +36,8 @@
     // never masquerade as the prefab's authoritative root class.
     nativeWidgetClass: kind === "Layout prefab" ? "LayoutResource" : nativeClassFor(name, kind),
     nativeChildHint: kind === "Layout prefab" ? nativeClassFor(name, kind) : undefined,
-    workbenchAction: kind === "Texture atlas" ? "Use as ImageWidget source in Layout Editor" : "Drag this registered layout prefab into the target layout, then preserve its named children"
+    workbenchAction: kind === "Texture atlas" ? "Use as ImageWidget source in Layout Editor" : "Drag this registered layout prefab into the target layout, then preserve its named children",
+    functionHints: functionHintsFor(name, kind)
   });
   const layouts = (category, directory, names, preview = "▣") => names.forEach(name => entries.push(entryFor(category, "Layout prefab", name, `UI/layouts/${directory}/${name}.layout`, preview)));
   const refs = (category, kind, directory, names, preview) => names.forEach(name => entries.push(entryFor(category, kind, name, `${directory}/${name}`, preview)));

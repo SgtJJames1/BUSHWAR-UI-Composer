@@ -29,6 +29,7 @@
       defaultBinding: "player.list.connected",
       defaultFunction: "engine.context.refresh",
       defaultFunctionTarget: "m_wRefresh",
+      functionHints: ["ui.widget.click", "player.row.select", "engine.context.refresh", "ui.layout.close"],
       nativeTree: "Frame m_wRoot > Frame m_wAdminPanel > Text m_wAdminPanelTitle + Button m_wClose + Button m_wRefresh + Text m_wConnectedLabel + Text m_wPlayerCount + Text m_wPlayerSelection + ScrollLayout m_wPlayerScroll > VerticalLayout m_wPlayerList > Button Row > Text NameText",
       workbenchAction: "Drag this registered Core layout into the target layout and preserve the named children",
       requiredChildren: {
@@ -55,6 +56,7 @@
       coreLibraryId: "BUSHWAR-UIComposer-Core",
       defaultBinding: "player.name",
       runtimeValueWidgetName: "NameText",
+      functionHints: ["ui.widget.click", "player.row.select", "ui.widget.set-text"],
       nativeTree: "Button Row > Text NameText",
       workbenchAction: "Use as the rowLayoutPath for player.list.connected and preserve Row/NameText",
       requiredChildren: { rowRoot: "Row", rowName: "NameText" },
@@ -66,7 +68,7 @@
     schema: 1,
     projectId: "BUSHWAR-UIComposer-Core",
     projectGuid: "B3A5F08C0D504D96",
-    version: "0.1.0",
+    version: "0.1.1",
     entries,
     disclaimer: "BUSHWAR Core resources. Register the companion addon in Workbench; the website stores paths/contracts only and does not redistribute vanilla assets."
   };

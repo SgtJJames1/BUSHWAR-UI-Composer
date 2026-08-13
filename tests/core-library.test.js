@@ -20,11 +20,10 @@ for (const entry of website.entries) {
   assert(entry.path.endsWith(".layout"), `${entry.id} must point at a registered layout resource`);
   assert(/^[0-9A-F]{16}$/.test(entry.resourceGuid || ""), `${entry.id} must carry the Workbench-generated resource GUID`);
   assert(entry.resourceReference === `{${entry.resourceGuid}}${entry.path}`, `${entry.id} must carry a GUID-qualified resource reference`);
-  assert(/^[0-9A-F]{16}$/.test(entry.resourceGuid || ""), `${entry.id} must carry the Workbench-generated resource GUID`);
-  assert(entry.resourceReference === `{${entry.resourceGuid}}${entry.path}`, `${entry.id} must carry a GUID-qualified resource reference`);
   assert(entry.coreLibraryId === website.projectId, `${entry.id} must identify the companion Core addon`);
   assert(Object.keys(entry.requiredChildren || {}).length > 0, `${entry.id} must preserve named-child contracts`);
   assert(Array.isArray(entry.runtimeContracts) && entry.runtimeContracts.length > 0, `${entry.id} must declare runtime contracts`);
+  assert(Array.isArray(entry.functionHints) && entry.functionHints.length > 0, `${entry.id} must declare supported callback hints`);
   assert(fs.existsSync(path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", entry.path)), `${entry.path} must exist in the Core addon`);
 }
 
@@ -33,6 +32,8 @@ const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 assert(app.includes("BUSHWAR_REFORGER_CORE_LIBRARY"), "app must load the Core library manifest");
 assert(app.includes("coreLibraryId: layer.coreLibraryId"), "Workbench widgets must preserve the Core addon identity");
 assert(app.includes("declaredRuntimeContracts: layer.runtimeContracts"), "Workbench contracts must preserve Core runtime declarations");
+assert(app.includes("availableCallbacks: layer.functionHints"), "Workbench plans must preserve catalog callback hints");
+assert(app.includes("const callbackHints = (item.functionHints || []).join"), "catalog cards must expose callback hints");
 assert(index.includes("reforger-core-library.js"), "index must load the Core library manifest");
 assert(index.includes('value="BUSHWAR Core"'), "catalog must expose a separate BUSHWAR Core filter");
 assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultBinding === "player.list.connected", "Core admin panel must default to the authoritative connected-player binding");
