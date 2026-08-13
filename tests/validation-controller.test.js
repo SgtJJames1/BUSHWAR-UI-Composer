@@ -19,6 +19,7 @@ assert(source.includes('GetPlayerName(playerId)'), "validation controller must r
 assert(source.includes("if (playerName.IsEmpty())"), "validation controller must filter empty player names");
 assert(source.includes("IsWidgetNamedOrChild"), "validation controller must support nested WLib callback targets");
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wClose")'), "close callback must use the nested-widget route");
+assert(source.includes('IsWidgetNamedOrChild(w, "m_wRefresh")'), "refresh callback must use the nested-widget route");
 assert(source.includes("RefreshRuntimeBindings()"), "validation controller must refresh scalar runtime bindings");
 assert(source.includes("FindPlayerRowIndex(w)"), "validation controller must resolve nested row clicks to one row identity");
 assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "validation controller must not duplicate rows for nested name widgets");
