@@ -26,6 +26,8 @@ assert(source.includes('{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout'
 assert(!source.includes("GetPlayers(out"), "validation controller must not emit the API metadata out keyword");
 assert(source.includes('GetPlayerName(playerId)'), "validation controller must resolve each returned player ID");
 assert(source.includes("if (playerName.IsEmpty())"), "validation controller must filter empty player names");
+assert(source.includes('unavailableCount.SetText("0 CONNECTED")'), "validation controller must clear count when PlayerManager is unavailable");
+assert(source.includes('unavailableSelection.SetText("SELECTED: NONE")'), "validation controller must clear selection when PlayerManager is unavailable");
 assert(source.includes("IsWidgetNamedOrChild"), "validation controller must support nested WLib callback targets");
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wClose")'), "close callback must use the nested-widget route");
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wRefresh")'), "refresh callback must use the nested-widget route");
