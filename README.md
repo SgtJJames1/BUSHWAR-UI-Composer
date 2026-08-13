@@ -80,7 +80,7 @@ The **What's new** toolbar button remains available to reopen it.
   root/widget instructions, resource sources, anchors, and reusable widget
   names. It also carries a `layoutCreateRequest` for a native-widget scaffold
   in the Enfusion `layout_create` tool. Its scaffold slots use
-  `OffsetLeft`/`OffsetTop`/`OffsetRight`/`OffsetBottom` with point anchors,
+  `OffsetLeft`/`OffsetTop` plus signed `OffsetRight`/`OffsetBottom` with point anchors,
   matching the Workbench serializer so fixed bounds such as 24 px / 360 px do
   not collapse to the origin when Workbench reserializes a point anchor. Palette
   elements map to native Button/Text/Image/ProgressBar/

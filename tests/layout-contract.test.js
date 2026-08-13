@@ -7,8 +7,11 @@ if (!fs.existsSync(candidate)) {
   process.exit(0);
 }
 const source = fs.readFileSync(candidate, "utf8");
-if (!source.includes("Anchor 0 0.15 0 0.8") || !source.includes("OffsetLeft 24") || !source.includes("OffsetRight 384")) {
+if (!source.includes("Anchor 0 0.15 0 0.8") || !source.includes("OffsetLeft 24") || !source.includes("OffsetRight -384")) {
   throw new Error("runtime admin panel must retain the 24 px / 360 px / 15%-80% Offset* geometry");
+}
+if (source.includes("OffsetRight 384") || source.includes("OffsetBottom 52\n") || source.includes("OffsetBottom 110\n")) {
+  throw new Error("runtime admin panel must not use positive right/bottom offsets that collapse point-anchored widgets");
 }
 if (source.includes("PositionX") || source.includes("SizeX")) {
   throw new Error("runtime admin panel must not regress to PositionX/SizeX shorthand");

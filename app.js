@@ -905,14 +905,16 @@
     // FrameWidgetSlot serializer expresses a point-anchored pixel rectangle
     // with Offset* fields; PositionX/SizeX shorthand can parse yet collapse
     // to the origin when the layout is opened in a fresh resource database.
+    // Enfusion's right/bottom offsets are measured from the anchored edge,
+    // so a point-anchored rectangle uses negative right/bottom values.
     const left = Math.round(layer.x);
     const top = Math.round(layer.y);
     const pixelSlot = {
       anchor: "0 0 0 0",
       offsetLeft: left,
       offsetTop: top,
-      offsetRight: left + Math.round(layer.w),
-      offsetBottom: top + Math.round(layer.h)
+      offsetRight: -(left + Math.round(layer.w)),
+      offsetBottom: -(top + Math.round(layer.h))
     };
     if (layer.type === "table" && widget.binding === "player.list.connected") {
       return {
@@ -1459,7 +1461,7 @@
         description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
         rootSize: { width: state.canvas.width, height: state.canvas.height, source: "Composer canvas; set the same root size in Layout Editor before judging pixel bounds." },
         root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
-        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container). Pixel-authored widgets use point anchors with OffsetLeft/OffsetTop/OffsetRight/OffsetBottom bounds, matching the shipped BUSHWAR GM layouts and preserving the Composer canvas at the exported root size. Source-backed widgets also carry source/sourceBacked metadata; drag that registered WLib/vanilla layout into the target in Layout Editor and preserve its named children. Open and resave in Workbench Layout Editor before production."
+        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container). Pixel-authored widgets use point anchors with OffsetLeft/OffsetTop and negative OffsetRight/OffsetBottom bounds, matching the shipped BUSHWAR GM layouts and preserving the Composer canvas at the exported root size. Source-backed widgets also carry source/sourceBacked metadata; drag that registered WLib/vanilla layout into the target in Layout Editor and preserve its named children. Open and resave in Workbench Layout Editor before production."
       },
       safety: {
         layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",

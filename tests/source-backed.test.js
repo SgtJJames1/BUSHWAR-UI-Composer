@@ -25,7 +25,8 @@ assert(source.includes("recipeCallbacks: widget.recipeCallbacks"), "runtime scaf
 assert(source.includes("functionTargetWidgetName: widget.functionTargetWidgetName"), "runtime scaffolds must preserve exact action target widget names");
 assert(source.includes("functionTargetWidgetName: layer.functionTargetWidgetName || undefined"), "runtime contracts must retain action target metadata");
 assert(source.includes("workbenchRecipe: widget.runtimeContract?.workbenchRecipe"), "runtime scaffolds must preserve the proven Workbench recipe id");
-assert(source.includes("offsetRight: left + Math.round(layer.w)"), "pixel-authored layout slots must emit Workbench Offset* bounds");
+assert(source.includes("offsetRight: -(left + Math.round(layer.w))"), "pixel-authored layout slots must emit signed Workbench Offset* bounds");
+assert(source.includes("offsetBottom: -(top + Math.round(layer.h))"), "pixel-authored layout slots must sign the Workbench bottom edge");
 assert(!source.includes("positionX: left"), "layout handoff must not rely on PositionX/SizeX shorthand that can collapse to the origin");
 
 console.log("source-backed.test.js: PASS");

@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.21",
+  version: "0.10.22",
   published: "13 August 2026",
-  title: "Concrete text actions for runtime UI parity",
-  summary: "The function database now includes a generated TextWidget.SetText action, so designed buttons can update named runtime text widgets in Reforger as well as in browser preview.",
+  title: "Fix signed Workbench panel bounds",
+  summary: "Workbench handoffs now emit signed right/bottom offsets, fixing the cramped top-left admin menu while preserving the 24 px / 360 px / 15%-80% GM panel geometry.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -24,7 +24,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Player-row callback scaffolds retain the actual PlayerManager ID and emit a compile-safe review hook for server-authoritative actions such as teleport.",
     "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract.",
-    "Generated FrameWidgetSlot geometry uses OffsetLeft/OffsetTop/OffsetRight/OffsetBottom with point anchors, matching the shipped BUSHWAR GM menu and preventing the cramped top-left import seen with older handoff files.",
+    "Generated FrameWidgetSlot geometry uses point anchors with signed OffsetRight/OffsetBottom edges, matching the shipped BUSHWAR GM menu and preventing the cramped top-left import seen with older handoff files.",
     "The disposable admin-menu fixtures use the same Offset* bounds: left 24 px, top 15%, width 360 px, bottom 80%.",
     "Browser and PNG previews for Connected players now mirror the native count / selection / scroll / Button row / NameText scaffold; empty context shows zero rows rather than invented player entries.",
     "Imported engine context is normalized to positive, unique player IDs with non-empty names, and clicking a preview row records the real PlayerManager ID used by the generated callback contract.",
@@ -59,6 +59,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The GM editor binding now emits SCR_EditorManagerEntity.IsOpenedInstance(true), matching the engine contract's includeLimited parameter.",
     "Toggle widget visibility is a generated client-local action: choose an exact Workbench widget name or leave the target blank to toggle the clicked widget, with the same behavior represented in browser preview.",
     "Connected-player refresh now resets the count and selection labels when PlayerManager is unavailable, and row selection rejects stale IDs or empty names instead of showing an invalid player.",
-    "Set text on widget is a generated client-local action: choose an exact TextWidget name and the controller emits TextWidget.SetText with the designed value; browser preview updates the same target layer."
+    "Set text on widget is a generated client-local action: choose an exact TextWidget name and the controller emits TextWidget.SetText with the designed value; browser preview updates the same target layer.",
+    "Pixel-authored Workbench layout slots now negate OffsetRight/OffsetBottom for point anchors; positive right/bottom values collapse a rectangle past the top-left origin."
   ]
 };
