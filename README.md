@@ -160,13 +160,17 @@ The **What's new** toolbar button remains available to reopen it.
   controller re-queries the engine when the layout opens; the browser snapshot
   is never runtime authority. On a Player-row Button, the generated binding
   targets that row's named `Text` child rather than casting the Button root.
-- A bound connected-player table also exports a runtime scaffold request with
+ - A bound connected-player table also exports a runtime scaffold request with
   named count/scroll/list widgets and a row-layout path, so the generated
   Enfusion controller has concrete widget targets instead of a visual-only
   guess. The generated controller reads the engine's authoritative ID array,
   carries each real playerId beside its row, and uses a throttled OnUpdate
   signature check for join/leave/name changes. The plan also includes a native
-  Button/Text row scaffold with valid parent-inferred slots.
+   Button/Text row scaffold with valid parent-inferred slots.
+ - A connected-player count binding emits the authoritative
+   `PlayerManager.GetPlayerCount()` value. The table itself still resolves the
+   ID list and names separately, skipping non-positive IDs and empty names, so
+   a count can never cause placeholder rows to be created.
 - If a connected table adopts a source-backed WLib prefab, the handoff carries
   the exact required named children (`Count`, `Selection`, `Scroll`, `List`,
   and row `NameText`) and validation marks the source for manual Workbench

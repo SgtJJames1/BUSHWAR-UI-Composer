@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.50",
+  version: "0.10.51",
   published: "13 August 2026",
-  title: "Make widget update callbacks executable",
-  summary: "Assigning Widget update (OnUpdate) now produces a real throttled Workbench route attached to the named widget, instead of being treated as a click-only review hook.",
+  title: "Use the engine's authoritative player count",
+  summary: "Connected-player count bindings now read PlayerManager.GetPlayerCount() directly, while row creation continues to filter the actual ID/name list so empty rows never appear.",
   changes: [
     "Generic Connected players (engine) tables now use the registered BUSHWAR Core Button Row > NameText prefab by default, so PlayerManager rows can actually instantiate in Reforger instead of silently failing on a bare path.",
     "Schema-3 handoffs now list runtime row resources and the required BUSHWAR-UIComposer-Core dependency; validation warns when a custom row layout is not GUID-qualified.",
@@ -102,6 +102,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The disposable Workbench import-plan plugin now rejects schema-3 plans missing layoutResourceReference, preventing a visually correct browser design from being treated as a compiled runtime handoff without a registered layout.",
     "Handoff can now load a local .layout.meta file, extract its non-null GUID and resource path, and populate the layout name/GUID fields without uploading the metadata.",
     "Widget update callbacks now attach the generated controller to the exact target widget, throttle OnUpdate to 30 ticks, refresh linked engine-backed values when available, and expose a compile-safe target-addon seam without misrouting the callback through OnClick.",
-    "Handoff validation and controller-source tests now fail when a Widget update assignment loses its target-widget route."
+    "Handoff validation and controller-source tests now fail when a Widget update assignment loses its target-widget route.",
+    "Player count bindings now emit PlayerManager.GetPlayerCount() in the native controller; the connected table still uses GetPlayers(playerIds) and GetPlayerName(playerId) to create only valid named rows."
   ]
 };

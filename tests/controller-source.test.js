@@ -41,6 +41,8 @@ assert(qualifiedSource.includes('{92829430AE6EAD05}UI/layouts/Sub/TestLayout.lay
 assert(!source.includes("GetPlayers(out"), "generated source must not copy the API metadata out label into source syntax");
 assert(source.includes("RefreshRuntimeBindings();"), "live refresh callback must route to runtime bindings");
 assert(source.includes("runtimePlayerCount++"), "player.count must be computed from non-empty runtime names");
+assert(source.includes("runtimeEnginePlayerCount = playerManager.GetPlayerCount();"), "player.count must read the authoritative PlayerManager count");
+assert(source.includes("runtimeEnginePlayerCount.ToString()"), "player.count must display the authoritative engine count");
 assert(source.includes('IsWidgetNamedOrChild(w, "Refresh")'), "named refresh widget route must be generated");
 assert(source.includes('FindAnyWidget("SelectedPlayerText")'), "player.name on a Player row must target its generated Text child");
 assert(source.includes('FindAnyWidget("CountText")'), "scalar runtime child override must flow into generated controller source");

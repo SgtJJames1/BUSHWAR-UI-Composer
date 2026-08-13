@@ -8,6 +8,7 @@ assert(source.includes('emptyValuePolicy: "omit-row"'), "connected-player bindin
 assert(source.includes('identityField: "playerId"'), "connected-player binding must carry the runtime identity field");
 assert(source.includes('previewPolicy: "snapshot-only"'), "browser context must be documented as preview-only");
 assert(source.includes('targetKinds: ["table"]'), "connected-player list binding must be table-only");
-assert(source.includes('id: "player.count"') && source.includes('GetPlayerName(playerId)'), "player count must count valid named PlayerManager records, not raw slots");
+assert(source.includes('id: "player.count"') && source.includes('GetPlayerCount()'), "player count must use the authoritative PlayerManager count");
+assert(source.includes('id: "player.count"') && source.includes('GetPlayerName(playerId)'), "player count contract must retain name resolution for runtime availability/row filtering");
 
 console.log("binding-contract.test.js: PASS");

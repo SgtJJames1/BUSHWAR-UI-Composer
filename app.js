@@ -1615,12 +1615,14 @@
         "\t\t\treturn;",
         "",
         needsPlayerName ? "\t\tstring runtimePlayerName;" : "",
-        needsPlayerCount ? "\t\tint runtimePlayerCount;" : "",
+         needsPlayerCount ? "\t\tint runtimePlayerCount;" : "",
+         needsPlayerCount ? "\t\tint runtimeEnginePlayerCount;" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\tbool runtimePlayerDataAvailable;" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\tPlayerManager playerManager = GetGame().GetPlayerManager();" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\tif (playerManager)" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t{" : "",
-        (needsPlayerName || needsPlayerCount) ? "\t\t\truntimePlayerDataAvailable = true;" : "",
+         (needsPlayerName || needsPlayerCount) ? "\t\t\truntimePlayerDataAvailable = true;" : "",
+         needsPlayerCount ? "\t\t\truntimeEnginePlayerCount = playerManager.GetPlayerCount();" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tarray<int> runtimePlayerIds = {};" : "",
         needsPlayerCount ? "\t\t\tarray<int> countedPlayerIds = {};" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tplayerManager.GetPlayers(runtimePlayerIds);" : "",
@@ -1640,7 +1642,7 @@
         ...scalarBindings.map(widget => {
           const valueWidgetName = widget.runtimeContract?.valueWidgetName || (widget.layerType === "player" ? `${widget.name}Text` : widget.name);
           if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(!runtimePlayerDataAvailable || runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
-          if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerDataAvailable ? runtimePlayerCount.ToString() : "PLAYER DATA UNAVAILABLE");`;
+           if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerDataAvailable ? runtimeEnginePlayerCount.ToString() : "PLAYER DATA UNAVAILABLE");`;
           return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance(true) ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
         }),
         "\t}",
@@ -2394,8 +2396,8 @@
       if (state.layers.some(layer => layer.binding === "player.list.connected") && (!generatedSource.includes("playerManager.GetPlayers(playerIds);") || generatedSource.includes("GetPlayers(out"))) {
         warnings.push("Generated controller failed the compile-safe PlayerManager.GetPlayers contract; re-export before opening this plan in Workbench.");
       }
-      if (state.layers.some(layer => layer.binding === "player.count") && !generatedSource.includes("runtimePlayerCount++")) {
-        warnings.push("Connected player count is bound, but the generated controller does not contain its runtime count path.");
+      if (state.layers.some(layer => layer.binding === "player.count") && !generatedSource.includes("runtimeEnginePlayerCount = playerManager.GetPlayerCount();")) {
+        warnings.push("Connected player count is bound, but the generated controller does not contain its authoritative PlayerManager.GetPlayerCount() path.");
       }
       if (state.layers.some(layer => layer.functionId === "engine.context.refresh") && !generatedSource.includes("RefreshRuntimeBindings();")) {
         warnings.push("Live engine refresh is assigned, but the generated controller does not contain its refresh route.");
