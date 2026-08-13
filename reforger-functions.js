@@ -44,6 +44,30 @@
       implementation: { status: "generated", method: "ToggleWidgetVisibility", notes: "The controller resolves the target by its exact Workbench widget name and never changes server/game state." }
     },
     {
+      id: "ui.widget.set-text",
+      label: "Set text on widget",
+      category: "UI actions",
+      kind: "engine-api",
+      targetKinds: ["button", "player", "text", "badge", "input", "prompt", "toast", "context", "window", "dialog"],
+      callback: "TextWidget.SetText(string)",
+      authority: "client-local",
+      runtime: "Set a named TextWidget child to the configured layer text. The target must be the actual TextWidget name from Workbench Layout Editor.",
+      requiresTarget: true,
+      implementation: { status: "generated", method: "SetWidgetText", notes: "The controller casts the exact target to TextWidget and leaves the action as a local UI change." }
+    },
+    {
+      id: "ui.widget.set-text",
+      label: "Set text on widget",
+      category: "UI actions",
+      kind: "engine-api",
+      targetKinds: ["button", "player", "text", "badge", "input", "prompt", "toast", "context", "window", "dialog"],
+      callback: "TextWidget.SetText(string)",
+      authority: "client-local",
+      runtime: "Set a named TextWidget child to the configured layer text. The target must be the actual TextWidget name from Workbench Layout Editor.",
+      requiresTarget: true,
+      implementation: { status: "generated", method: "SetWidgetText", notes: "The controller casts the exact target to TextWidget and leaves the action as a local UI change." }
+    },
+    {
       id: "ui.layout.open",
       label: "Open native layout",
       category: "UI actions",

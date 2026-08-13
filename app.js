@@ -1001,6 +1001,10 @@
         const targetName = widget.functionTargetWidgetName?.trim() || widget.name;
         callbackRoutes.push(`\t\t\tToggleWidgetVisibility(${JSON.stringify(targetName)}, w);`);
       }
+      else if (widget.functionId === "ui.widget.set-text") {
+        const targetName = widget.functionTargetWidgetName?.trim() || `${widget.name}Text`;
+        callbackRoutes.push(`\t\t\tSetWidgetText(${JSON.stringify(targetName)}, ${JSON.stringify(widget.properties?.text || "")});`);
+      }
       else if (widget.functionId === "player.list.refresh") { callbackRoutes.push("\t\t\treturn OnReviewRequiredCallback(\"player.list.refresh\", w);"); needsReviewHook = true; directReturn = true; }
       else if (widget.functionId === "player.row.teleport") callbackRoutes.push("\t\t\tRequestTeleportSelectedPlayer();");
       else if (widget.functionId === "ui.widget.click") { callbackRoutes.push("\t\t\treturn OnWidgetClickContract(w, x, y, button);"); needsWidgetClickHook = true; directReturn = true; }
@@ -1083,6 +1087,13 @@
       "\t\t\ttarget = fallbackWidget;",
       "\t\tif (target)",
       "\t\t\ttarget.SetVisible(!target.IsVisible());",
+      "\t}",
+      "",
+      "\tprotected void SetWidgetText(string targetName, string value)",
+      "\t{",
+      "\t\tTextWidget target = TextWidget.Cast(m_wRoot.FindAnyWidget(targetName));",
+      "\t\tif (target)",
+      "\t\t\ttarget.SetText(value);",
       "\t}",
       ""
     ];
@@ -2007,6 +2018,19 @@
       target.visible = !target.visible;
       render();
       setStatus(`${prefix} · browser preview toggled ${target.name}; Workbench will toggle the named widget at runtime`);
+      return true;
+    }
+    if (layer.functionId === "ui.widget.set-text") {
+      const targetName = layer.functionTargetWidgetName?.trim();
+      const target = targetName ? state.layers.find(item => item.name === targetName) : layer;
+      if (!target) {
+        setStatus(`${prefix} · target widget '${targetName}' was not found in this design`);
+        return true;
+      }
+      checkpoint();
+      target.text = layer.text || "";
+      render();
+      setStatus(`${prefix} · browser preview set ${target.name}; Workbench will call TextWidget.SetText at runtime`);
       return true;
     }
     if (layer.functionId === "ui.widget.click" || layer.functionId === "gm.context-action.perform") {

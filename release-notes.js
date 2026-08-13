@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.20",
+  version: "0.10.21",
   published: "13 August 2026",
-  title: "Runtime roster safety and concrete engine actions",
-  summary: "Generated connected-player controllers now clear unavailable state and reject stale or unnamed IDs, while retaining concrete targetable UI actions.",
+  title: "Concrete text actions for runtime UI parity",
+  summary: "The function database now includes a generated TextWidget.SetText action, so designed buttons can update named runtime text widgets in Reforger as well as in browser preview.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -58,6 +58,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Native Reforger recipes add proven info-panel, status, progress, timer, icon-overlay, and GM connected-player trees with named child contracts; applying one creates editable layers plus the callback metadata used by the Workbench handoff.",
     "The GM editor binding now emits SCR_EditorManagerEntity.IsOpenedInstance(true), matching the engine contract's includeLimited parameter.",
     "Toggle widget visibility is a generated client-local action: choose an exact Workbench widget name or leave the target blank to toggle the clicked widget, with the same behavior represented in browser preview.",
-    "Connected-player refresh now resets the count and selection labels when PlayerManager is unavailable, and row selection rejects stale IDs or empty names instead of showing an invalid player."
+    "Connected-player refresh now resets the count and selection labels when PlayerManager is unavailable, and row selection rejects stale IDs or empty names instead of showing an invalid player.",
+    "Set text on widget is a generated client-local action: choose an exact TextWidget name and the controller emits TextWidget.SetText with the designed value; browser preview updates the same target layer."
   ]
 };
