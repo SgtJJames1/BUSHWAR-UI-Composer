@@ -42,6 +42,7 @@ assert(index.includes('value="BUSHWAR Core"'), "catalog must expose a separate B
 assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultBinding === "player.list.connected", "Core admin panel must default to the authoritative connected-player binding");
 assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultFunctionTarget === "m_wRefresh", "Core admin panel refresh contract must target the named refresh button");
 assert(website.entries.find(entry => entry.id === "core.player-row")?.runtimeValueWidgetName === "NameText", "Core row must declare the actual TextWidget child used for player names");
+assert.strictEqual(website.entries.find(entry => entry.id === "core.admin-panel")?.rowLayoutPath, "{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout", "Core admin panel must carry the registered GUID-qualified row ResourceName");
 const adminChildren = website.entries.find(entry => entry.id === "core.admin-panel")?.requiredChildren || {};
 assert.strictEqual(adminChildren.count, "m_wPlayerCount", "Core admin panel must expose the canonical connected-count child key");
 assert.strictEqual(adminChildren.selection, "m_wPlayerSelection", "Core admin panel must expose the canonical selection child key");

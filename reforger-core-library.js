@@ -25,7 +25,7 @@
       nativeWidgetClass: "LayoutResource",
       nativeChildHint: "FrameWidgetClass",
       coreLibraryId: "BUSHWAR-UIComposer-Core",
-      rowLayoutPath: "UI/layouts/BWUIC_CorePlayerRow.layout",
+      rowLayoutPath: "{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout",
       defaultBinding: "player.list.connected",
       defaultFunction: "engine.context.refresh",
       defaultFunctionTarget: "m_wRefresh",
