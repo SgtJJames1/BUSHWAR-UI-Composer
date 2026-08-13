@@ -1048,7 +1048,7 @@
     const className = `BWUIC_${classStem}Controller`;
     const connected = widgets.find(widget => widget.binding === "player.list.connected");
     const connectedNames = connected ? (() => {
-      const names = connected.requiredNamedChildren || {};
+      const names = connected.requiredWidgetNames || connected.requiredNamedChildren || {};
       return {
         count: names.count || `${connected.name}Count`,
         selection: names.selection || `${connected.name}Selection`,

@@ -16,7 +16,7 @@ const source = sandbox.controllerSourceFor("TestLayout", "TestLayout", [
     name: "Players",
     binding: "player.list.connected",
     functionId: "player.row.select",
-    requiredWidgetNames: { count: "PlayersCount", selection: "PlayersSelection", list: "PlayersList", rowName: "NameText" },
+    requiredWidgetNames: { count: "m_wPlayerCount", selection: "m_wPlayerSelection", scroll: "m_wPlayerScroll", list: "m_wPlayerList", rowName: "NameText" },
     rowLayoutPath: "UI/layouts/TestLayout-player-row.layout"
   },
   { name: "PlayerCount", binding: "player.count", functionId: "engine.context.refresh", runtimeContract: { valueWidgetName: "CountText" } },
@@ -46,6 +46,8 @@ assert(source.includes('PackToFile("$profile:BUSHWAR-UIComposer/runtime-context.
 assert(source.includes('snapshot.players.Insert(player);'), "engine context export must append only filtered runtime player records");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
+assert(source.includes('FindAnyWidget("m_wPlayerList")'), "Core connected-player controllers must use the manifest list child name");
+assert(source.includes('FindAnyWidget("m_wPlayerSelection")'), "Core connected-player controllers must use the manifest selection child name");
 assert(source.includes("if (playerName.IsEmpty())"), "row selection must reject a stale or unnamed PlayerManager ID");
 assert(source.includes("unavailableCount.SetText(\"0 CONNECTED\")"), "missing PlayerManager must clear the runtime count instead of leaving stale UI state");
 assert(source.includes("SetReadableFont(m_wRoot, \"NameText\""), "generated controller must carry the Composer font contract into the native row");

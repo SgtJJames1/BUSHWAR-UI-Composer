@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.29",
+  version: "0.10.30",
   published: "13 August 2026",
-  title: "Native connected-player scaffold parity",
-  summary: "WCA now uses the selected Core or source-backed connected-player child names in both the generated layout scaffold and controller, keeping the exported native tree aligned with the actual Reforger layout.",
+  title: "Core controller child-name parity",
+  summary: "WCA now carries the resolved Core child-name contract through the final controller-generation step, so generated FindAnyWidget routes use the same names as the native layout scaffold.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -76,6 +76,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Reforger catalog cards now list callback hints such as OnClick, OnUpdate, SetText, layout open/close, and connected-player selection; these hints travel with the selected layer into the schema-3 Workbench plan.",
     "The BUSHWAR Core manifest is version 0.1.1 and records the same callback hints for its registered admin panel and player-row resources.",
     "Core admin panels now expose canonical count/selection/scroll/list/row child keys while retaining legacy aliases, so imported older projects still generate valid FindAnyWidget targets instead of undefined names.",
-    "Connected-player layoutCreateRequest scaffolds and generated font routes now use the resolved named-child contract (including Core m_wPlayerCount/m_wPlayerList) and preserve the registered source-backed layout reference."
+    "Connected-player layoutCreateRequest scaffolds and generated font routes now use the resolved named-child contract (including Core m_wPlayerCount/m_wPlayerList) and preserve the registered source-backed layout reference.",
+    "Controller generation now accepts both requiredWidgetNames and requiredNamedChildren contracts; regression coverage proves Core m_wPlayerList and m_wPlayerSelection reach the final EnforceScript source."
   ]
 };
