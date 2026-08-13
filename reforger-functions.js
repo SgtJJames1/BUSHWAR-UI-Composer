@@ -78,7 +78,7 @@
       label: "Connected-player row selected",
       category: "Player actions",
       kind: "controller-contract",
-      targetKinds: ["table", "player"],
+      targetKinds: ["table"],
       callback: "OnPlayerRowClicked(int playerId)",
       authority: "client-local",
       runtime: "Carry the actual PlayerManager ID alongside the row; never recover identity from display text or row position.",

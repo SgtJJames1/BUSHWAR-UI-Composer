@@ -7,5 +7,6 @@ assert(source.includes('sourceOfTruth: "live PlayerManager"'), "player bindings 
 assert(source.includes('emptyValuePolicy: "omit-row"'), "connected-player binding must declare that empty names are omitted");
 assert(source.includes('identityField: "playerId"'), "connected-player binding must carry the runtime identity field");
 assert(source.includes('previewPolicy: "snapshot-only"'), "browser context must be documented as preview-only");
+assert(source.includes('targetKinds: ["table"]'), "connected-player list binding must be table-only");
 
 console.log("binding-contract.test.js: PASS");

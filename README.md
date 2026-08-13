@@ -126,6 +126,9 @@ The **What's new** toolbar button remains available to reopen it.
   contract is Connected players (engine): it maps to
   PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId), filters
   empty names, and exports the contract in the project and Workbench-plan JSON.
+  It is intentionally table-only: a standalone Player row uses the scalar
+  Player display name binding, while the connected table owns the list/count/
+  selection child contract.
   The API metadata labels `playerIds` as an out parameter; the EnforceScript
   call itself must omit the `out` keyword.
 - The generated controller applies the Composer font-size contract when the
@@ -145,6 +148,10 @@ The **What's new** toolbar button remains available to reopen it.
   carries each real playerId beside its row, and uses a throttled OnUpdate
   signature check for join/leave/name changes. The plan also includes a native
   Button/Text row scaffold with valid parent-inferred slots.
+- If a connected table adopts a source-backed WLib prefab, the handoff carries
+  the exact required named children (`Count`, `Selection`, `Scroll`, `List`,
+  and row `NameText`) and validation marks the source for manual Workbench
+  verification instead of assuming the prefab hierarchy matches.
 - An explicit callback catalogue lets each supported widget declare the
   Enfusion event/API or controller contract it needs. Connected-player tables
   default to a row-selection contract that carries the real `playerId`; the

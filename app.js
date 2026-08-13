@@ -759,6 +759,16 @@
     const baseName = nativeWidgetBaseName(layer, index);
     const sameNameBefore = allLayers.slice(0, index).filter((previous, previousIndex) => nativeWidgetBaseName(previous, previousIndex) === baseName).length;
     const widgetName = sameNameBefore ? `${baseName}_${sameNameBefore + 1}` : baseName;
+    const runtimeChildNames = binding?.id === "player.list.connected" && layer.type === "table"
+      ? {
+          count: `${widgetName}Count`,
+          selection: `${widgetName}Selection`,
+          scroll: `${widgetName}Scroll`,
+          list: `${widgetName}List`,
+          rowRoot: "Row",
+          rowName: "NameText"
+        }
+      : undefined;
     return {
       id: layer.id,
       name: widgetName,
@@ -787,7 +797,9 @@
         actualValuesOnly: binding ? true : undefined,
         preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values",
         sourceBacked: sourceBackedLayer(layer),
-        sourcePath: source || undefined
+        sourcePath: source || undefined,
+        requiredNamedChildren: runtimeChildNames,
+        sourceChildVerification: source && runtimeChildNames ? "manual-required" : undefined
       } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
       anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
@@ -796,7 +808,9 @@
       reforgerProfile: source ? (layer.reforgerVisual || reforgerVisualFor({ ...layer, name: layer.catalogName || layer.name, catalogCategory: layer.catalogCategory || "Widgets" })) : undefined,
       resourceReference: layer.resourcePath || undefined,
       sourceChildHint: layer.catalogNativeChildHint || undefined,
-      resourceWorkbenchAction: layer.catalogWorkbenchAction || undefined
+      resourceWorkbenchAction: layer.catalogWorkbenchAction || undefined,
+      requiredNamedChildren: runtimeChildNames,
+      sourceChildVerification: source && runtimeChildNames ? "manual-required" : undefined
     };
   }
 
@@ -1300,6 +1314,9 @@
       contract: widget.bindingContract,
       functionId: widget.functionId || undefined,
       functionContract: widget.functionContract,
+      sourceBacked: !!widget.source,
+      sourcePath: widget.source,
+      sourceChildVerification: widget.sourceChildVerification,
       widgetName: widget.name,
       controllerClass: `BWUIC_${classStem}Controller`,
       layoutPath: `UI/layouts/${layoutName}.layout`,
@@ -1309,14 +1326,7 @@
         description: "Native row scaffold for a connected-player callback. Keep the playerId in controller state, not in display text.",
         root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "Player", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 6 12 6" } }] }
       } : undefined,
-      requiredWidgetNames: widget.binding === "player.list.connected" ? {
-        count: `${widget.name}Count`,
-        selection: `${widget.name}Selection`,
-        scroll: `${widget.name}Scroll`,
-        list: `${widget.name}List`,
-        rowRoot: "Row",
-        rowName: "NameText"
-      } : undefined,
+      requiredWidgetNames: widget.requiredNamedChildren,
       implementation: widget.binding === "player.list.connected"
         ? "Read PlayerManager.GetPlayers(playerIds) (the API marks this parameter out), resolve GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, set TextWidget.SetExactFontSize from the Composer font contract, and refresh when the roster signature changes. If a row callback is assigned, carry the actual playerId alongside the row."
         : "Implement the listed engine contract in the generated controller; the Composer does not invent callbacks or authority."
@@ -1343,6 +1353,8 @@
       widgets,
       nativeProfileSchema: 1,
       nativeWidgetClasses: [...new Set(widgets.map(widget => widget.widgetType))].join(","),
+      sourceBackedWidgets: widgets.filter(widget => widget.source).length,
+      sourceChildVerificationRequired: widgets.filter(widget => widget.sourceChildVerification === "manual-required").length,
       engineContext: {
         format: engineContextFormat,
         schema: 1,
@@ -1773,7 +1785,7 @@
       if (layer.binding && !bindingFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown engine binding.`);
       const binding = bindingFor(layer);
       if (layer.binding && binding && binding.targetKinds && !binding.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses ${binding.label} on a ${layer.type} widget; choose a compatible widget type before handoff.`);
-      if (sourceBackedLayer(layer) && !layer.catalogNativeChildHint && ["player", "table"].includes(layer.type)) warnings.push(`${layer.name || "A runtime list"} uses a source-backed layout without a known child hint; confirm the required named children in Workbench before compiling the controller.`);
+      if (sourceBackedLayer(layer) && layer.binding === "player.list.connected") warnings.push(`${layer.name || "A connected-player table"} uses a source-backed layout; confirm Count/Selection/Scroll/List and row NameText names in Workbench before compiling the generated controller.`);
       if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
       const callback = functionFor(layer);
       if (layer.functionId && callback && !callback.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);

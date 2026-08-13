@@ -16,7 +16,7 @@
       valueType: "array<PlayerRecord>",
       sourceClass: "PlayerManager",
       sourceMethods: ["GetPlayers(playerIds) [out parameter]", "GetPlayerName(playerId)"],
-      targetKinds: ["table", "player"],
+      targetKinds: ["table"],
       updateEvents: ["player joined", "player left"],
       authority: "client-read",
       runtime: "Read the authoritative connected-player ID array (the API parameter is out, but the EnforceScript call is GetPlayers(playerIds)), resolve each name, and omit empty values; never scan a guessed ID range or create placeholder rows.",

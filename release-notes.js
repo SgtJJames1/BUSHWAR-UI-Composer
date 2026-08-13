@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.13",
+  version: "0.10.14",
   published: "13 August 2026",
-  title: "Source-backed Reforger handoff",
-  summary: "Palette widgets can now adopt their recommended registered WLib layout source without losing runtime bindings or callbacks, tightening the visual path from the Composer to Workbench.",
+  title: "Runtime child-contract guard",
+  summary: "Connected-player bindings are now table-only, and source-backed runtime widgets carry explicit named-child verification requirements before Workbench compilation.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -47,6 +47,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Connected-player controllers keep exactly one native row per valid PlayerManager ID; nested WLib/Text children resolve through the row's parent chain instead of becoming duplicate rows.",
     "Runtime bindings now declare their live source of truth, empty-value policy, identity field, and snapshot-only browser preview policy in the handoff contract.",
     "Palette layers can adopt their recommended registered WLib layout source from the inspector; source/sourceBacked metadata travels with the Workbench plan while existing engine bindings and callbacks stay attached.",
-    "Source-backed runtime lists are flagged for named-child verification in Workbench instead of silently pretending a prefab's internal hierarchy matches the Composer scaffold."
+    "Source-backed runtime lists are flagged for named-child verification in Workbench instead of silently pretending a prefab's internal hierarchy matches the Composer scaffold.",
+    "The connected-player binding is table-only; standalone Player rows must use the Player display-name binding so generated controllers cannot target a missing list scaffold.",
+    "Schema-3 plans summarize source-backed widget counts and required named-child verification for the disposable Workbench review plugin."
   ]
 };
