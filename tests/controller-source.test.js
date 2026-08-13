@@ -3,7 +3,7 @@ const vm = require("vm");
 const assert = require("assert");
 
 const appSource = fs.readFileSync(require.resolve("../app.js"), "utf8");
-const start = appSource.indexOf("function controllerSourceFor");
+const start = appSource.indexOf("function normalizeLayoutGuid");
 const end = appSource.indexOf("function makeWorkbenchPlan", start);
 assert(start >= 0 && end > start, "controllerSourceFor must remain present in app.js");
 
@@ -27,8 +27,10 @@ const source = sandbox.controllerSourceFor("TestLayout", "TestLayout", [
   { name: "StatusButton", layerType: "button", properties: { text: "READY" }, functionId: "ui.widget.set-text", functionTargetWidgetName: "StatusText" },
   { name: "ExportContext", layerType: "button", functionId: "engine.context.export" }
 ]);
+const qualifiedSource = sandbox.controllerSourceFor("TestLayout", "TestLayout", [], "92829430ae6ead05");
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "generated source must use compile-valid GetPlayers call syntax");
+assert(qualifiedSource.includes('{92829430AE6EAD05}UI/layouts/TestLayout.layout'), "a registered layout GUID must produce a GUID-qualified controller ResourceName");
 assert(!source.includes("GetPlayers(out"), "generated source must not copy the API metadata out label into source syntax");
 assert(source.includes("RefreshRuntimeBindings();"), "live refresh callback must route to runtime bindings");
 assert(source.includes("runtimePlayerCount++"), "player.count must be computed from non-empty runtime names");
