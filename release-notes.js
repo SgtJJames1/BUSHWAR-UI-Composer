@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.19",
+  version: "0.10.20",
   published: "13 August 2026",
-  title: "Concrete engine actions and stricter runtime contracts",
-  summary: "The Composer now generates a real widget-visibility action, passes the GM editor API argument correctly, and exposes exact target widget names in the handoff.",
+  title: "Runtime roster safety and concrete engine actions",
+  summary: "Generated connected-player controllers now clear unavailable state and reject stale or unnamed IDs, while retaining concrete targetable UI actions.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -57,6 +57,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Pixel-authored layout slots now export OffsetLeft/Top/Right/Bottom rectangles, matching Workbench's anchored FrameWidgetSlot form and preserving the requested 24 px / 360 px GM panel bounds.",
     "Native Reforger recipes add proven info-panel, status, progress, timer, icon-overlay, and GM connected-player trees with named child contracts; applying one creates editable layers plus the callback metadata used by the Workbench handoff.",
     "The GM editor binding now emits SCR_EditorManagerEntity.IsOpenedInstance(true), matching the engine contract's includeLimited parameter.",
-    "Toggle widget visibility is a generated client-local action: choose an exact Workbench widget name or leave the target blank to toggle the clicked widget, with the same behavior represented in browser preview."
+    "Toggle widget visibility is a generated client-local action: choose an exact Workbench widget name or leave the target blank to toggle the clicked widget, with the same behavior represented in browser preview.",
+    "Connected-player refresh now resets the count and selection labels when PlayerManager is unavailable, and row selection rejects stale IDs or empty names instead of showing an invalid player."
   ]
 };

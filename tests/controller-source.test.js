@@ -40,6 +40,8 @@ assert(source.includes('ToggleWidgetVisibility("DetailsPanel", w);'), "targeted 
 assert(source.includes("target.SetVisible(!target.IsVisible());"), "visibility action must generate a concrete native widget operation");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
+assert(source.includes("if (playerName.IsEmpty())"), "row selection must reject a stale or unnamed PlayerManager ID");
+assert(source.includes("unavailableCount.SetText(\"0 CONNECTED\")"), "missing PlayerManager must clear the runtime count instead of leaving stale UI state");
 assert(source.includes("SetReadableFont(m_wRoot, \"NameText\""), "generated controller must carry the Composer font contract into the native row");
 assert(source.includes("FindPlayerRowIndex(w)"), "nested row children must resolve to one canonical row identity");
 assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "nested row text must not become a duplicate player row");
