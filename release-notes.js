@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.36",
+  version: "0.10.37",
   published: "13 August 2026",
-  title: "Authoritative player roster guard",
-  summary: "WCA and the generated Workbench controller now keep one row and one count per unique, named PlayerManager ID.",
+  title: "Runtime context parity check",
+  summary: "WCA now regression-tests the imported Workbench context boundary so invalid, empty, and duplicate player records cannot reach the preview.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -84,6 +84,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The Composer test suite now constructs a Core admin layer and verifies its exported widget, native count/selection/scroll/list children, GUID-qualified source, and registered row layout agree as one contract.",
     "Core library tests now compare each manifest ResourceName with the actual .layout.meta file and validation controller, catching null or stale GUID registration before a Workbench handoff is used.",
     "Generated controllers and the disposable validation admin menu now deduplicate PlayerManager IDs before creating rows or calculating connected counts, while still skipping empty names.",
-    "Exported runtime-context snapshots and roster signatures use the same unique-ID rule, so browser previews cannot gain duplicate or placeholder player entries from a malformed engine list."
+    "Exported runtime-context snapshots and roster signatures use the same unique-ID rule, so browser previews cannot gain duplicate or placeholder player entries from a malformed engine list.",
+    "The browser context normalizer now has an executable regression fixture covering duplicate IDs, empty names, non-positive IDs, invalid IDs, and multiple valid players before a snapshot reaches the canvas."
   ]
 };

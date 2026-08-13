@@ -1,0 +1,30 @@
+const fs = require("fs");
+const vm = require("vm");
+const assert = require("assert");
+
+const source = fs.readFileSync(require.resolve("../app.js"), "utf8");
+const start = source.indexOf("function normalizeEnginePlayers");
+const end = source.indexOf("function engineContextLabel", start);
+assert(start >= 0 && end > start, "engine context normalizer must remain present in app.js");
+
+const sandbox = {};
+vm.createContext(sandbox);
+vm.runInContext(`${source.slice(start, end)}; this.normalizeEnginePlayers = normalizeEnginePlayers;`, sandbox);
+
+const players = sandbox.normalizeEnginePlayers([
+  { id: 1, name: "Sgt.James" },
+  { id: 1, name: "duplicate" },
+  { id: 2, name: "" },
+  { id: 3, name: "   " },
+  { id: 0, name: "invalid zero" },
+  { id: -4, name: "invalid negative" },
+  { id: "not-a-number", name: "invalid id" },
+  { id: 5, name: "Second real player" }
+]);
+
+assert.deepStrictEqual(players.map(player => ({ id: player.id, name: player.name })), [
+  { id: 1, name: "Sgt.James" },
+  { id: 5, name: "Second real player" }
+], "browser context must keep only unique positive IDs with non-empty names");
+
+console.log("engine-context.test.js: PASS");
