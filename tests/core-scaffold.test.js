@@ -8,8 +8,32 @@ const coreSource = fs.readFileSync(path.join(root, "reforger-core-library.js"), 
 const coreSandbox = { window: {} };
 vm.runInNewContext(coreSource, coreSandbox, { filename: "reforger-core-library.js" });
 const core = coreSandbox.window.BUSHWAR_REFORGER_CORE_LIBRARY;
-const admin = core.entries.find(entry => entry.id === "core.admin-panel");
-assert(admin, "Core admin panel fixture must exist");
+assert(core.entries.find(entry => entry.id === "core.player-row"), "Core player row fixture must exist in the manifest");
+assert(!core.entries.find(entry => entry.id === "core.admin-panel"), "Core manifest must no longer offer the GM admin panel");
+// app.js keeps the legacy admin-panel scaffold path so old saved projects
+// still import. This fixture mirrors the removed manifest entry.
+const admin = {
+  id: "core.admin-panel",
+  category: "BUSHWAR Core",
+  kind: "Layout prefab",
+  name: "BWUIC_CoreAdminPanel",
+  path: "UI/layouts/BWUIC_CoreAdminPanel.layout",
+  resourceGuid: "92829430AE6EAD05",
+  resourceReference: "{92829430AE6EAD05}UI/layouts/BWUIC_CoreAdminPanel.layout",
+  visual: "core-admin-panel",
+  rowLayoutPath: "{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout",
+  defaultBinding: "player.list.connected",
+  defaultFunction: "engine.context.refresh",
+  defaultFunctionTarget: "m_wRefresh",
+  functionHints: ["ui.widget.click", "player.row.select", "engine.context.refresh", "ui.layout.close"],
+  geometry: { left: 24, top: 0.15, width: 360, bottom: 0.8, coordinateSpace: "screen" },
+  requiredChildren: {
+    root: "m_wRoot", panel: "m_wAdminPanel", title: "m_wAdminPanelTitle", close: "m_wClose", refresh: "m_wRefresh",
+    connectedLabel: "m_wConnectedLabel", count: "m_wPlayerCount", selection: "m_wPlayerSelection",
+    scroll: "m_wPlayerScroll", list: "m_wPlayerList", rowRoot: "Row", rowName: "NameText"
+  },
+  runtimeContracts: ["player.list.connected", "player.count", "player.row.select", "engine.context.refresh"]
+};
 
 const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const start = appSource.indexOf("function reforgerBoundsFor");

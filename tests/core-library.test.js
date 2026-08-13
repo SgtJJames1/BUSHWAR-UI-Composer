@@ -15,7 +15,7 @@ assert.strictEqual(website.projectId, addon.projectId, "website and addon Core p
 assert.strictEqual(website.projectGuid, addon.projectGuid, "website and addon Core project GUIDs must match");
 assert.strictEqual(website.version, addon.version, "website and addon Core versions must match");
 assert.strictEqual(website.entries.length, addon.entries.length, "website and addon Core entry counts must match");
-assert(website.entries.length >= 2, "Core library must expose the admin panel and player row resources");
+assert(website.entries.length >= 1, "Core library must expose at least the player row resource");
 for (const entry of website.entries) {
   const addonEntry = addon.entries.find(candidate => candidate.id === entry.id);
   assert(addonEntry, `${entry.id} must exist in the addon manifest`);
@@ -39,9 +39,7 @@ for (const entry of website.entries) {
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const validationControllerPath = path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Validation", "Scripts", "Game", "UI", "BWUIC_BushwarComposerlayoutController.c");
-const coreAdminLayout = fs.readFileSync(path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", "UI", "layouts", "BWUIC_CoreAdminPanel.layout"), "utf8");
 const coreRowLayout = fs.readFileSync(path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", "UI", "layouts", "BWUIC_CorePlayerRow.layout"), "utf8");
-assert(coreAdminLayout.includes('Text "PLAYER DATA UNAVAILABLE"'), "Core admin count must not start with a fake zero before PlayerManager is available");
 assert(coreRowLayout.includes('Name "NameText"') && coreRowLayout.includes('Text ""'), "Core player rows must start without a placeholder name");
 if (fs.existsSync(validationControllerPath)) {
   const validationController = fs.readFileSync(validationControllerPath, "utf8");
@@ -54,15 +52,8 @@ assert(app.includes("availableCallbacks: layer.functionHints"), "Workbench plans
 assert(app.includes("const callbackHints = (item.functionHints || []).join"), "catalog cards must expose callback hints");
 assert(index.includes("reforger-core-library.js"), "index must load the Core library manifest");
 assert(index.includes('value="BUSHWAR Core"'), "catalog must expose a separate BUSHWAR Core filter");
-assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultBinding === "player.list.connected", "Core admin panel must default to the authoritative connected-player binding");
-assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultFunctionTarget === "m_wRefresh", "Core admin panel refresh contract must target the named refresh button");
 assert(website.entries.find(entry => entry.id === "core.player-row")?.runtimeValueWidgetName === "NameText", "Core row must declare the actual TextWidget child used for player names");
-assert.strictEqual(website.entries.find(entry => entry.id === "core.admin-panel")?.rowLayoutPath, "{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout", "Core admin panel must carry the registered GUID-qualified row ResourceName");
-const adminChildren = website.entries.find(entry => entry.id === "core.admin-panel")?.requiredChildren || {};
-assert.strictEqual(adminChildren.count, "m_wPlayerCount", "Core admin panel must expose the canonical connected-count child key");
-assert.strictEqual(adminChildren.selection, "m_wPlayerSelection", "Core admin panel must expose the canonical selection child key");
-assert.strictEqual(adminChildren.list, "m_wPlayerList", "Core admin panel must expose the canonical connected-list child key");
-assert.strictEqual(adminChildren.rowName, "NameText", "Core admin panel must expose the canonical row text child key");
+assert(!website.entries.some(entry => entry.id === "core.admin-panel"), "Core library must not ship the GM admin panel; it belongs to the GM tools project");
 assert(app.includes("normalizeRequiredChildren"), "app must normalize legacy Core named-child aliases before generating controller contracts");
 assert(app.indexOf("const declaredChildren = normalizeRequiredChildren(layer.requiredChildren)") < app.indexOf("const runtimeChildNames = declaredChildren"), "Core child normalization must happen before controller child-name selection");
 assert(app.includes("${names.list}"), "generated connected-player controllers must use the canonical connected-list child name");

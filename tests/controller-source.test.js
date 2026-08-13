@@ -79,6 +79,8 @@ assert(source.includes("if (runtimePlayerIds[runtimeIndex] <= 0) continue;"), "g
 assert(source.includes('FindAnyWidget("m_wPlayerList")'), "Core connected-player controllers must use the manifest list child name");
 assert(source.includes('FindAnyWidget("m_wPlayerSelection")'), "Core connected-player controllers must use the manifest selection child name");
 assert(source.includes("if (playerName.IsEmpty())"), "row selection must reject a stale or unnamed PlayerManager ID");
+assert(source.includes("if (m_aPlayerRowIds.Find(playerId) < 0)"), "row selection must reject IDs that are not present in the current rendered row map");
+assert(source.includes("RefreshRuntimeBindings();\n\t}"), "row selection must immediately refresh selected-player scalar bindings");
 assert(source.includes("unavailableCount.SetText(\"PLAYER DATA UNAVAILABLE\")"), "missing PlayerManager must expose unavailable runtime state instead of claiming zero players");
 assert(source.includes("if (!nameText)"), "generated controllers must reject a row prefab that lacks the required NameText child");
 assert(source.includes("runtimePlayerDataAvailable"), "scalar player bindings must distinguish unavailable PlayerManager state from a real zero count");

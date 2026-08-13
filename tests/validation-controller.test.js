@@ -24,7 +24,7 @@ assert(fs.existsSync(adminMenuPath), "validation addon admin-menu fixture must b
 const adminMenuSource = fs.readFileSync(adminMenuPath, "utf8");
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "validation controller must use compile-valid GetPlayers syntax");
-assert(source.includes('{92829430AE6EAD05}UI/layouts/BWUIC_CoreAdminPanel.layout'), "validation controller must use the registered BUSHWAR Core admin layout GUID");
+assert(source.includes('{1D2CEED7BB782E8D}UI/layouts/admin-menu.layout'), "validation controller must use the validation addon's registered admin-menu layout GUID (the admin panel is not part of the UI Composer mod)");
 assert(source.includes('{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout'), "validation controller must use the registered BUSHWAR Core row layout GUID");
 assert(!source.includes("GetPlayers(out"), "validation controller must not emit the API metadata out keyword");
 assert(source.includes('GetPlayerName(playerId)'), "validation controller must resolve each returned player ID");
@@ -41,6 +41,7 @@ assert(source.includes("RefreshRuntimeBindings()"), "validation controller must 
 assert(source.includes("int enginePlayerCount = playerManager.GetPlayerCount();"), "validation connected-player header must use the authoritative engine count");
 assert(source.includes('countText.SetText(enginePlayerCount.ToString() + " CONNECTED");'), "validation connected-player header must display the engine count");
 assert(source.includes("FindPlayerRowIndex(w)"), "validation controller must resolve nested row clicks to one row identity");
+assert(source.includes("if (m_aPlayerRowIds.Find(playerId) < 0)"), "validation controller must reject stale IDs outside the current row map");
 assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "validation controller must not duplicate rows for nested name widgets");
 assert(adminMenuSource.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "admin-menu fixture must deduplicate PlayerManager IDs before creating rows");
 assert(adminMenuSource.includes("if (playerId <= 0)"), "admin-menu fixture must reject non-positive PlayerManager IDs");

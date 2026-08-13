@@ -1,9 +1,13 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.53",
+  version: "0.10.54",
   published: "13 August 2026",
-  title: "Keep runtime table counts authoritative",
-  summary: "Connected-player table headers now use PlayerManager.GetPlayerCount() directly while row creation remains filtered to valid named IDs.",
+  title: "Dedicated UI Composer runtime mod, admin-free",
+  summary: "The BUSHWAR UI Composer runtime mod now ships only generic base resources and scripts; the GM admin panel was removed from it and the validation addon's admin menu uses its own registered layout.",
   changes: [
+    "The dedicated Reforger runtime mod (BUSHWAR-UIComposer-Core) now owns the registered player-row layout plus generic runtime scripts (layout controller base and a safe PlayerManager list helper); the GM admin panel is deliberately not part of it and stays with the GM tools side.",
+    "The website Core library manifest exposes only the registered player-row resource; saved projects containing legacy admin-panel layers still import through the preserved app.js path.",
+    "The validation addon's admin menu now uses its own registered admin-menu layout ({1D2CEED7BB782E8D}) instead of the Core admin panel.",
+    "Runtime verification on Reforger 1.8: both addons compile clean in Workbench, both layouts resolve with their registered GUIDs, and the Arland test world loads in game mode (189,762 entities).",
     "Generic Connected players (engine) tables now use the registered BUSHWAR Core Button Row > NameText prefab by default, so PlayerManager rows can actually instantiate in Reforger instead of silently failing on a bare path.",
     "Schema-3 handoffs now list runtime row resources and the required BUSHWAR-UIComposer-Core dependency; validation warns when a custom row layout is not GUID-qualified.",
     "Registered .layout.meta imports now preserve the full normalized resource path instead of reconstructing only the filename; changing the layout name clears the imported path so stale metadata cannot leak into a new handoff.",
