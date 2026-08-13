@@ -37,6 +37,10 @@ for (const entry of website.entries) {
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const validationControllerPath = path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Validation", "Scripts", "Game", "UI", "BWUIC_BushwarComposerlayoutController.c");
+const coreAdminLayout = fs.readFileSync(path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", "UI", "layouts", "BWUIC_CoreAdminPanel.layout"), "utf8");
+const coreRowLayout = fs.readFileSync(path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", "UI", "layouts", "BWUIC_CorePlayerRow.layout"), "utf8");
+assert(coreAdminLayout.includes('Text "PLAYER DATA UNAVAILABLE"'), "Core admin count must not start with a fake zero before PlayerManager is available");
+assert(coreRowLayout.includes('Name "NameText"') && coreRowLayout.includes('Text ""'), "Core player rows must start without a placeholder name");
 if (fs.existsSync(validationControllerPath)) {
   const validationController = fs.readFileSync(validationControllerPath, "utf8");
   for (const entry of website.entries) assert(validationController.includes(entry.resourceReference), `${entry.id} validation controller must use the registered ResourceName`);

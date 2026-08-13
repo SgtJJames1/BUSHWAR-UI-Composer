@@ -1047,7 +1047,7 @@
           {
             type: "Text",
             name: names.count,
-            props: { Text: "0 CONNECTED", Color: reforgerColor(layer.accent) },
+            props: { Text: "PLAYER DATA UNAVAILABLE", Color: reforgerColor(layer.accent) },
             slot: childPixelSlot(inset, inset, listWidth, countHeight)
           },
           {
@@ -1354,7 +1354,7 @@
         "\t\tif (!playerManager)",
         "\t\t{",
         `\t\t\tTextWidget unavailableCount = TextWidget.Cast(m_wRoot.FindAnyWidget("${names.count}"));`,
-        "\t\t\tif (unavailableCount) unavailableCount.SetText(\"0 CONNECTED\");",
+        "\t\t\tif (unavailableCount) unavailableCount.SetText(\"PLAYER DATA UNAVAILABLE\");",
         `\t\t\tTextWidget unavailableSelection = TextWidget.Cast(m_wRoot.FindAnyWidget("${names.selection}"));`,
         "\t\t\tif (unavailableSelection) unavailableSelection.SetText(\"SELECTED: NONE\");",
         "\t\t\treturn;",
@@ -1378,6 +1378,11 @@
         "\t\t\tif (!row)",
         "\t\t\t\tcontinue;",
         `\t\t\tTextWidget nameText = TextWidget.Cast(row.FindAnyWidget(\"${names.rowName}\"));`,
+        "\t\t\tif (!nameText)",
+        "\t\t\t{",
+        `\t\t\t\tm_w${classStem}ConnectedList.RemoveChild(row);`,
+        "\t\t\t\tcontinue;",
+        "\t\t\t}",
         "\t\t\tif (nameText)",
         "\t\t\t{",
         "\t\t\t\tnameText.SetText(playerName);",
@@ -1491,9 +1496,11 @@
         "",
         needsPlayerName ? "\t\tstring runtimePlayerName;" : "",
         needsPlayerCount ? "\t\tint runtimePlayerCount;" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\tbool runtimePlayerDataAvailable;" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\tPlayerManager playerManager = GetGame().GetPlayerManager();" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\tif (playerManager)" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t{" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\truntimePlayerDataAvailable = true;" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tarray<int> runtimePlayerIds = {};" : "",
         needsPlayerCount ? "\t\t\tarray<int> countedPlayerIds = {};" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tplayerManager.GetPlayers(runtimePlayerIds);" : "",
@@ -1512,8 +1519,8 @@
         (needsPlayerName || needsPlayerCount) ? "\t\t}" : "",
         ...scalarBindings.map(widget => {
           const valueWidgetName = widget.runtimeContract?.valueWidgetName || (widget.layerType === "player" ? `${widget.name}Text` : widget.name);
-          if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
-          if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerCount.ToString());`;
+          if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(!runtimePlayerDataAvailable || runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
+          if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerDataAvailable ? runtimePlayerCount.ToString() : "PLAYER DATA UNAVAILABLE");`;
           return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance(true) ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
         }),
         "\t}",
@@ -1644,7 +1651,7 @@
         name: `${layoutName}-player-row`,
         description: "Native row scaffold for a connected-player callback. Keep the playerId in controller state, not in display text.",
         sourcePath: widget.rowLayoutPath || undefined,
-        root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "Player", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 6 12 6" } }] }
+        root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 6 12 6" } }] }
       } : undefined,
       requiredWidgetNames: widget.requiredNamedChildren,
       valueWidgetName: widget.runtimeContract?.valueWidgetName,
@@ -2513,7 +2520,7 @@
   $("#engineContextBtn").addEventListener("click", () => $("#engineContextInput").click());
   $("#engineContextInput").addEventListener("change", event => { importEngineContext(event.target.files[0]); event.target.value = ""; });
   $("#clearEngineContextBtn").addEventListener("click", () => {
-    if (!enginePlayers().length) return;
+    if (!hasEngineContextSnapshot()) return;
     checkpoint();
     state.engineContext = { ...freshState().engineContext };
     render();

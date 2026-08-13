@@ -54,7 +54,9 @@ assert(source.includes("if (runtimePlayerIds[runtimeIndex] <= 0) continue;"), "g
 assert(source.includes('FindAnyWidget("m_wPlayerList")'), "Core connected-player controllers must use the manifest list child name");
 assert(source.includes('FindAnyWidget("m_wPlayerSelection")'), "Core connected-player controllers must use the manifest selection child name");
 assert(source.includes("if (playerName.IsEmpty())"), "row selection must reject a stale or unnamed PlayerManager ID");
-assert(source.includes("unavailableCount.SetText(\"0 CONNECTED\")"), "missing PlayerManager must clear the runtime count instead of leaving stale UI state");
+assert(source.includes("unavailableCount.SetText(\"PLAYER DATA UNAVAILABLE\")"), "missing PlayerManager must expose unavailable runtime state instead of claiming zero players");
+assert(source.includes("if (!nameText)"), "generated controllers must reject a row prefab that lacks the required NameText child");
+assert(source.includes("runtimePlayerDataAvailable"), "scalar player bindings must distinguish unavailable PlayerManager state from a real zero count");
 assert(source.includes("SetReadableFont(m_wRoot, \"NameText\""), "generated controller must carry the Composer font contract into the native row");
 assert(source.includes("FindPlayerRowIndex(w)"), "nested row children must resolve to one canonical row identity");
 assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "nested row text must not become a duplicate player row");

@@ -29,7 +29,8 @@ assert(source.includes('{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout'
 assert(!source.includes("GetPlayers(out"), "validation controller must not emit the API metadata out keyword");
 assert(source.includes('GetPlayerName(playerId)'), "validation controller must resolve each returned player ID");
 assert(source.includes("if (playerName.IsEmpty())"), "validation controller must filter empty player names");
-assert(source.includes('unavailableCount.SetText("0 CONNECTED")'), "validation controller must clear count when PlayerManager is unavailable");
+assert(source.includes('unavailableCount.SetText("PLAYER DATA UNAVAILABLE")'), "validation controller must expose unavailable count state when PlayerManager is unavailable");
+assert(source.includes('if (!nameText)'), "validation controller must reject rows missing the required NameText child");
 assert(source.includes('unavailableSelection.SetText("SELECTED: NONE")'), "validation controller must clear selection when PlayerManager is unavailable");
 assert(source.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "validation controller must deduplicate PlayerManager IDs before creating rows");
 assert(source.includes("if (playerId <= 0)"), "validation controller must reject non-positive PlayerManager IDs");
@@ -42,6 +43,9 @@ assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "validation controlle
 assert(adminMenuSource.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "admin-menu fixture must deduplicate PlayerManager IDs before creating rows");
 assert(adminMenuSource.includes("if (playerId <= 0)"), "admin-menu fixture must reject non-positive PlayerManager IDs");
 assert(adminMenuSource.includes("array<int> signaturePlayerIds = {};"), "admin-menu fixture signature must deduplicate PlayerManager IDs");
+assert(adminMenuSource.includes("if (!nameText)"), "admin-menu fixture must reject rows missing the required NameText child");
+assert(adminMenuSource.includes("FindPlayerRowIndex(w)"), "admin-menu fixture must resolve nested row clicks to one row identity");
+assert(adminMenuSource.includes('w.GetName() == "m_wRefresh"'), "admin-menu fixture must expose a real refresh callback");
 assert(contextActionSource.includes("class BWUIC_ValidationRuntimeContextSnapshot : JsonApiStruct"), "validation addon must define a JSON runtime context snapshot");
 assert(contextActionSource.includes('RegV("players")'), "runtime context snapshot must register its player array");
 assert(contextActionSource.includes("playerManager.GetPlayers(playerIds);"), "runtime context exporter must read the authoritative PlayerManager IDs");
