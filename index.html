@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-runtime-child-flow">
+    <link rel="stylesheet" href="styles.css?v=20260813-native-recipes">
 </head>
 <body>
   <header class="topbar">
@@ -109,17 +109,20 @@
           <button data-add="categorybar"><span class="widget-icon category-icon"></span>Category bar</button>
           <button data-add="table" data-binding="player.list.connected" data-function="player.row.select"><span class="widget-icon table-icon"></span>Connected players (engine)</button>
         </div>
-        <div class="library-label">Reforger UI database <span id="catalogCount"></span></div>
-        <p id="catalogNote" class="hint catalog-note"></p>
-        <label class="catalog-filter" for="catalogCategoryFilter">Reforger category
+          <div class="library-label">Reforger UI database <span id="catalogCount"></span></div>
+          <p id="catalogNote" class="hint catalog-note"></p>
+          <label class="catalog-filter" for="catalogCategoryFilter">Reforger category
           <select id="catalogCategoryFilter">
             <option value="all">All Reforger references</option>
             <option value="Widgets">Widgets / WLib prefabs</option>
             <option value="HUD">HUD &amp; Game Master</option>
             <option value="Icons">Icon atlas families</option>
-          </select>
-        </label>
-        <div id="reforgerCatalog" class="reforger-catalog"></div>
+            </select>
+          </label>
+          <div class="library-label recipe-label">Native Reforger recipes <span id="recipeCount"></span></div>
+          <p id="recipeNote" class="hint catalog-note"></p>
+          <div id="reforgerRecipes" class="reforger-recipes"></div>
+          <div id="reforgerCatalog" class="reforger-catalog"></div>
       </section>
 
       <section class="layers-section">
@@ -265,11 +268,12 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-runtime-child-flow"></script>
-  <script src="reforger-catalog.js?v=20260813-runtime-child-flow"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-runtime-child-flow"></script>
-  <script src="reforger-bindings.js?v=20260813-runtime-child-flow"></script>
-  <script src="reforger-functions.js?v=20260813-runtime-child-flow"></script>
-  <script src="app.js?v=20260813-runtime-child-flow"></script>
+  <script src="release-notes.js?v=20260813-native-recipes"></script>
+  <script src="reforger-catalog.js?v=20260813-native-recipes"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-native-recipes"></script>
+  <script src="reforger-bindings.js?v=20260813-native-recipes"></script>
+  <script src="reforger-functions.js?v=20260813-native-recipes"></script>
+  <script src="reforger-recipes.js?v=20260813-native-recipes"></script>
+  <script src="app.js?v=20260813-native-recipes"></script>
 </body>
 </html>

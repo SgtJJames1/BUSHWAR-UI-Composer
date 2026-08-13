@@ -54,6 +54,7 @@ The **What's new** toolbar button remains available to reopen it.
 - Named local templates: save the current canvas as a reusable template, reload it later, update it by saving with the same name, or remove it from the template list
 - A clear lock toggle in every layer row plus a lock badge beside the selected layer's pixel-bounds label; locked layers cannot be dragged, resized, or nudged
 - A searchable, categorized Reforger UI reference database: Widget Library (`WLib`) layout prefabs, HUD/Game Master layouts, and vanilla icon-atlas families, each carrying its exact resource path, native widget-class hint, and Workbench action for the handoff
+- A native Reforger recipe database alongside the path catalogue: GM connected players, info panels, status/progress/timer HUDs, and icon overlays carry the proven Workbench recipe ID, named child tree, and callback metadata. Applying a recipe creates editable Composer layers; it does not pretend that a browser mock is a compiled layout.
 - Any palette layer can adopt its profile's recommended registered `.layout` source from the inspector. This keeps the layer's existing binding/callback while exporting `source`/`sourceBacked` metadata, so the final Workbench layout uses the same WLib prefab rather than a generic scaffold.
 - An optional Workbench engine-context import (`bushwar-ui-composer-engine-context`, schema 1) for previewing a captured connected-player roster. Imported names/IDs are evidence for the browser preview only; generated controllers always re-query `PlayerManager` in Reforger.
 - The same context contract can carry the local GM editor state (`editorOpen`); scalar bindings display that captured value or an explicit unknown-state label instead of guessing.
@@ -79,9 +80,9 @@ The **What's new** toolbar button remains available to reopen it.
   root/widget instructions, resource sources, anchors, and reusable widget
   names. It also carries a `layoutCreateRequest` for a native-widget scaffold
   in the Enfusion `layout_create` tool. Its scaffold slots use
-  `PositionX`/`PositionY`/`SizeX`/`SizeY` with point anchors, matching the
-  shipped BUSHWAR GM layouts so fixed bounds such as 24 px / 360 px do not
-  collapse to the origin when Workbench reserializes a point anchor. Palette
+  `OffsetLeft`/`OffsetTop`/`OffsetRight`/`OffsetBottom` with point anchors,
+  matching the Workbench serializer so fixed bounds such as 24 px / 360 px do
+  not collapse to the origin when Workbench reserializes a point anchor. Palette
   elements map to native Button/Text/Image/ProgressBar/
   EditBox/CheckBox/layout-container classes instead of every element collapsing
   to a generic Frame. Open and resave that scaffold in
@@ -182,11 +183,15 @@ This is a design/prototyping tool, not a replacement for the Reforger Layout Edi
    context** to preview the actual roster from that session. Treat it as a
    timestamped preview only; the generated controller must query the engine
    again when the layout opens.
-5. Assign an **Engine callback / action** in the inspector when the widget must
+ 5. Assign an **Engine callback / action** in the inspector when the widget must
    do something. For a connected-player table, keep `player.list.connected`
    paired with `player.row.select`; the exported controller must carry the
    engine player ID alongside each row instead of inferring identity from row
-   order or display text.
+    order or display text.
+    For a known native layout, prefer the **Native Reforger recipes** buttons in
+    the left palette. The recipe attaches the named child contract and proven
+    Workbench recipe ID; bind live values and callbacks on those named layers
+    rather than replacing them with arbitrary text placeholders.
    Palette and template layers with a registered Reforger/WLib equivalent now
    adopt that source automatically. The native-widget inspector can still use
    **Use recommended Reforger source** or switch back to a generated native

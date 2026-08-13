@@ -136,6 +136,10 @@
     return window.BUSHWAR_REFORGER_FUNCTIONS || { entries: [], byId: () => null, forLayer: () => [] };
   }
 
+  function recipeCatalog() {
+    return window.BUSHWAR_REFORGER_RECIPES || { entries: [], byId: () => null };
+  }
+
   function widgetProfileCatalog() {
     return window.BUSHWAR_REFORGER_WIDGET_PROFILES || { entries: {}, forType: () => ({ label: "Frame panel", layoutType: "Frame", runtimeClass: "FrameWidgetClass" }) };
   }
@@ -785,7 +789,7 @@
     const baseName = nativeWidgetBaseName(layer, index);
     const sameNameBefore = allLayers.slice(0, index).filter((previous, previousIndex) => nativeWidgetBaseName(previous, previousIndex) === baseName).length;
     const widgetName = sameNameBefore ? `${baseName}_${sameNameBefore + 1}` : baseName;
-    const runtimeChildNames = binding?.id === "player.list.connected" && layer.type === "table"
+    const runtimeChildNames = layer.requiredChildren || (binding?.id === "player.list.connected" && layer.type === "table"
       ? {
           count: `${widgetName}Count`,
           selection: `${widgetName}Selection`,
@@ -794,7 +798,7 @@
           rowRoot: "Row",
           rowName: "NameText"
         }
-      : undefined;
+      : undefined);
     const sourceChildVerification = source && binding ? "manual-required" : undefined;
     return {
       id: layer.id,
@@ -810,7 +814,8 @@
       bindingContract: binding || undefined,
       functionId: layer.functionId || "",
       functionContract: callback || undefined,
-      runtimeContract: binding || callback ? {
+      recipeCallbacks: layer.recipeCallbacks || [],
+      runtimeContract: binding || callback || runtimeChildNames ? {
         dataSource: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "client UI event",
         authority: callback?.authority || binding?.authority || "client-local",
         refreshEvents: binding?.updateEvents || callback?.updateEvents || [],
@@ -826,6 +831,10 @@
         sourceBacked: sourceBackedLayer(layer),
         sourcePath: source || undefined,
         requiredNamedChildren: runtimeChildNames,
+        recipeId: layer.engineRecipeId || undefined,
+        workbenchRecipe: layer.workbenchRecipe || undefined,
+        nativeTree: layer.nativeTree || undefined,
+        recipeCallbacks: layer.recipeCallbacks || undefined,
         sourceChildVerification
       } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
@@ -1340,6 +1349,10 @@
       layerType: widget.layerType,
       properties: widget.properties,
       runtimeContract: widget.runtimeContract,
+      recipeCallbacks: widget.recipeCallbacks,
+      recipeId: widget.runtimeContract?.recipeId,
+      workbenchRecipe: widget.runtimeContract?.workbenchRecipe,
+      nativeTree: widget.runtimeContract?.nativeTree,
       contract: widget.bindingContract,
       functionId: widget.functionId || undefined,
       functionContract: widget.functionContract,
@@ -1736,6 +1749,65 @@
     });
     $("#catalogCount").textContent = `(${visible}/${catalog.entries.length})`;
     $("#catalogNote").textContent = catalog.disclaimer;
+  }
+
+  function renderEngineRecipes() {
+    const catalog = recipeCatalog();
+    const root = $("#reforgerRecipes");
+    if (!root) return;
+    root.innerHTML = "";
+    catalog.entries.forEach(recipe => {
+      const button = document.createElement("button");
+      button.className = "recipe-entry";
+      button.title = `${recipe.description} Native tree: ${recipe.nativeTree}`;
+      button.innerHTML = `<span class="recipe-icon">⌘</span><span class="catalog-copy"><strong>${escapeHtml(recipe.label)}</strong><small>${escapeHtml(recipe.category)} · ${escapeHtml(recipe.workbenchRecipe || "custom")}</small><small>${escapeHtml(recipe.nativeTree)}</small></span>`;
+      button.addEventListener("click", () => applyEngineRecipe(recipe.id));
+      root.append(button);
+    });
+    $("#recipeCount").textContent = `(${catalog.entries.length})`;
+    $("#recipeNote").textContent = catalog.disclaimer;
+  }
+
+  function applyEngineRecipe(id) {
+    const recipe = recipeCatalog().byId(id);
+    if (!recipe) return;
+    if (recipe.template) {
+      applyTemplate(recipe.template);
+      state.layers.forEach(layer => Object.assign(layer, {
+        engineRecipeId: recipe.id,
+        workbenchRecipe: recipe.workbenchRecipe,
+        nativeTree: recipe.nativeTree,
+        recipeCallbacks: clone(recipe.callbacks || [])
+      }));
+      const runtimeLayer = state.layers.find(layer => layer.binding === "player.list.connected");
+      if (runtimeLayer && recipe.requiredChildren) runtimeLayer.requiredChildren = clone(recipe.requiredChildren);
+      render();
+      setStatus(`${recipe.label} loaded · runtime PlayerManager contract attached`);
+      return;
+    }
+    checkpoint();
+    state.layers = [];
+    selectedId = null;
+    state.canvas.baseScene = "blank";
+    state.canvas.baseSceneVisible = true;
+    state.canvas.width = 1920;
+    state.canvas.height = 1080;
+    (recipe.layers || []).forEach((definition, index) => {
+      const layer = makeLayer(definition.type, {
+        ...definition,
+        engineRecipeId: recipe.id,
+        workbenchRecipe: recipe.workbenchRecipe,
+        nativeTree: recipe.nativeTree,
+        ...(index === 0 && recipe.requiredChildren ? { requiredChildren: clone(recipe.requiredChildren) } : {}),
+        recipeCallbacks: clone(recipe.callbacks || []),
+        functionId: definition.functionId || ""
+      });
+      state.layers.push(layer);
+    });
+    selectedId = state.layers[0]?.id || null;
+    syncControls();
+    render();
+    setStatus(`${recipe.label} loaded · named Workbench children and callback contract attached`);
   }
 
   function addReferenceFiles(files) {
@@ -2200,6 +2272,7 @@
   $("#workbenchTarget").value = state.handoff.target;
   $("#workbenchLayoutName").value = state.handoff.layoutName;
   renderUserTemplates();
+  renderEngineRecipes();
   renderReforgerCatalog();
   updateUndoButtons();
   if (!state.layers.length) applyTemplate("gm-admin"); else render();

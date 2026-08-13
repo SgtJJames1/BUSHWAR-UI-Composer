@@ -49,7 +49,7 @@
       category: "Players",
       valueType: "int",
       sourceClass: "PlayerManager",
-      sourceMethods: ["GetPlayers(playerIds) [out parameter]"],
+      sourceMethods: ["GetPlayers(playerIds) [out parameter]", "GetPlayerName(playerId)"],
       targetKinds: ["text", "badge"],
       updateEvents: ["player joined", "player left"],
       authority: "client-read",

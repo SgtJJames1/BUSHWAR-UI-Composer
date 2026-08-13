@@ -110,6 +110,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
 .catalog-note + .catalog-filter { margin: 0 0 7px; }
 .reference-hint { margin: 6px 0; font-size: 11px; }
 .reforger-catalog { display: grid; gap: 5px; max-height: 440px; overflow: auto; padding-right: 2px; }
+.reforger-recipes { display: grid; gap: 5px; max-height: 250px; overflow: auto; padding-right: 2px; margin-bottom: 8px; }
+.recipe-entry { width: 100%; display: grid; grid-template-columns: 30px 1fr; gap: 7px; padding: 6px; text-align: left; align-items: center; border-color: #496b76; background: linear-gradient(90deg, #1a3038, #17242a); }
+.recipe-entry:hover { border-color: var(--accent-2); background: #203b44; }
+.recipe-icon { height: 29px; display: grid; place-items: center; background: #263f47; color: var(--accent); border: 1px solid #63828b; font-size: 15px; font-weight: 800; }
 .catalog-entry { width: 100%; display: grid; grid-template-columns: 30px 1fr; gap: 7px; padding: 6px; text-align: left; align-items: center; }
 .catalog-entry[hidden] { display: none; }
 .catalog-preview { height: 29px; display: grid; place-items: center; background: #25353c; color: var(--accent-2); border: 1px solid #43565e; font-size: 12px; font-weight: 800; }

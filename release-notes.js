@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.16",
+  version: "0.10.17",
   published: "13 August 2026",
-  title: "Verified runtime child mapping and pixel bounds",
-  summary: "Runtime child-name overrides now reach generated controller source, and exported pixel slots use Workbench Offset* bounds so panels do not collapse into a cramped top-left cluster.",
+  title: "Native Reforger recipes and runtime contracts",
+  summary: "The Composer now offers proven Reforger layout recipes with named child trees and callback contracts, while keeping connected-player values engine-backed and empty-name safe.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -54,6 +54,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Connected-player tables remain native runtime scaffolds until their Count/Selection/Scroll/List/NameText child names are verified against the selected Reforger source.",
     "Any source-backed runtime binding now carries a manual child-name verification gate, and scalar bindings can override the exact runtime TextWidget child name in the inspector.",
     "The schema-3 runtime scaffold preserves layer type, widget properties, and runtime contracts before controller generation; verified child overrides are no longer dropped from the generated EnforceScript.",
-    "Pixel-authored layout slots now export OffsetLeft/Top/Right/Bottom rectangles, matching Workbench's anchored FrameWidgetSlot form and preserving the requested 24 px / 360 px GM panel bounds."
+    "Pixel-authored layout slots now export OffsetLeft/Top/Right/Bottom rectangles, matching Workbench's anchored FrameWidgetSlot form and preserving the requested 24 px / 360 px GM panel bounds.",
+    "Native Reforger recipes add proven info-panel, status, progress, timer, icon-overlay, and GM connected-player trees with named child contracts; applying one creates editable layers plus the callback metadata used by the Workbench handoff."
   ]
 };
