@@ -74,6 +74,10 @@ assert.strictEqual(node.source, admin.resourceReference, "Core native scaffold m
 assert.strictEqual(node.children[0].name, "m_wPlayerCount", "native scaffold count child must match Core");
 assert.strictEqual(node.children[1].name, "m_wPlayerSelection", "native scaffold selection child must match Core");
 assert.strictEqual(node.children[2].name, "m_wPlayerScroll", "native scaffold scroll child must match Core");
+assert.strictEqual(node.children[0].slot.anchor, "0 0 0 0", "connected count child must use a point-anchored pixel slot");
+assert.strictEqual(node.children[1].slot.anchor, "0 0 0 0", "connected selection child must use a point-anchored pixel slot");
+assert.strictEqual(node.children[2].slot.anchor, "0 0 0 0", "connected scroll child must use a point-anchored pixel slot");
+assert(node.children[2].slot.offsetRight < 0 && node.children[2].slot.offsetBottom < 0, "connected scroll child must use signed pixel insets instead of fractional anchors");
 assert.strictEqual(node.children[2].children[0].name, "m_wPlayerList", "native scaffold list child must match Core");
 
 console.log("core-scaffold.test.js: PASS");

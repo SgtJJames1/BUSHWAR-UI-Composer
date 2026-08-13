@@ -1012,6 +1012,19 @@
     };
     if (widget.binding === "player.list.connected") {
       const names = connectedChildNamesFor(widget);
+      const inset = 14;
+      const countHeight = Math.max(24, Math.round(layer.h * 0.1));
+      const selectionHeight = Math.max(24, Math.round(layer.h * 0.1));
+      const listTop = inset + countHeight + selectionHeight + 8;
+      const listWidth = Math.max(1, Math.round(layer.w) - inset * 2);
+      const listHeight = Math.max(1, Math.round(layer.h) - listTop - inset);
+      const childPixelSlot = (left, top, width, height) => ({
+        anchor: "0 0 0 0",
+        offsetLeft: left,
+        offsetTop: top,
+        offsetRight: -(left + width),
+        offsetBottom: -(top + height)
+      });
       return {
         type: "Frame",
         name: widget.name,
@@ -1024,18 +1037,18 @@
             type: "Text",
             name: names.count,
             props: { Text: "0 CONNECTED", Color: reforgerColor(layer.accent) },
-            slot: { anchor: "0 0 1 0.12" }
+            slot: childPixelSlot(inset, inset, listWidth, countHeight)
           },
           {
             type: "Text",
             name: names.selection,
             props: { Text: "SELECTED: NONE", Color: reforgerColor(layer.color) },
-            slot: { anchor: "0 0.12 1 0.24" }
+            slot: childPixelSlot(inset, inset + countHeight, listWidth, selectionHeight)
           },
           {
             type: "ScrollLayout",
             name: names.scroll,
-            slot: { anchor: "0 0.28 1 1" },
+            slot: childPixelSlot(inset, listTop, listWidth, listHeight),
             children: [{
               type: "VerticalLayout",
               name: names.list,
