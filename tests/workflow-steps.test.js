@@ -62,6 +62,6 @@ const index = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 assert(index.includes('id="workbenchWorkflow"'), "the Handoff panel must contain the workflow tracker");
 assert(index.includes('id="workflowDialog"'), "the app must ship the Workbench workflow guide dialog");
 assert(index.includes('id="downloadLayoutCreateBtn"'), "the app must offer downloading the layout scaffold request");
-assert(index.includes("app.js?v=20260813-sidebar"), "cache-busters must be bumped for this release");
+assert(index.includes("app.js?v=20260813-panels"), "cache-busters must be bumped for this release");
 
 console.log("workflow-steps.test.js: PASS");

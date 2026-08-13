@@ -21,7 +21,7 @@ const inDialog = index => dialogStarts.some((start, i) => index >= start && inde
 const orphans = [];
 for (const match of html.matchAll(/<button\b([^>]*)>/g)) {
   const tag = match[1];
-  const hasDataAction = /\bdata-(add|template|scene|size)=/.test(tag);
+  const hasDataAction = /\bdata-(add|template|scene|size|tutorial-tab)=/.test(tag);
   const id = tag.match(/\bid="([^"]+)"/)?.[1];
   if (hasDataAction) continue;
   if (id && (js.includes(`$("#${id}")`) || js.includes(`getElementById("${id}")`))) continue;
@@ -42,11 +42,27 @@ assert(css.includes(".handoff-export-row"), "handoff actions must be grouped int
 assert(css.includes("button.accent:hover"), "primary actions must have a hover state");
 
 // --- Right sidebar sizing, collapsibility, and mod prep ---------------------
-assert(css.includes("grid-template-columns: 250px minmax(320px, 1fr) 320px"), "right sidebar must be widened to 320px");
+assert(css.includes("--right-width: 320px"), "right sidebar must default to 320px");
 assert(html.includes('<details class="sidebar-section" open>'), "right sidebar sections must be collapsible");
 assert(html.includes('id="modPrepNote"'), "handoff must expose the live mod-prep note");
 assert(js.includes("workflow-details"), "workflow tracker must collapse into a summary");
 assert(js.includes("Mod prep"), "mod-prep note must be rendered with controller path and dependency");
 assert(html.includes("BUSHWAR-UIComposer-Core") && html.includes("B3A5F08C0D504D96"), "workflow guide must document the Core mod dependency");
+
+// --- Resizable / toggleable sidebars ----------------------------------------
+assert(html.includes('class="sidebar-resizer resizer-left"'), "left sidebar must have a resize handle");
+assert(html.includes('class="sidebar-resizer resizer-right"'), "right sidebar must have a resize handle");
+assert(html.includes('id="toggleLeftBtn"') && html.includes('id="toggleRightBtn"'), "sidebars must be toggleable from the toolbar");
+assert(js.includes("initSidebarResizer"), "resize handles must be wired");
+assert(js.includes("applySidebarLayout()"), "sidebar layout must be applied on start");
+assert(css.includes("--left-width") && css.includes("--right-width"), "sidebar widths must be CSS variables");
+assert(css.includes("grid-column: 5"), "right sidebar must keep its explicit grid track when hidden");
+assert(js.includes("delete snapshot.ui"), "panel preferences must not leak into portable bundles");
+
+// --- Tutorials ---------------------------------------------------------------
+assert(html.includes('id="tutorialsDialog"'), "a tutorials dialog must exist");
+assert(html.includes('data-tutorial-tab="start"') && html.includes('data-tutorial-panel="keys"'), "tutorial tabs must cover start and shortcuts");
+assert(js.includes("openTutorialTab"), "tutorial tabs must switch panels");
+assert(html.includes('id="tutorialsBtn"'), "a Tutorials button must open the guides");
 
 console.log("ui-audit.test.js: PASS");

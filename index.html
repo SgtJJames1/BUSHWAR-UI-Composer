@@ -5,12 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-sidebar">
+    <link rel="stylesheet" href="styles.css?v=20260813-panels">
 </head>
 <body>
   <header class="topbar">
     <div class="brand"><span class="brand-mark">BW</span><span>BUSHWAR UI Composer</span><small>by Sgt.James</small></div>
     <div class="toolbar">
+      <button id="toggleLeftBtn" class="ghost" aria-pressed="true" title="Show or hide the element panels">Panels</button>
+      <button id="toggleRightBtn" class="ghost" aria-pressed="true" title="Show or hide the inspector and handoff">Inspector</button>
+      <span class="separator"></span>
       <button id="newBtn" title="New design">New</button>
       <button id="openBtn">Open project</button>
       <button id="saveBtn">Save project</button>
@@ -30,6 +33,7 @@
         <option value="1">100%</option>
       </select>
       <button id="previewBtn">Preview</button>
+      <button id="tutorialsBtn" title="Step-by-step guides">Tutorials</button>
       <button id="whatsNewBtn" title="View changes in this release">What's new</button>
       <button id="pngBtn" class="accent">Export PNG</button>
     </div>
@@ -126,6 +130,7 @@
       </section>
     </aside>
 
+    <div class="sidebar-resizer resizer-left" role="separator" aria-orientation="vertical" aria-label="Resize element panels"></div>
     <section class="workspace" id="workspace">
       <div class="ruler-label"><span id="canvasLabel">1920 × 1080</span><span id="pointerLabel">x 0 · y 0</span></div>
       <div class="canvas-scroll" id="canvasScroll">
@@ -134,6 +139,7 @@
         </div>
       </div>
     </section>
+    <div class="sidebar-resizer resizer-right" role="separator" aria-orientation="vertical" aria-label="Resize inspector panels"></div>
 
     <aside class="sidebar right-sidebar">
       <details class="sidebar-section" open>
@@ -305,6 +311,94 @@
       <div class="dialog-actions"><button class="accent" value="close">Got it</button></div>
     </form>
   </dialog>
+  <dialog id="tutorialsDialog" class="template-dialog tutorials-dialog" aria-labelledby="tutorialsTitle">
+    <form method="dialog">
+      <div class="update-heading"><span class="update-badge">GUIDES</span><span class="update-version">step by step</span></div>
+      <h2 id="tutorialsTitle">Tutorials & workflows</h2>
+      <div class="tutorial-tabs" role="tablist" aria-label="Tutorial topics">
+        <button type="button" class="tutorial-tab active" data-tutorial-tab="start" role="tab" aria-selected="true">Getting started</button>
+        <button type="button" class="tutorial-tab" data-tutorial-tab="design" role="tab" aria-selected="false">Design</button>
+        <button type="button" class="tutorial-tab" data-tutorial-tab="handoff" role="tab" aria-selected="false">Workbench handoff</button>
+        <button type="button" class="tutorial-tab" data-tutorial-tab="mod" role="tab" aria-selected="false">Mod integration</button>
+        <button type="button" class="tutorial-tab" data-tutorial-tab="engine" role="tab" aria-selected="false">Engine data</button>
+        <button type="button" class="tutorial-tab" data-tutorial-tab="files" role="tab" aria-selected="false">Files & templates</button>
+        <button type="button" class="tutorial-tab" data-tutorial-tab="keys" role="tab" aria-selected="false">Shortcuts</button>
+      </div>
+
+      <div class="tutorial-panel" data-tutorial-panel="start" role="tabpanel">
+        <ol class="tutorial-steps">
+          <li><b>Pick a base scene.</b><span>Use the <b>Base scene</b> cards on the left: <em>Blank workspace</em> for a clean canvas or <em>Vanilla GM</em> to trace the reference screenshot.</span></li>
+          <li><b>Set the root size.</b><span>Workbench documents a minimum <b>1920 × 1080</b>. Change Width/Height in the <b>Screen</b> panel or use the 1080p / 1440p / 4K presets.</span></li>
+          <li><b>Build the UI.</b><span>Add elements from the <b>Element library</b>, then select layers on the canvas to edit their position, size, text, colors, and bindings in the <b>Selection</b> panel.</span></li>
+          <li><b>Track readiness.</b><span>The <b>Handoff</b> panel shows an eight-step workflow with a live count; <b>Validate Workbench handoff</b> lists anything blocking an export.</span></li>
+          <li><b>Save early, save often.</b><span><b>Save project</b> writes a portable <code>.bwui.json</code>; autosave keeps a local recovery cache.</span></li>
+        </ol>
+      </div>
+
+      <div class="tutorial-panel" data-tutorial-panel="design" role="tabpanel" hidden>
+        <ol class="tutorial-steps">
+          <li><b>Add and arrange layers.</b><span>The Element library covers panels, text, buttons, icons, windows, dialogs, toasts, tables, inputs, toggles, and GM controls. Drag on the canvas to position; the <b>Layers</b> list reorders with ↑/↓.</span></li>
+          <li><b>Edit the selected widget.</b><span>Use the Selection panel: Name, X/Y/W/H, Text, Fill/Text/Border/Accent colors, Font px, Radius, Opacity, Visible, and Lock. Names prefixed <code>m_w</code> are the ones the generated controller looks up.</span></li>
+          <li><b>Trace a reference.</b><span><b>Add to reference board</b> embeds locked reference layers that travel with the project; <b>Use temporary screenshot</b> is a quick tracing aid. Use the base scene opacity and reference opacity sliders.</span></li>
+          <li><b>Preview and export images.</b><span><b>Preview</b> exercises assigned callbacks locally; <b>Export PNG</b> renders the canvas at full resolution.</span></li>
+          <li><b>Prefer registered sources.</b><span>Palette layers can adopt a registered WLib/vanilla layout source from the inspector so the Workbench handoff carries the real prefab instead of a generic mock.</span></li>
+        </ol>
+      </div>
+
+      <div class="tutorial-panel" data-tutorial-panel="handoff" role="tabpanel" hidden>
+        <ol class="tutorial-steps">
+          <li><b>Validate.</b><span>Click <b>Validate Workbench handoff</b> and fix every warning (canvas size, unlocked references, missing GUIDs, unsupported bindings).</span></li>
+          <li><b>Export the schema-3 plan.</b><span><b>Export Workbench import plan</b> (or the handoff bundle) carries widgets, anchors, controller source, and a layout scaffold request.</span></li>
+          <li><b>Validate in Workbench.</b><span>Use the import-plan plugin in the <code>BUSHWAR-UIComposer-Validation</code> addon; schema 1/2 plans are rejected.</span></li>
+          <li><b>Create the layout.</b><span>Open Workbench Layout Editor and build the tree from the copied/downloaded scaffold request. Workbench owns <code>.layout</code> serialization — never hand-edit the XML.</span></li>
+          <li><b>Register and copy the GUID.</b><span>Registering generates the <code>.layout.meta</code>. Load it into Handoff (or paste the 16-character GUID) so the controller compiles with a GUID-qualified ResourceName.</span></li>
+          <li><b>Export the controller.</b><span><b>Export controller</b> writes the EnforceScript scaffold; place it at the plan's <code>controllerPath</code> in your addon.</span></li>
+          <li><b>Compile and smoke-test.</b><span>Compile in Workbench, run Layout Editor Live Preview at your target resolutions, then verify the in-game layout renders and its bindings behave.</span></li>
+        </ol>
+      </div>
+
+      <div class="tutorial-panel" data-tutorial-panel="mod" role="tabpanel" hidden>
+        <ol class="tutorial-steps">
+          <li><b>Declare the Core dependency.</b><span>When the plan uses the Core row resource, your target addon must depend on <code>BUSHWAR-UIComposer-Core</code> (<code>B3A5F08C0D504D96</code>). The Mod prep note in Handoff tells you when it is required.</span></li>
+          <li><b>Place the controller.</b><span>Copy <code>controllerSource</code> to <code>Scripts/Game/UI/BWUIC_&lt;Layout&gt;Controller.c</code> in your addon and compile it.</span></li>
+          <li><b>Register every layout.</b><span>The target layout and each row layout need fresh Workbench <code>.meta</code> GUIDs; keep every ResourceName GUID-qualified in the controller.</span></li>
+          <li><b>Register custom textures.</b><span>The Composer ships no Reforger assets — import and register any custom images in your addon before referencing them.</span></li>
+          <li><b>Own your authority.</b><span>The Composer mod provides UI resources and named-child contracts. Permissions, replication, and server RPCs belong to your addon; engine bindings re-query <code>PlayerManager</code> at runtime and never trust the browser snapshot.</span></li>
+        </ol>
+      </div>
+
+      <div class="tutorial-panel" data-tutorial-panel="engine" role="tabpanel" hidden>
+        <ol class="tutorial-steps">
+          <li><b>Capture a context snapshot.</b><span>In-game, run the <b>Export UI Context</b> action (or the generated controller's export callback) to write <code>$profile:BUSHWAR-UIComposer/runtime-context.json</code>.</span></li>
+          <li><b>Import it here.</b><span><b>Import Workbench context</b> reads the snapshot so the browser preview shows the real connected roster, count, and GM editor state.</span></li>
+          <li><b>Treat it as preview only.</b><span>The snapshot is timestamped evidence. Generated controllers always re-query <code>PlayerManager.GetPlayerCount()</code> / <code>GetPlayers</code> / <code>GetPlayerName</code> when the layout opens; empty names are omitted and invalid IDs are never rendered.</span></li>
+          <li><b>Refresh live values.</b><span>Assign <b>Refresh live engine values</b> to a button; the generated controller repaints count and rows in memory without writing player data to disk.</span></li>
+        </ol>
+      </div>
+
+      <div class="tutorial-panel" data-tutorial-panel="files" role="tabpanel" hidden>
+        <ol class="tutorial-steps">
+          <li><b>Save / Open projects.</b><span><b>Save project</b> and <b>Open project</b> use portable <code>.bwui.json</code> bundles that embed reference images.</span></li>
+          <li><b>Templates.</b><span><b>Save current as template</b> stores a local reusable design; <b>Export current</b> / <b>Import template</b> share bundles that keep embedded references.</span></li>
+          <li><b>Workbench exports.</b><span>Export the import plan, the complete handoff bundle, the controller scaffold, and the layout scaffold request from the Handoff panel.</span></li>
+          <li><b>PNG.</b><span><b>Export PNG</b> renders the canvas for quick sharing or documentation.</span></li>
+        </ol>
+      </div>
+
+      <div class="tutorial-panel" data-tutorial-panel="keys" role="tabpanel" hidden>
+        <ul class="shortcut-list">
+          <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Ctrl</kbd> + <kbd>Y</kbd> — Undo / Redo</li>
+          <li><kbd>Ctrl</kbd> + <kbd>D</kbd> — Duplicate selected layer</li>
+          <li><kbd>Delete</kbd> / <kbd>Backspace</kbd> — Delete selected layer</li>
+          <li><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> — Nudge by 1 px</li>
+          <li><kbd>Shift</kbd> + arrows — Nudge by 10 px</li>
+          <li><kbd>Esc</kbd> — Exit preview</li>
+        </ul>
+      </div>
+
+      <div class="dialog-actions"><button class="accent" value="close">Got it</button></div>
+    </form>
+  </dialog>
   <dialog id="templateDialog" class="template-dialog">
     <form method="dialog">
       <h2>Save as template</h2>
@@ -314,13 +408,13 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-sidebar"></script>
-  <script src="reforger-catalog.js?v=20260813-sidebar"></script>
-  <script src="reforger-core-library.js?v=20260813-sidebar"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-sidebar"></script>
-  <script src="reforger-bindings.js?v=20260813-sidebar"></script>
-  <script src="reforger-functions.js?v=20260813-sidebar"></script>
-  <script src="reforger-recipes.js?v=20260813-sidebar"></script>
-  <script src="app.js?v=20260813-sidebar"></script>
+  <script src="release-notes.js?v=20260813-panels"></script>
+  <script src="reforger-catalog.js?v=20260813-panels"></script>
+  <script src="reforger-core-library.js?v=20260813-panels"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-panels"></script>
+  <script src="reforger-bindings.js?v=20260813-panels"></script>
+  <script src="reforger-functions.js?v=20260813-panels"></script>
+  <script src="reforger-recipes.js?v=20260813-panels"></script>
+  <script src="app.js?v=20260813-panels"></script>
 </body>
 </html>

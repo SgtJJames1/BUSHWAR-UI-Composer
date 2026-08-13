@@ -1,9 +1,14 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.57",
+  version: "0.10.58",
   published: "13 August 2026",
-  title: "Roomier sidebar, collapsible panels, mod-prep hints",
-  summary: "The right sidebar is wider and its sections collapse for vertical room; the workflow tracker folds into a live summary, and a Mod prep note shows the controller path and Core dependency before you export.",
+  title: "Resizable sidebars, panel toggles, tutorial hub",
+  summary: "Both sidebars resize by dragging their edge and toggle on/off from the toolbar with remembered sizes; a new Tutorials hub walks every workflow through step-by-step guides.",
   changes: [
+    "Both sidebars are now resizable: drag the divider between a panel and the canvas (left 180-460px, right 240-460px). Sizes are remembered between sessions.",
+    "Panels and Inspector buttons in the toolbar hide or show either sidebar; the state persists and the canvas reclaims the space.",
+    "A new Tutorials dialog with tabbed guides covers getting started, designing, the Workbench handoff pipeline, mod integration (Core dependency, controller path, registration, textures, authority), engine data, files/templates, and keyboard shortcuts.",
+    "Panel preferences stay local: .bwui bundles and templates no longer carry sidebar size or visibility state.",
+    "The ui-audit regression test now locks the resize handles, toggles, explicit grid tracks, and the tutorial hub.",
     "Right sidebar widened from 270px to 320px so Handoff fields and export actions fit comfortably.",
     "Right-sidebar sections (Selection, Screen, Handoff, Engine context) are now collapsible, so you can extend the panel vertically and focus on one area.",
     "The Workbench workflow tracker collapses into a summary line with a live ready count; open it to see the eight steps.",

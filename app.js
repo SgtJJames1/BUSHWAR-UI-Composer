@@ -79,6 +79,7 @@
       canvas: { width: 1920, height: 1080, baseScene: "blank", baseSceneVisible: true, baseSceneOpacity: 1, background: "", backgroundName: "", backgroundOpacity: 0.45 },
       settings: { grid: true, snap: true, gridSize: 10 },
       handoff: { target: "Menu", layoutName: "BUSHWAR_ComposerLayout", layoutGuid: "", layoutPath: "" },
+      ui: { leftWidth: 250, rightWidth: 320, leftVisible: true, rightVisible: true },
       engineContext: { schema: 1, source: "none", capturedAt: "", engineVersion: "", editorOpen: null, playerCount: null, playerCountKnown: false, players: [], note: "No Workbench context loaded; runtime data remains authoritative." },
       layers: []
     };
@@ -136,6 +137,7 @@
     clean.canvas = { ...freshState().canvas, ...(value.canvas || {}) };
     clean.settings = { ...freshState().settings, ...(value.settings || {}) };
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
+    clean.ui = { ...freshState().ui, ...(value.ui || {}) };
     clean.engineContext = { ...freshState().engineContext, ...(value.engineContext || {}) };
     clean.engineContext.players = normalizeEnginePlayers(clean.engineContext.players);
     const importedPlayerCount = clean.engineContext.playerCount;
@@ -329,7 +331,9 @@
   }
 
   function portableSnapshot() {
-    return clone(state);
+    const snapshot = clone(state);
+    delete snapshot.ui; // panel layout preferences are local, not part of a shared bundle
+    return snapshot;
   }
 
   function autoSaveSnapshot() {
@@ -795,6 +799,59 @@
     $("#sceneToggleBtn").classList.toggle("ghost", !visible);
     $("#sceneToggleBtn").setAttribute("aria-pressed", visible ? "true" : "false");
     $$("[data-scene]").forEach(button => button.classList.toggle("active", button.dataset.scene === state.canvas.baseScene));
+  }
+
+  // --- Sidebar layout: resizable and toggleable panels ----------------------
+  function applySidebarLayout() {
+    const shell = document.querySelector(".app-shell");
+    if (!shell) return;
+    shell.style.setProperty("--left-width", `${state.ui.leftVisible ? state.ui.leftWidth : 0}px`);
+    shell.style.setProperty("--right-width", `${state.ui.rightVisible ? state.ui.rightWidth : 0}px`);
+    shell.style.setProperty("--left-resizer", `${state.ui.leftVisible ? 6 : 0}px`);
+    shell.style.setProperty("--right-resizer", `${state.ui.rightVisible ? 6 : 0}px`);
+    document.body.classList.toggle("left-hidden", !state.ui.leftVisible);
+    document.body.classList.toggle("right-hidden", !state.ui.rightVisible);
+    const leftAside = document.querySelector(".left-sidebar");
+    const rightAside = document.querySelector(".right-sidebar");
+    if (leftAside) leftAside.setAttribute("aria-hidden", state.ui.leftVisible ? "false" : "true");
+    if (rightAside) rightAside.setAttribute("aria-hidden", state.ui.rightVisible ? "false" : "true");
+    const leftBtn = $("#toggleLeftBtn");
+    const rightBtn = $("#toggleRightBtn");
+    if (leftBtn) leftBtn.setAttribute("aria-pressed", state.ui.leftVisible ? "true" : "false");
+    if (rightBtn) rightBtn.setAttribute("aria-pressed", state.ui.rightVisible ? "true" : "false");
+  }
+
+  function initSidebarResizer(handle, side) {
+    if (!handle) return;
+    handle.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      handle.setPointerCapture(event.pointerId);
+      const startX = event.clientX;
+      const startWidth = state.ui[`${side}Width`] || (side === "left" ? 250 : 320);
+      const onMove = moveEvent => {
+        const delta = side === "left" ? moveEvent.clientX - startX : startX - moveEvent.clientX;
+        state.ui[`${side}Width`] = Math.round(clamp(startWidth + delta, side === "left" ? 180 : 240, 460));
+        applySidebarLayout();
+        persist();
+      };
+      const onUp = () => {
+        handle.removeEventListener("pointermove", onMove);
+        handle.removeEventListener("pointerup", onUp);
+      };
+      handle.addEventListener("pointermove", onMove);
+      handle.addEventListener("pointerup", onUp);
+    });
+  }
+
+  function openTutorialTab(tab) {
+    $$("[data-tutorial-tab]").forEach(button => {
+      const active = button.dataset.tutorialTab === tab;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    $$("[data-tutorial-panel]").forEach(panel => {
+      panel.hidden = panel.dataset.tutorialPanel !== tab;
+    });
   }
 
   function setBaseScene(name, saveHistory = true) {
@@ -2898,6 +2955,12 @@
   });
   $("#downloadLayoutCreateBtn").addEventListener("click", downloadLayoutCreateRequest);
   $("#workflowHelpBtn").addEventListener("click", () => $("#workflowDialog").showModal());
+  initSidebarResizer($(".resizer-left"), "left");
+  initSidebarResizer($(".resizer-right"), "right");
+  $("#toggleLeftBtn").addEventListener("click", () => { state.ui.leftVisible = !state.ui.leftVisible; persist(); applySidebarLayout(); });
+  $("#toggleRightBtn").addEventListener("click", () => { state.ui.rightVisible = !state.ui.rightVisible; persist(); applySidebarLayout(); });
+  $("#tutorialsBtn").addEventListener("click", () => $("#tutorialsDialog").showModal());
+  $$("[data-tutorial-tab]").forEach(button => button.addEventListener("click", () => openTutorialTab(button.dataset.tutorialTab)));
   $("#whatsNewBtn").addEventListener("click", () => {
     const dialog = $("#updateDialog");
     dialog.dataset.autoNotice = "";
@@ -2979,6 +3042,7 @@
   loadPersisted();
   renderReleaseNotice();
   syncControls();
+  applySidebarLayout();
   $("#workbenchTarget").value = state.handoff.target;
   $("#workbenchLayoutName").value = state.handoff.layoutName;
   $("#workbenchLayoutGuid").value = normalizeLayoutGuid(state.handoff.layoutGuid);
