@@ -24,6 +24,8 @@ const sandbox = {
   safeName: value => String(value || "widget").replace(/[^a-z0-9_-]+/gi, "-").toLowerCase(),
   nativeWidgetBaseName: (layer, index = 0) => `m_w${String(layer?.name || `Widget${index + 1}`).replace(/[^a-z0-9]+/gi, "") || `Widget${index + 1}`}`,
   sourceBackedLayer: layer => Boolean(layer?.resourcePath && /\.layout$/i.test(layer.resourcePath)),
+  defaultConnectedRowResource: () => admin.rowLayoutPath,
+  connectedRowResourceFor: layer => layer?.rowLayoutPath || admin.rowLayoutPath,
   widgetProfileFor: () => ({ runtimeClass: "FrameWidgetClass", layoutType: "Frame", label: "Frame" }),
   bindingFor: layer => layer?.binding === "player.list.connected" ? {
     id: "player.list.connected", sourceClass: "PlayerManager", sourceMethods: ["GetPlayers(playerIds)", "GetPlayerName(playerId)"],

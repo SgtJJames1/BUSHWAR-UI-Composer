@@ -1,9 +1,11 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.47",
+  version: "0.10.48",
   published: "13 August 2026",
-  title: "Preserve registered layout paths",
-  summary: "WCA now keeps the exact registered .layout resource path from local metadata, including nested folders, through the controller and Workbench import plan.",
+  title: "Make connected-player rows runtime-safe",
+  summary: "Connected-player tables now export a qualified registered row resource by default, declare the Core dependency, and reject bare row paths before they become empty in-game lists.",
   changes: [
+    "Generic Connected players (engine) tables now use the registered BUSHWAR Core Button Row > NameText prefab by default, so PlayerManager rows can actually instantiate in Reforger instead of silently failing on a bare path.",
+    "Schema-3 handoffs now list runtime row resources and the required BUSHWAR-UIComposer-Core dependency; validation warns when a custom row layout is not GUID-qualified.",
     "Registered .layout.meta imports now preserve the full normalized resource path instead of reconstructing only the filename; changing the layout name clears the imported path so stale metadata cannot leak into a new handoff.",
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",

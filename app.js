@@ -193,6 +193,20 @@
     return !!(layer?.resourcePath && /\.layout$/i.test(layer.resourcePath));
   }
 
+  // A connected-player table cannot create rows from a bare path: Workspace
+  // needs a registered ResourceName at runtime. The companion Core addon owns
+  // the canonical Button Row > NameText prefab, so generic tables use that
+  // qualified reference until a different registered row layout is selected.
+  function defaultConnectedRowResource() {
+    const core = typeof window !== "undefined" ? window.BUSHWAR_REFORGER_CORE_LIBRARY : null;
+    const entry = core?.entries?.find(item => item.id === "core.player-row");
+    return entry?.resourceReference || "{F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout";
+  }
+
+  function connectedRowResourceFor(layer) {
+    return String(layer?.rowLayoutPath || defaultConnectedRowResource()).trim();
+  }
+
   function functionFor(layer) {
     return layer?.functionId ? functionCatalog().byId(layer.functionId) : null;
   }
@@ -906,7 +920,7 @@
       functionContract: callback || undefined,
       functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
       availableCallbacks: layer.functionHints || undefined,
-      rowLayoutPath: layer.rowLayoutPath || undefined,
+      rowLayoutPath: binding?.id === "player.list.connected" ? connectedRowResourceFor(layer) : (layer.rowLayoutPath || undefined),
       recipeCallbacks: layer.recipeCallbacks || [],
       runtimeContract: binding || callback || runtimeChildNames || layer.runtimeContracts?.length ? {
         dataSource: binding ? `${binding.sourceClass}: ${binding.sourceMethods.join(" + ")}` : "client UI event",
@@ -931,7 +945,7 @@
         recipeId: layer.engineRecipeId || undefined,
         workbenchRecipe: layer.workbenchRecipe || undefined,
         nativeTree: layer.nativeTree || undefined,
-        rowLayoutPath: layer.rowLayoutPath || undefined,
+        rowLayoutPath: binding?.id === "player.list.connected" ? connectedRowResourceFor(layer) : (layer.rowLayoutPath || undefined),
         recipeCallbacks: layer.recipeCallbacks || undefined,
         functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
         sourceChildVerification
@@ -1340,7 +1354,7 @@
         list: `${connected.name}List`,
         rowName: "NameText"
       };
-      const rowLayout = connected.rowLayoutPath || `UI/layouts/${layoutName}-player-row.layout`;
+      const rowLayout = connected.rowLayoutPath || defaultConnectedRowResource();
       lines.push(
         `\tprotected static const ResourceName CONNECTED_ROW_LAYOUT = \"${rowLayout}\";`,
         `\tprotected ref Widget m_w${classStem}ConnectedList;`,
@@ -1668,11 +1682,11 @@
       widgetName: widget.name,
       controllerClass: `BWUIC_${classStem}Controller`,
       layoutPath,
-      rowLayoutPath: widget.binding === "player.list.connected" ? (widget.rowLayoutPath || `UI/layouts/${layoutName}-player-row.layout`) : undefined,
+      rowLayoutPath: widget.binding === "player.list.connected" ? (widget.rowLayoutPath || defaultConnectedRowResource()) : undefined,
       rowLayoutCreateRequest: widget.binding === "player.list.connected" ? {
         name: `${layoutName}-player-row`,
         description: "Native row scaffold for a connected-player callback. Keep the playerId in controller state, not in display text.",
-        sourcePath: widget.rowLayoutPath || undefined,
+        sourcePath: widget.rowLayoutPath || defaultConnectedRowResource(),
         root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 6 12 6" } }] }
       } : undefined,
       requiredWidgetNames: widget.requiredNamedChildren,
@@ -1686,6 +1700,8 @@
     const layoutGuid = normalizeLayoutGuid(state.handoff.layoutGuid);
     const layoutResourceReference = layoutGuid ? `{${layoutGuid}}${layoutPath}` : layoutPath;
     const controllerSource = controllerSourceFor(classStem, layoutName, runtimeScaffolds, layoutGuid, layoutPath);
+    const runtimeResourceReferences = runtimeScaffolds.flatMap(widget => [widget.rowLayoutPath]).filter(Boolean);
+    const usesCoreRowResource = runtimeResourceReferences.some(resource => resource === defaultConnectedRowResource());
     return {
       format: workbenchPlanFormat,
       schema: workbenchPlanSchema,
@@ -1728,7 +1744,8 @@
       bindings: widgets.filter(widget => widget.binding).map(widget => ({ id: widget.binding, contract: widget.bindingContract })),
       callbacks: widgets.filter(widget => widget.functionId).map(widget => ({ id: widget.functionId, contract: widget.functionContract })),
       runtimeScaffolds,
-      resources: [...new Set(visibleLayers.map(layer => layer.resourcePath).filter(Boolean))],
+      resources: [...new Set([...visibleLayers.map(layer => layer.resourcePath), ...runtimeResourceReferences].filter(Boolean))],
+      dependencies: usesCoreRowResource ? [{ projectId: "BUSHWAR-UIComposer-Core", reason: "Connected-player rows use the registered Core Button Row > NameText prefab." }] : [],
       layoutCreateRequest: {
         name: layoutName,
         resourceReference: layoutResourceReference,
@@ -2233,6 +2250,7 @@
       if ((layer.binding || layer.functionId) && !layer.visible) warnings.push(`${layer.name || "A runtime layer"} is hidden and will not be exported into the Workbench layout.`);
       if (layer.functionId === "player.row.select" && layer.binding !== "player.list.connected") warnings.push(`${layer.name || "The player row"} needs the Connected players engine binding before its playerId callback can be wired.`);
       if (layer.binding === "player.list.connected" && !layer.functionId) warnings.push(`${layer.name || "Connected players"} reads real PlayerManager rows but has no row callback; add Connected-player row selected if clicking a player should carry its ID.`);
+      if (layer.binding === "player.list.connected" && !/^\{[0-9A-F]{16}\}/i.test(connectedRowResourceFor(layer))) warnings.push(`${layer.name || "Connected players"} has no GUID-qualified registered row layout; register the row prefab or use the BUSHWAR Core row resource before compiling.`);
     });
     const runtimeBoundLayers = state.layers.filter(layer => layer.binding || layer.functionId);
     if (runtimeBoundLayers.length) {
