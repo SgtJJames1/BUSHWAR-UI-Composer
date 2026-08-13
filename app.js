@@ -886,19 +886,18 @@
     // The Composer canvas is pixel-authored. Keep the generated Workbench
     // scaffold pixel-accurate instead of silently converting a 360 px panel
     // into a proportionally resizing anchor-only widget. The plan still
-    // carries normalized anchors for responsive handoff review.
-    // Use the same FrameWidgetSlot geometry that the shipped BUSHWAR GM
-    // layouts use. Position/Size fields are the pixel-authoritative form for
-    // point-anchored widgets; emitting Offset* here can be ignored by
-    // Workbench and collapse the panel into a tiny top-left cluster.
+    // carries normalized anchors for responsive handoff review. Workbench's
+    // FrameWidgetSlot serializer expresses a point-anchored pixel rectangle
+    // with Offset* fields; PositionX/SizeX shorthand can parse yet collapse
+    // to the origin when the layout is opened in a fresh resource database.
     const left = Math.round(layer.x);
     const top = Math.round(layer.y);
     const pixelSlot = {
       anchor: "0 0 0 0",
-      positionX: left,
-      positionY: top,
-      sizeX: Math.round(layer.w),
-      sizeY: Math.round(layer.h)
+      offsetLeft: left,
+      offsetTop: top,
+      offsetRight: left + Math.round(layer.w),
+      offsetBottom: top + Math.round(layer.h)
     };
     if (layer.type === "table" && widget.binding === "player.list.connected") {
       return {
@@ -1338,6 +1337,9 @@
     const widgets = visibleLayers.map((layer, index, layers) => workbenchWidgetFor(layer, index, layers));
     const runtimeScaffolds = widgets.filter(widget => widget.binding).map(widget => ({
       binding: widget.binding,
+      layerType: widget.layerType,
+      properties: widget.properties,
+      runtimeContract: widget.runtimeContract,
       contract: widget.bindingContract,
       functionId: widget.functionId || undefined,
       functionContract: widget.functionContract,
@@ -1354,6 +1356,7 @@
         root: { type: "Button", name: "Row", children: [{ type: "Text", name: "NameText", props: { Text: "Player", Color: "1 1 1 1" }, slot: { sizeMode: "FILL", padding: "12 6 12 6" } }] }
       } : undefined,
       requiredWidgetNames: widget.requiredNamedChildren,
+      valueWidgetName: widget.runtimeContract?.valueWidgetName,
       implementation: widget.binding === "player.list.connected"
         ? "Read PlayerManager.GetPlayers(playerIds) (the API marks this parameter out), resolve GetPlayerName(playerId), skip empty names, create one row per valid name under the generated list widget, set TextWidget.SetExactFontSize from the Composer font contract, and refresh when the roster signature changes. If a row callback is assigned, carry the actual playerId alongside the row."
         : "Implement the listed engine contract in the generated controller; the Composer does not invent callbacks or authority."

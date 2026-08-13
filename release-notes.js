@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.15",
+  version: "0.10.16",
   published: "13 August 2026",
-  title: "Source-backed visual handoff",
-  summary: "Palette and template widgets now adopt their registered Reforger/WLib source by default, reducing the visual gap between the Composer and Workbench while keeping runtime player tables explicit.",
+  title: "Verified runtime child mapping and pixel bounds",
+  summary: "Runtime child-name overrides now reach generated controller source, and exported pixel slots use Workbench Offset* bounds so panels do not collapse into a cramped top-left cluster.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -52,6 +52,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Schema-3 plans summarize source-backed widget counts and required named-child verification for the disposable Workbench review plugin.",
     "New palette and template layers adopt a registered vanilla/WLib source by default when one exists; use the inspector's generated-native action when a custom scaffold is intentional.",
     "Connected-player tables remain native runtime scaffolds until their Count/Selection/Scroll/List/NameText child names are verified against the selected Reforger source.",
-    "Any source-backed runtime binding now carries a manual child-name verification gate, and scalar bindings can override the exact runtime TextWidget child name in the inspector."
+    "Any source-backed runtime binding now carries a manual child-name verification gate, and scalar bindings can override the exact runtime TextWidget child name in the inspector.",
+    "The schema-3 runtime scaffold preserves layer type, widget properties, and runtime contracts before controller generation; verified child overrides are no longer dropped from the generated EnforceScript.",
+    "Pixel-authored layout slots now export OffsetLeft/Top/Right/Bottom rectangles, matching Workbench's anchored FrameWidgetSlot form and preserving the requested 24 px / 360 px GM panel bounds."
   ]
 };

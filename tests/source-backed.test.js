@@ -19,5 +19,9 @@ assert(source.includes("const sourceChildVerification = source && binding ? \"ma
 assert(source.includes("confirm the bound value child name and widget type"), "source-backed scalar bindings must warn about named-child verification");
 assert(source.includes("runtimeValueWidgetName"), "source-backed scalar bindings must support an explicit runtime child-name override");
 assert(index.includes("runtimeValueWidgetName"), "inspector must expose the runtime value child-name override");
+assert(source.includes("runtimeContract: widget.runtimeContract"), "runtime scaffolds must preserve the widget runtime contract for controller generation");
+assert(source.includes("valueWidgetName: widget.runtimeContract?.valueWidgetName"), "runtime scaffolds must preserve the verified value child name");
+assert(source.includes("offsetRight: left + Math.round(layer.w)"), "pixel-authored layout slots must emit Workbench Offset* bounds");
+assert(!source.includes("positionX: left"), "layout handoff must not rely on PositionX/SizeX shorthand that can collapse to the origin");
 
 console.log("source-backed.test.js: PASS");
