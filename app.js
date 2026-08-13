@@ -1297,9 +1297,10 @@
       "\t\tm_wRoot.AddHandler(this);",
       ...updateWidgetNames.flatMap(name => [
         `\t\tWidget updateTarget_${updateWidgetNames.indexOf(name)} = m_wRoot.FindAnyWidget(${JSON.stringify(name)});`,
-        `\t\tif (updateTarget_${updateWidgetNames.indexOf(name)} && updateTarget_${updateWidgetNames.indexOf(name)} != m_wRoot)`,
+        `\t\tif (updateTarget_${updateWidgetNames.indexOf(name)})`,
         "\t\t{",
-        `\t\t\tupdateTarget_${updateWidgetNames.indexOf(name)}.AddHandler(this);`,
+        `\t\t\tif (updateTarget_${updateWidgetNames.indexOf(name)} != m_wRoot)`,
+        `\t\t\t\tupdateTarget_${updateWidgetNames.indexOf(name)}.AddHandler(this);`,
         `\t\t\tm_aWidgetUpdateTargets.Insert(updateTarget_${updateWidgetNames.indexOf(name)});`,
         "\t\t}",
         ""
@@ -1325,7 +1326,7 @@
         "\t\tfor (int updateIndex = 0; updateIndex < m_aWidgetUpdateTargets.Count(); updateIndex++)",
         "\t\t{",
         "\t\t\tWidget updateTarget = m_aWidgetUpdateTargets[updateIndex];",
-        "\t\t\tif (updateTarget)",
+        "\t\t\tif (updateTarget && updateTarget != m_wRoot)",
         "\t\t\t\tupdateTarget.RemoveHandler(this);",
         "\t\t}",
         "\t\tm_aWidgetUpdateTargets.Clear();"

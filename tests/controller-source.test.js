@@ -32,6 +32,9 @@ const qualifiedSource = sandbox.controllerSourceFor("TestLayout", "TestLayout", 
 const updateOnlySource = sandbox.controllerSourceFor("UpdateOnly", "UpdateOnly", [
   { name: "RuntimePanel", layerType: "panel", functionId: "ui.widget.update", functionTargetWidgetName: "RuntimePanel" }
 ]);
+const rootUpdateSource = sandbox.controllerSourceFor("RootUpdate", "RootUpdate", [
+  { name: "RootUpdate", layerType: "panel", functionId: "ui.widget.update", functionTargetWidgetName: "RootUpdate" }
+]);
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "generated source must use compile-valid GetPlayers call syntax");
 assert(qualifiedSource.includes('{92829430AE6EAD05}UI/layouts/Sub/TestLayout.layout'), "a registered layout GUID must preserve the qualified layout ResourceName path");
@@ -55,6 +58,7 @@ assert(source.includes("OnWidgetUpdateContract(w)"), "widget update must expose 
 assert(source.includes("m_iWidgetUpdateCounter < 30"), "widget update must be throttled instead of rebuilding every frame");
 assert(updateOnlySource.includes("override bool OnUpdate(Widget w)"), "update-only designs must still generate the native OnUpdate override");
 assert(!updateOnlySource.includes('OnReviewRequiredCallback("ui.widget.update"'), "generated widget update must not be misrouted through the review-only click hook");
+assert(rootUpdateSource.includes("m_aWidgetUpdateTargets.Insert(updateTarget_0);"), "widget update must support a root widget target without losing the handler");
 assert(source.includes('PackToFile("$profile:BUSHWAR-UIComposer/runtime-context.json")'), "engine context export must write the documented local snapshot path");
 assert(source.includes('snapshot.players.Insert(player);'), "engine context export must append only filtered runtime player records");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");

@@ -179,13 +179,17 @@ The **What's new** toolbar button remains available to reopen it.
   export a review hook and are called out by validation; they are never treated
   as already implemented. Generated callback routes walk parent widgets so
   nested WLib controls still reach the assigned route.
-- Concrete client-local actions are marked `generated` rather than
-  `review-required`. `Toggle widget visibility` accepts an exact target widget
+ - Concrete client-local actions are marked `generated` rather than
+   `review-required`. `Toggle widget visibility` accepts an exact target widget
   name (or toggles the clicked widget when blank), previews the same visibility
   change in the browser, and emits `FindAnyWidget(...)` + `SetVisible(...)` in
   the controller scaffold. The GM editor binding emits
-  `SCR_EditorManagerEntity.IsOpenedInstance(true)` because the engine API
-  includes the limited-editor argument.
+   `SCR_EditorManagerEntity.IsOpenedInstance(true)` because the engine API
+   includes the limited-editor argument.
+ - `Widget update (OnUpdate)` is a target-required generated route: the
+   controller attaches to the exact named widget, throttles callbacks to 30
+   ticks, refreshes linked runtime bindings when present, and exposes a
+   compile-safe `OnWidgetUpdateContract` seam for reviewed target-addon logic.
 
 ## Workbench boundary
 
