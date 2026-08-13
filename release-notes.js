@@ -1,5 +1,5 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.42",
+  version: "0.10.43",
   published: "13 August 2026",
   title: "Runtime roster parity tightened",
   summary: "Connected-player rows now require a valid native NameText child and a real non-empty PlayerManager name; unavailable engine state is no longer shown as zero players.",
