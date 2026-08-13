@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.34",
+  version: "0.10.35",
   published: "13 August 2026",
-  title: "Executable Core scaffold contract test",
-  summary: "WCA now has an executable Core fixture test that checks the catalog layer, native scaffold, and registered row resource stay aligned before publishing.",
+  title: "Core registration parity guard",
+  summary: "WCA now checks the website manifest, Workbench-generated Core .meta GUIDs, and the disposable validation controller as one registered-resource contract.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -81,6 +81,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Core connected-player panels now carry {F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout into the generated ResourceName, avoiding ambiguous bare-path row creation.",
     "Validate Workbench handoff now treats the registered BUSHWAR Core child tree as manifest-verified while preserving manual child-name warnings for unverified vanilla/source-backed runtime layouts.",
     "Opening or restoring an older project/template now hydrates matching Core layers from the current manifest, including the GUID-qualified player-row ResourceName and runtime callback contracts.",
-    "The Composer test suite now constructs a Core admin layer and verifies its exported widget, native count/selection/scroll/list children, GUID-qualified source, and registered row layout agree as one contract."
+    "The Composer test suite now constructs a Core admin layer and verifies its exported widget, native count/selection/scroll/list children, GUID-qualified source, and registered row layout agree as one contract.",
+    "Core library tests now compare each manifest ResourceName with the actual .layout.meta file and validation controller, catching null or stale GUID registration before a Workbench handoff is used."
   ]
 };

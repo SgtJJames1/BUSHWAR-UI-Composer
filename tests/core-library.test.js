@@ -27,11 +27,20 @@ for (const entry of website.entries) {
   assert(Array.isArray(entry.runtimeContracts) && entry.runtimeContracts.length > 0, `${entry.id} must declare runtime contracts`);
   assert(Array.isArray(entry.functionHints) && entry.functionHints.length > 0, `${entry.id} must declare supported callback hints`);
   assert.strictEqual(JSON.stringify(entry.functionHints), JSON.stringify(addonEntry.functionHints), `${entry.id} callback hints must match between website and addon manifests`);
-  assert(fs.existsSync(path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", entry.path)), `${entry.path} must exist in the Core addon`);
+  const coreResourcePath = path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", entry.path);
+  assert(fs.existsSync(coreResourcePath), `${entry.path} must exist in the Core addon`);
+  const metaPath = `${coreResourcePath}.meta`;
+  assert(fs.existsSync(metaPath), `${entry.path}.meta must exist after Workbench registration`);
+  assert(fs.readFileSync(metaPath, "utf8").includes(`Name \"{${entry.resourceGuid}}${entry.path}\"`), `${entry.id} .meta must carry the manifest GUID-qualified ResourceName`);
 }
 
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const validationControllerPath = path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Validation", "Scripts", "Game", "UI", "BWUIC_BushwarComposerlayoutController.c");
+if (fs.existsSync(validationControllerPath)) {
+  const validationController = fs.readFileSync(validationControllerPath, "utf8");
+  for (const entry of website.entries) assert(validationController.includes(entry.resourceReference), `${entry.id} validation controller must use the registered ResourceName`);
+}
 assert(app.includes("BUSHWAR_REFORGER_CORE_LIBRARY"), "app must load the Core library manifest");
 assert(app.includes("coreLibraryId: layer.coreLibraryId"), "Workbench widgets must preserve the Core addon identity");
 assert(app.includes("declaredRuntimeContracts: layer.runtimeContracts"), "Workbench contracts must preserve Core runtime declarations");
