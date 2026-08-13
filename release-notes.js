@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.37",
+  version: "0.10.38",
   published: "13 August 2026",
-  title: "Runtime context parity check",
-  summary: "WCA now regression-tests the imported Workbench context boundary so invalid, empty, and duplicate player records cannot reach the preview.",
+  title: "Zero-player context parity",
+  summary: "WCA now distinguishes an imported Workbench roster with zero players from a browser that has no engine snapshot at all.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -85,6 +85,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Core library tests now compare each manifest ResourceName with the actual .layout.meta file and validation controller, catching null or stale GUID registration before a Workbench handoff is used.",
     "Generated controllers and the disposable validation admin menu now deduplicate PlayerManager IDs before creating rows or calculating connected counts, while still skipping empty names.",
     "Exported runtime-context snapshots and roster signatures use the same unique-ID rule, so browser previews cannot gain duplicate or placeholder player entries from a malformed engine list.",
-    "The browser context normalizer now has an executable regression fixture covering duplicate IDs, empty names, non-positive IDs, invalid IDs, and multiple valid players before a snapshot reaches the canvas."
+    "The browser context normalizer now has an executable regression fixture covering duplicate IDs, empty names, non-positive IDs, invalid IDs, and multiple valid players before a snapshot reaches the canvas.",
+    "Imported zero-player snapshots now render 0 connected and an explicit Workbench-empty message; no snapshot remains an unknown state instead of pretending the engine reported zero.",
+    "Generated controllers and validation fixtures reject non-positive PlayerManager IDs before name lookup, row creation, scalar counts, signatures, or context export."
   ]
 };

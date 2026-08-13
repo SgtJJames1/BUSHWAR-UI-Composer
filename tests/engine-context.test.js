@@ -26,5 +26,7 @@ assert.deepStrictEqual(players.map(player => ({ id: player.id, name: player.name
   { id: 1, name: "Sgt.James" },
   { id: 5, name: "Second real player" }
 ], "browser context must keep only unique positive IDs with non-empty names");
+assert(source.includes('return state.engineContext?.source === "workbench"'), "browser must distinguish an imported zero-player snapshot from no snapshot");
+assert(source.includes('hasEngineContextSnapshot() ? String(enginePlayers().length) : "NO WORKBENCH PLAYER SNAPSHOT"'), "player count preview must show zero for an imported empty roster and unknown only without a snapshot");
 
 console.log("engine-context.test.js: PASS");

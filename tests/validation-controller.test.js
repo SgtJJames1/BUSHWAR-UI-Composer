@@ -32,6 +32,7 @@ assert(source.includes("if (playerName.IsEmpty())"), "validation controller must
 assert(source.includes('unavailableCount.SetText("0 CONNECTED")'), "validation controller must clear count when PlayerManager is unavailable");
 assert(source.includes('unavailableSelection.SetText("SELECTED: NONE")'), "validation controller must clear selection when PlayerManager is unavailable");
 assert(source.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "validation controller must deduplicate PlayerManager IDs before creating rows");
+assert(source.includes("if (playerId <= 0)"), "validation controller must reject non-positive PlayerManager IDs");
 assert(source.includes("IsWidgetNamedOrChild"), "validation controller must support nested WLib callback targets");
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wClose")'), "close callback must use the nested-widget route");
 assert(source.includes('IsWidgetNamedOrChild(w, "m_wRefresh")'), "refresh callback must use the nested-widget route");
@@ -39,12 +40,14 @@ assert(source.includes("RefreshRuntimeBindings()"), "validation controller must 
 assert(source.includes("FindPlayerRowIndex(w)"), "validation controller must resolve nested row clicks to one row identity");
 assert(!source.includes("m_aPlayerRows.Insert(nameText)"), "validation controller must not duplicate rows for nested name widgets");
 assert(adminMenuSource.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "admin-menu fixture must deduplicate PlayerManager IDs before creating rows");
+assert(adminMenuSource.includes("if (playerId <= 0)"), "admin-menu fixture must reject non-positive PlayerManager IDs");
 assert(adminMenuSource.includes("array<int> signaturePlayerIds = {};"), "admin-menu fixture signature must deduplicate PlayerManager IDs");
 assert(contextActionSource.includes("class BWUIC_ValidationRuntimeContextSnapshot : JsonApiStruct"), "validation addon must define a JSON runtime context snapshot");
 assert(contextActionSource.includes('RegV("players")'), "runtime context snapshot must register its player array");
 assert(contextActionSource.includes("playerManager.GetPlayers(playerIds);"), "runtime context exporter must read the authoritative PlayerManager IDs");
 assert(contextActionSource.includes("if (playerName.IsEmpty())"), "runtime context exporter must filter empty player names");
 assert(contextActionSource.includes("array<int> capturedPlayerIds = {};"), "runtime context exporter must deduplicate PlayerManager IDs");
+assert(contextActionSource.includes("if (playerId <= 0)"), "runtime context exporter must reject non-positive PlayerManager IDs");
 assert(contextActionSource.includes('PackToFile("$profile:BUSHWAR-UIComposer/runtime-context.json")'), "runtime context exporter must write the documented profile snapshot path");
 assert(contextActionSource.includes("class BWUIC_ExportEngineContextContextAction"), "GM context menu must expose the runtime context export action");
 

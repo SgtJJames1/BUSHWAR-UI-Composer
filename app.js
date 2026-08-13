@@ -209,8 +209,8 @@
   function runtimeDisplayValue(layer) {
     const binding = bindingFor(layer);
     if (!binding) return layer.text;
-    if (binding.id === "player.name") return selectedRuntimePlayer()?.name || "NO WORKBENCH PLAYER SNAPSHOT";
-    if (binding.id === "player.count") return enginePlayers().length ? String(enginePlayers().length) : "NO WORKBENCH PLAYER SNAPSHOT";
+    if (binding.id === "player.name") return selectedRuntimePlayer()?.name || (hasEngineContextSnapshot() ? "PLAYER UNAVAILABLE" : "NO WORKBENCH PLAYER SNAPSHOT");
+    if (binding.id === "player.count") return hasEngineContextSnapshot() ? String(enginePlayers().length) : "NO WORKBENCH PLAYER SNAPSHOT";
     if (binding.id === "editor.gm.open") {
       if (typeof state.engineContext?.editorOpen !== "boolean") return "GM EDITOR STATE UNKNOWN";
       return state.engineContext.editorOpen ? "GM EDITOR OPEN" : "GM EDITOR CLOSED";
@@ -231,6 +231,10 @@
     return normalizeEnginePlayers(state.engineContext?.players);
   }
 
+  function hasEngineContextSnapshot() {
+    return state.engineContext?.source === "workbench";
+  }
+
   function normalizeEnginePlayers(players) {
     const seenIds = new Set();
     return (Array.isArray(players) ? players : []).map(player => ({
@@ -247,7 +251,7 @@
 
   function engineContextLabel() {
     const context = state.engineContext || {};
-    if (!enginePlayers().length) return "No Workbench snapshot loaded";
+    if (!hasEngineContextSnapshot()) return "No Workbench snapshot loaded";
     const version = context.engineVersion ? ` · WR ${context.engineVersion}` : "";
     const editor = typeof context.editorOpen === "boolean" ? ` · GM editor ${context.editorOpen ? "open" : "closed"}` : "";
     return `${enginePlayers().length} connected player${enginePlayers().length === 1 ? "" : "s"} imported${editor}${version}`;
@@ -269,7 +273,7 @@
       const selectedClass = selected && Number(selected.id) === Number(player.id) ? " selected" : "";
       return `<button type="button" class="engine-scaffold-row${selectedClass}" data-player-id="${escapeHtml(player.id)}"><span class="engine-row-name">${escapeHtml(player.name)}</span></button>`;
     }).join("");
-    const empty = players.length ? "" : `<div class="engine-scaffold-empty">No imported Workbench players. Runtime opens with zero rows until PlayerManager returns a valid connected player.</div>`;
+    const empty = players.length ? "" : `<div class="engine-scaffold-empty">${hasEngineContextSnapshot() ? "Workbench reports 0 valid connected players." : "No imported Workbench players. Runtime opens with zero rows until PlayerManager returns a valid connected player."}</div>`;
     return { players, selected, rows, empty };
   }
 
@@ -573,8 +577,8 @@
     const visual = layer.reforgerVisual || reforgerVisualFor(layer);
     element.classList.add(`reforger-${visual}`);
     const title = text || "Reforger reference";
-    const corePlayerTitle = layer.coreLibraryEntryId === "core.player-row"
-      ? escapeHtml(runtimeDisplayValue(layer) || "NO WORKBENCH PLAYER SNAPSHOT")
+     const corePlayerTitle = layer.coreLibraryEntryId === "core.player-row"
+       ? escapeHtml(runtimeDisplayValue(layer) || (hasEngineContextSnapshot() ? "PLAYER UNAVAILABLE" : "NO WORKBENCH PLAYER SNAPSHOT"))
       : title;
     const body = {
       button: `<span class="rr-button">${title}<i>›</i></span>`, checkbox: `<span class="rr-check checked">✓</span><span class="rr-label">${title}</span>`, slider: `<span class="rr-label">${title}</span><span class="rr-slider"><i></i></span>`, progress: `<span class="rr-label">${title}</span><span class="rr-progress"><i></i></span>`, selector: `<span class="rr-select">${title}<b>⌄</b></span>`, input: `<span class="rr-input"><b>${title}</b><i>Search / enter value</i></span>`, tabs: `<span class="rr-tabs"><b>${title}</b><i>DETAILS</i><i>OPTIONS</i></span>`, list: `<span class="rr-list"><b>${title}</b><i></i><i></i><i></i></span>`, "vehicle-hud": `<span class="rr-gauge">62</span><span class="rr-vehicle"><b>${title}</b><i>GEAR 3 · 48 km/h</i><em></em></span>`, map: `<span class="rr-map"><i>⌖</i><b>${title}</b><em></em></span>`, chat: `<span class="rr-chat"><b>${title}</b><i>PLAYER: Ready on your mark.</i><i>GM: Entity placed.</i></span>`, action: `<span class="rr-action"><b>F</b><span>${title}<i>Hold to interact</i></span></span>`, "gm-hud": `<span class="rr-gm"><b>◆</b><span>${title}<i>GAME MASTER / EDITOR</i></span><em>⌘</em></span>`, "icon-atlas": `<span class="rr-atlas"><i>⌁</i><i>⚙</i><i>◇</i><i>⌖</i><i>◉</i><i>▣</i></span>`, "map-marker": `<span class="rr-marker">⌖</span><span class="rr-label">${title}</span>`, "core-admin-panel": `<span class="rr-core-admin"><span class="rr-core-head"><b>${title}</b><button type="button" class="rr-core-refresh core-action" data-core-action="refresh">REFRESH</button><button type="button" class="rr-core-close" aria-label="Close">×</button></span><span class="rr-core-label">CONNECTED PLAYERS <b class="rr-core-count">0 CONNECTED</b></span><span class="rr-core-selection">SELECTED: NONE</span><span class="rr-core-list"></span></span>`, "core-player-row": `<button type="button" class="engine-scaffold-row rr-core-player-row"><span class="engine-row-name">${corePlayerTitle}</span></button>`, text: `<span class="rr-text">${title}</span>`, panel: `<span class="rr-panel"><b>${title}</b><i>Workbench layout reference</i></span>`
@@ -586,9 +590,9 @@
       const count = element.querySelector(".rr-core-count");
       const selection = element.querySelector(".rr-core-selection");
       const list = element.querySelector(".rr-core-list");
-      if (count) count.textContent = `${players.length} CONNECTED`;
+       if (count) count.textContent = hasEngineContextSnapshot() ? `${players.length} CONNECTED` : "ENGINE SNAPSHOT REQUIRED";
       if (selection) selection.textContent = `SELECTED: ${selected ? selected.name : "NONE"}`;
-      if (list) list.innerHTML = players.length ? players.map(player => `<button type="button" class="engine-scaffold-row rr-core-player-row" data-player-id="${escapeHtml(player.id)}"><span class="engine-row-name">${escapeHtml(player.name)}</span></button>`).join("") : `<span class="engine-scaffold-empty">No imported Workbench players. Runtime opens with zero rows until PlayerManager returns a valid connected player.</span>`;
+       if (list) list.innerHTML = players.length ? players.map(player => `<button type="button" class="engine-scaffold-row rr-core-player-row" data-player-id="${escapeHtml(player.id)}"><span class="engine-row-name">${escapeHtml(player.name)}</span></button>`).join("") : `<span class="engine-scaffold-empty">${hasEngineContextSnapshot() ? "Workbench reports 0 valid connected players." : "No imported Workbench players. Runtime opens with zero rows until PlayerManager returns a valid connected player."}</span>`;
     }
   }
 
@@ -1261,6 +1265,8 @@
         "\t\t\tfor (int playerIndex = 0; playerIndex < playerIds.Count(); playerIndex++)",
         "\t\t\t{",
         "\t\t\t\tint playerId = playerIds[playerIndex];",
+        "\t\t\t\tif (playerId <= 0)",
+        "\t\t\t\t\tcontinue;",
         "\t\t\t\tif (capturedPlayerIds.Find(playerId) >= 0)",
         "\t\t\t\t\tcontinue;",
         "\t\t\t\tstring playerName = playerManager.GetPlayerName(playerId);",
@@ -1333,6 +1339,8 @@
         "\t\tfor (int playerIndex = 0; playerIndex < playerIds.Count(); playerIndex++)",
         "\t\t{",
         "\t\t\tint playerId = playerIds[playerIndex];",
+        "\t\t\tif (playerId <= 0)",
+        "\t\t\t\tcontinue;",
         "\t\t\tif (m_aPlayerRowIds.Find(playerId) >= 0)",
         "\t\t\t\tcontinue;",
         "\t\t\tstring playerName = playerManager.GetPlayerName(playerId);",
@@ -1383,6 +1391,8 @@
         "\t\tfor (int playerIndex = 0; playerIndex < playerIds.Count(); playerIndex++)",
         "\t\t{",
         "\t\t\tint playerId = playerIds[playerIndex];",
+        "\t\t\tif (playerId <= 0)",
+        "\t\t\t\tcontinue;",
         "\t\t\tif (signaturePlayerIds.Find(playerId) >= 0)",
         "\t\t\t\tcontinue;",
         "\t\t\tstring playerName = playerManager.GetPlayerName(playerId);",
@@ -1464,6 +1474,7 @@
         needsPlayerName ? "\t\t\t\truntimePlayerName = playerManager.GetPlayerName(m_iSelectedPlayerId);" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\tfor (int runtimeIndex = 0; runtimeIndex < runtimePlayerIds.Count(); runtimeIndex++)" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\t{" : "",
+        (needsPlayerName || needsPlayerCount) ? "\t\t\t\tif (runtimePlayerIds[runtimeIndex] <= 0) continue;" : "",
         needsPlayerCount ? "\t\t\t\tif (countedPlayerIds.Find(runtimePlayerIds[runtimeIndex]) >= 0) continue;" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\t\tstring currentPlayerName = playerManager.GetPlayerName(runtimePlayerIds[runtimeIndex]);" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t\t\tif (currentPlayerName.IsEmpty()) continue;" : "",

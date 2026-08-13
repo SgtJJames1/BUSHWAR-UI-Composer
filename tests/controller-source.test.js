@@ -49,6 +49,8 @@ assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuil
 assert(source.includes("if (m_aPlayerRowIds.Find(playerId) >= 0)"), "generated controllers must deduplicate PlayerManager IDs before creating rows");
 assert(source.includes("array<int> capturedPlayerIds = {};"), "generated context snapshots must deduplicate PlayerManager IDs");
 assert(source.includes("array<int> countedPlayerIds = {};"), "generated scalar player counts must deduplicate PlayerManager IDs");
+assert(source.includes("if (playerId <= 0)"), "generated controllers must reject non-positive PlayerManager IDs");
+assert(source.includes("if (runtimePlayerIds[runtimeIndex] <= 0) continue;"), "generated scalar bindings must reject non-positive PlayerManager IDs");
 assert(source.includes('FindAnyWidget("m_wPlayerList")'), "Core connected-player controllers must use the manifest list child name");
 assert(source.includes('FindAnyWidget("m_wPlayerSelection")'), "Core connected-player controllers must use the manifest selection child name");
 assert(source.includes("if (playerName.IsEmpty())"), "row selection must reject a stale or unnamed PlayerManager ID");
