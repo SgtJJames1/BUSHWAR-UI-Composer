@@ -27,10 +27,10 @@ const source = sandbox.controllerSourceFor("TestLayout", "TestLayout", [
   { name: "StatusButton", layerType: "button", properties: { text: "READY" }, functionId: "ui.widget.set-text", functionTargetWidgetName: "StatusText" },
   { name: "ExportContext", layerType: "button", functionId: "engine.context.export" }
 ]);
-const qualifiedSource = sandbox.controllerSourceFor("TestLayout", "TestLayout", [], "92829430ae6ead05");
+const qualifiedSource = sandbox.controllerSourceFor("TestLayout", "TestLayout", [], "92829430ae6ead05", "UI/layouts/Sub/TestLayout.layout");
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "generated source must use compile-valid GetPlayers call syntax");
-assert(qualifiedSource.includes('{92829430AE6EAD05}UI/layouts/TestLayout.layout'), "a registered layout GUID must produce a GUID-qualified controller ResourceName");
+assert(qualifiedSource.includes('{92829430AE6EAD05}UI/layouts/Sub/TestLayout.layout'), "a registered layout GUID must preserve the qualified layout ResourceName path");
 assert(!source.includes("GetPlayers(out"), "generated source must not copy the API metadata out label into source syntax");
 assert(source.includes("RefreshRuntimeBindings();"), "live refresh callback must route to runtime bindings");
 assert(source.includes("runtimePlayerCount++"), "player.count must be computed from non-empty runtime names");

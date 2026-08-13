@@ -1,9 +1,10 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.46",
+  version: "0.10.47",
   published: "13 August 2026",
-  title: "Import registered layout metadata",
-  summary: "WCA can now read a registered .layout.meta locally and populate the target GUID used by the generated Workbench controller.",
+  title: "Preserve registered layout paths",
+  summary: "WCA now keeps the exact registered .layout resource path from local metadata, including nested folders, through the controller and Workbench import plan.",
   changes: [
+    "Registered .layout.meta imports now preserve the full normalized resource path instead of reconstructing only the filename; changing the layout name clears the imported path so stale metadata cannot leak into a new handoff.",
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
     "Connected-player tables default to a row-selection contract that carries the real playerId into the controller.",
