@@ -825,6 +825,25 @@
     return `m_w${sourceName.replace(/-([a-z])/g, (_, character) => character.toUpperCase()) || fallback}`;
   }
 
+  function normalizeRequiredChildren(children) {
+    if (!children || typeof children !== "object") return children;
+    const normalized = { ...children };
+    const aliases = {
+      count: ["playerCount"],
+      selection: ["playerSelection"],
+      scroll: ["playerScroll"],
+      list: ["playerList"],
+      rowName: ["nameText"],
+      rowRoot: ["row"]
+    };
+    Object.entries(aliases).forEach(([canonical, legacyNames]) => {
+      if (normalized[canonical]) return;
+      const legacyName = legacyNames.find(name => normalized[name]);
+      if (legacyName) normalized[canonical] = normalized[legacyName];
+    });
+    return normalized;
+  }
+
   function workbenchWidgetFor(layer, index, allLayers = []) {
     const profile = widgetProfileFor(layer);
     const source = sourceBackedLayer(layer) ? layer.resourcePath : "";
@@ -834,7 +853,8 @@
     const baseName = nativeWidgetBaseName(layer, index);
     const sameNameBefore = allLayers.slice(0, index).filter((previous, previousIndex) => nativeWidgetBaseName(previous, previousIndex) === baseName).length;
     const widgetName = sameNameBefore ? `${baseName}_${sameNameBefore + 1}` : baseName;
-    const runtimeChildNames = layer.requiredChildren || (binding?.id === "player.list.connected" && layer.type === "table"
+    const declaredChildren = normalizeRequiredChildren(layer.requiredChildren);
+    const runtimeChildNames = declaredChildren || (binding?.id === "player.list.connected" && layer.type === "table"
       ? {
           count: `${widgetName}Count`,
           selection: `${widgetName}Selection`,

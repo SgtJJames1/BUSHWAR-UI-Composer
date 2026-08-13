@@ -34,7 +34,11 @@
       workbenchAction: "Drag this registered Core layout into the target layout and preserve the named children",
       requiredChildren: {
         root: "m_wRoot", panel: "m_wAdminPanel", title: "m_wAdminPanelTitle", close: "m_wClose", refresh: "m_wRefresh",
-        connectedLabel: "m_wConnectedLabel", playerCount: "m_wPlayerCount", playerSelection: "m_wPlayerSelection",
+        connectedLabel: "m_wConnectedLabel", count: "m_wPlayerCount", selection: "m_wPlayerSelection",
+        scroll: "m_wPlayerScroll", list: "m_wPlayerList", rowRoot: "Row", rowName: "NameText",
+        // Legacy semantic aliases remain for imported plans created before the
+        // controller contract was made canonical.
+        playerCount: "m_wPlayerCount", playerSelection: "m_wPlayerSelection",
         playerScroll: "m_wPlayerScroll", playerList: "m_wPlayerList"
       },
       runtimeContracts: ["player.list.connected", "player.count", "player.row.select", "engine.context.refresh"]

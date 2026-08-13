@@ -42,5 +42,13 @@ assert(index.includes('value="BUSHWAR Core"'), "catalog must expose a separate B
 assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultBinding === "player.list.connected", "Core admin panel must default to the authoritative connected-player binding");
 assert(website.entries.find(entry => entry.id === "core.admin-panel")?.defaultFunctionTarget === "m_wRefresh", "Core admin panel refresh contract must target the named refresh button");
 assert(website.entries.find(entry => entry.id === "core.player-row")?.runtimeValueWidgetName === "NameText", "Core row must declare the actual TextWidget child used for player names");
+const adminChildren = website.entries.find(entry => entry.id === "core.admin-panel")?.requiredChildren || {};
+assert.strictEqual(adminChildren.count, "m_wPlayerCount", "Core admin panel must expose the canonical connected-count child key");
+assert.strictEqual(adminChildren.selection, "m_wPlayerSelection", "Core admin panel must expose the canonical selection child key");
+assert.strictEqual(adminChildren.list, "m_wPlayerList", "Core admin panel must expose the canonical connected-list child key");
+assert.strictEqual(adminChildren.rowName, "NameText", "Core admin panel must expose the canonical row text child key");
+assert(app.includes("normalizeRequiredChildren"), "app must normalize legacy Core named-child aliases before generating controller contracts");
+assert(app.indexOf("const declaredChildren = normalizeRequiredChildren(layer.requiredChildren)") < app.indexOf("const runtimeChildNames = declaredChildren"), "Core child normalization must happen before controller child-name selection");
+assert(app.includes("${names.list}"), "generated connected-player controllers must use the canonical connected-list child name");
 
 console.log("core-library.test.js: PASS");
