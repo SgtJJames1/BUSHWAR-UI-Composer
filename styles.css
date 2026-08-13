@@ -33,11 +33,17 @@ button:disabled { opacity: .35; cursor: default; }
 .check { color: var(--muted); font-size: 13px; display: flex; gap: 5px; align-items: center; }
 select, input, textarea { background: #0c1418; border: 1px solid var(--line); border-radius: 3px; padding: 6px; outline: none; }
 input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
-.app-shell { height: calc(100% - 76px); display: grid; grid-template-columns: 250px minmax(320px, 1fr) 270px; }
+.app-shell { height: calc(100% - 76px); display: grid; grid-template-columns: 250px minmax(320px, 1fr) 320px; }
 .sidebar { background: var(--panel); overflow: auto; scrollbar-color: #34454d transparent; }
 .left-sidebar { border-right: 1px solid var(--line); }
 .right-sidebar { border-left: 1px solid var(--line); }
 .sidebar section { padding: 12px; border-bottom: 1px solid var(--line-soft); }
+details.sidebar-section { padding: 12px; border-bottom: 1px solid var(--line-soft); }
+details.sidebar-section > summary { list-style: none; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+details.sidebar-section > summary::-webkit-details-marker { display: none; }
+details.sidebar-section > summary::after { content: "▾"; color: var(--muted); font-size: 10px; transition: transform .12s ease; }
+details.sidebar-section:not([open]) > summary::after { transform: rotate(-90deg); }
+details.sidebar-section:not([open]) > summary.section-title { margin-bottom: 0; }
 .section-title { color: #dbe4e8; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 9px; }
 .row-title { display: flex; justify-content: space-between; align-items: center; }
 .layer-actions { display: flex; gap: 3px; }
@@ -352,6 +358,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
   padding: 10px;
   background: rgba(127, 169, 183, 0.06);
 }
+.workflow-details > summary { list-style: none; cursor: pointer; }
+.workflow-details > summary::-webkit-details-marker { display: none; }
 .workflow-heading {
   display: flex;
   justify-content: space-between;
@@ -380,6 +388,18 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
 .workflow-step .workflow-copy { display: grid; gap: 1px; }
 .workflow-step b { font-size: 12px; font-weight: 600; }
 .workflow-step small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.mod-prep {
+  margin: 8px 0 4px;
+  border-left: 3px solid var(--accent);
+  background: rgba(244, 123, 54, 0.08);
+  padding: 8px 10px;
+  border-radius: 4px;
+  display: grid;
+  gap: 3px;
+}
+.mod-prep b { color: var(--accent); font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; }
+.mod-prep span { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.mod-prep code { color: var(--text); }
 .guide-steps { margin: 0; padding-left: 18px; display: grid; gap: 7px; }
 .guide-steps li { color: var(--muted); font-size: 12px; line-height: 1.45; }
 .guide-steps b { color: var(--text); }

@@ -1,9 +1,15 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.56",
+  version: "0.10.57",
   published: "13 August 2026",
-  title: "UI cleanup, accessibility, and design refresh",
-  summary: "Removed redundant controls (duplicate scene picker and design-spec copy), grouped Handoff actions into compact rows, and modernised the UI with visible focus rings, hover states, reduced-motion support, and screen-reader status announcements.",
+  title: "Roomier sidebar, collapsible panels, mod-prep hints",
+  summary: "The right sidebar is wider and its sections collapse for vertical room; the workflow tracker folds into a live summary, and a Mod prep note shows the controller path and Core dependency before you export.",
   changes: [
+    "Right sidebar widened from 270px to 320px so Handoff fields and export actions fit comfortably.",
+    "Right-sidebar sections (Selection, Screen, Handoff, Engine context) are now collapsible, so you can extend the panel vertically and focus on one area.",
+    "The Workbench workflow tracker collapses into a summary line with a live ready count; open it to see the eight steps.",
+    "A live Mod prep note shows the generated controller target (Scripts/Game/UI/…) and whether the BUSHWAR-UIComposer-Core dependency (B3A5F08C0D504D96) is required, updated as you design.",
+    "The Workbench workflow guide now includes a Mod prep checklist (dependency, controller path, layout registration, textures, authority boundary).",
+    "The ui-audit regression test now locks the sidebar sizing, collapsible sections, and mod-prep note.",
     "Removed the duplicate topbar Scene picker (the Base scene cards are now the single picker) and the redundant Copy design specification action; the schema-3 plan and handoff bundle already carry the same information.",
     "Handoff actions are grouped into compact rows: Export handoff bundle + Export controller, and Copy scaffold + Download scaffold, with shorter labels.",
     "Design refresh: rounded buttons, hover states on primary actions, visible :focus-visible rings for keyboard navigation, and prefers-reduced-motion support.",

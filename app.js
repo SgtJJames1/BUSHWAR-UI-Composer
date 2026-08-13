@@ -2404,7 +2404,15 @@
     const count = { done: 0, todo: 0, manual: 0 };
     steps.forEach(step => { count[step.state]++; });
     const automatic = steps.length - count.manual;
-    container.innerHTML = `<div class="workflow-heading"><b>Workbench workflow</b><span class="workflow-count">${count.done}/${automatic} automatic steps ready</span></div><ol class="workflow-steps">${steps.map((step, index) => `<li class="workflow-step ${step.state}" data-step="${step.id}"><span class="workflow-marker">${step.state === "done" ? "✓" : step.state === "manual" ? "●" : index + 1}</span><span class="workflow-copy"><b>${escapeHtml(step.label)}</b><small>${escapeHtml(step.detail)}</small></span></li>`).join("")}</ol>`;
+    container.innerHTML = `<details class="workflow-details" open><summary class="workflow-heading"><b>Workbench workflow</b><span class="workflow-count">${count.done}/${automatic} ready</span></summary><ol class="workflow-steps">${steps.map((step, index) => `<li class="workflow-step ${step.state}" data-step="${step.id}"><span class="workflow-marker">${step.state === "done" ? "✓" : step.state === "manual" ? "●" : index + 1}</span><span class="workflow-copy"><b>${escapeHtml(step.label)}</b><small>${escapeHtml(step.detail)}</small></span></li>`).join("")}</ol></details>`;
+    const prep = $("#modPrepNote");
+    if (prep) {
+      const layoutName = safeName(state.handoff.layoutName) || "bushwar-composer-layout";
+      const classStem = layoutName.split(/[-_]+/).filter(Boolean).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join("") || "BushwarComposerLayout";
+      const controllerPath = `Scripts/Game/UI/BWUIC_${classStem}Controller.c`;
+      const usesCoreRow = state.layers.some(layer => layer.binding === "player.list.connected" && connectedRowResourceFor(layer) === defaultConnectedRowResource());
+      prep.innerHTML = `<b>Mod prep</b><span>Controller target: <code>${escapeHtml(controllerPath)}</code></span><span>${usesCoreRow ? "Dependency: <code>BUSHWAR-UIComposer-Core</code> (<code>B3A5F08C0D504D96</code>) — required for the Core row resource." : "No <code>BUSHWAR-UIComposer-Core</code> dependency required (no Core row resources used)."}</span>`;
+    }
   }
 
   function validateHandoff() {

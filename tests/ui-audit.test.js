@@ -41,4 +41,12 @@ assert(css.includes("prefers-reduced-motion"), "reduced-motion preference must b
 assert(css.includes(".handoff-export-row"), "handoff actions must be grouped into compact rows");
 assert(css.includes("button.accent:hover"), "primary actions must have a hover state");
 
+// --- Right sidebar sizing, collapsibility, and mod prep ---------------------
+assert(css.includes("grid-template-columns: 250px minmax(320px, 1fr) 320px"), "right sidebar must be widened to 320px");
+assert(html.includes('<details class="sidebar-section" open>'), "right sidebar sections must be collapsible");
+assert(html.includes('id="modPrepNote"'), "handoff must expose the live mod-prep note");
+assert(js.includes("workflow-details"), "workflow tracker must collapse into a summary");
+assert(js.includes("Mod prep"), "mod-prep note must be rendered with controller path and dependency");
+assert(html.includes("BUSHWAR-UIComposer-Core") && html.includes("B3A5F08C0D504D96"), "workflow guide must document the Core mod dependency");
+
 console.log("ui-audit.test.js: PASS");

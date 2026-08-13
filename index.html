@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-cleanup">
+    <link rel="stylesheet" href="styles.css?v=20260813-sidebar">
 </head>
 <body>
   <header class="topbar">
@@ -136,8 +136,8 @@
     </section>
 
     <aside class="sidebar right-sidebar">
-      <section>
-        <div class="section-title">Selection</div>
+      <details class="sidebar-section" open>
+        <summary class="section-title">Selection</summary>
         <div id="emptyInspector" class="empty-state">Select a widget to edit it.</div>
         <div id="inspector" hidden>
           <div class="field"><label for="propName">Name</label><input id="propName" data-prop="name" type="text"></div>
@@ -197,10 +197,10 @@
             <p class="hint">For targetable engine actions, enter the exact named widget from Workbench Layout Editor. The target name travels into the generated controller.</p>
           </div>
         </div>
-      </section>
+      </details>
 
-      <section>
-        <div class="section-title">Screen</div>
+      <details class="sidebar-section" open>
+        <summary class="section-title">Screen</summary>
         <div class="two-grid">
           <div class="field"><label>Width</label><input id="screenWidth" type="number" value="1920" min="320"></div>
           <div class="field"><label>Height</label><input id="screenHeight" type="number" value="1080" min="240"></div>
@@ -210,11 +210,11 @@
           <button data-size="2560,1440">1440p</button>
           <button data-size="3840,2160">4K</button>
         </div>
-      </section>
+      </details>
 
-      <section>
-        <div class="section-title">Handoff</div>
-        <p class="hint">Save the design, then export an import plan for Workbench Layout Editor. The plan keeps widget names, resource sources, anchors, and pixel bounds together.</p>
+      <details class="sidebar-section" open>
+        <summary class="section-title">Handoff</summary>
+        <p class="hint">Validate, then export a schema-3 plan for Workbench Layout Editor. The workflow below tracks what is ready.</p>
         <div class="two-grid workbench-target-fields">
           <div class="field"><label for="workbenchTarget">Target</label><select id="workbenchTarget"><option>Menu</option><option>Dialog</option><option>Display / HUD</option></select></div>
           <div class="field"><label for="workbenchLayoutName">Layout name</label><input id="workbenchLayoutName" maxlength="80" value="BUSHWAR_ComposerLayout"></div>
@@ -232,16 +232,17 @@
         </div>
         <button id="validateBtn" class="wide handoff-validate">Validate Workbench handoff</button>
         <div id="workbenchWorkflow" class="workbench-workflow" aria-label="Workbench workflow"></div>
+        <div id="modPrepNote" class="mod-prep" aria-live="polite"></div>
         <button id="workflowHelpBtn" class="wide ghost">Workbench workflow guide</button>
-      </section>
+      </details>
 
-      <section>
-        <div class="section-title">Engine context</div>
+      <details class="sidebar-section" open>
+        <summary class="section-title">Engine context</summary>
         <p class="hint">Import a small runtime snapshot exported from the generated Reforger controller to preview real connected players and other engine-backed values. The controller writes <code>$profile:BUSHWAR-UIComposer/runtime-context.json</code>; without a snapshot, the Composer shows an explicit runtime placeholder and never invents rows.</p>
         <button id="engineContextBtn" class="wide ghost">Import Workbench context</button>
         <button id="clearEngineContextBtn" class="wide ghost">Clear engine context</button>
         <div id="engineContextStatus" class="engine-context-status">No Workbench context loaded</div>
-      </section>
+      </details>
     </aside>
   </main>
 
@@ -293,6 +294,14 @@
         <li><b>Compile and smoke-test</b> in-game. Verify the layout renders at your target resolutions (Layout Editor Live Preview) and that engine bindings read <code>PlayerManager</code> — the browser snapshot is preview evidence only.</li>
       </ol>
       <p class="hint">Fidelity contract: only native widgets (Frame, Text, Button, Image, ProgressBar, Scroll, layouts, EditBox, CheckBox) survive the handoff. Gradients, shadows, rounded corners, and web typography have no Reforger equivalent. Custom images must become registered textures in your mod. The UI Composer mod owns UI resources and named-child contracts; your mod owns authority, permissions, and replication.</p>
+      <p class="hint"><b>Mod prep checklist</b></p>
+      <ul class="guide-steps">
+        <li>Your target addon must depend on <code>BUSHWAR-UIComposer-Core</code> (<code>B3A5F08C0D504D96</code>) when the plan uses the Core row resource.</li>
+        <li>Place the generated controller at the plan's <code>controllerPath</code> (<code>Scripts/Game/UI/…</code>) and compile it in the target addon.</li>
+        <li>Register the target layout and every row layout; keep GUID-qualified ResourceNames in the controller.</li>
+        <li>Register any custom textures in your addon — the Composer ships no Reforger assets.</li>
+        <li>Your addon owns authority, permissions, and replication; the Composer mod owns UI resources and named-child contracts.</li>
+      </ul>
       <div class="dialog-actions"><button class="accent" value="close">Got it</button></div>
     </form>
   </dialog>
@@ -305,13 +314,13 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-cleanup"></script>
-  <script src="reforger-catalog.js?v=20260813-cleanup"></script>
-  <script src="reforger-core-library.js?v=20260813-cleanup"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-cleanup"></script>
-  <script src="reforger-bindings.js?v=20260813-cleanup"></script>
-  <script src="reforger-functions.js?v=20260813-cleanup"></script>
-  <script src="reforger-recipes.js?v=20260813-cleanup"></script>
-  <script src="app.js?v=20260813-cleanup"></script>
+  <script src="release-notes.js?v=20260813-sidebar"></script>
+  <script src="reforger-catalog.js?v=20260813-sidebar"></script>
+  <script src="reforger-core-library.js?v=20260813-sidebar"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-sidebar"></script>
+  <script src="reforger-bindings.js?v=20260813-sidebar"></script>
+  <script src="reforger-functions.js?v=20260813-sidebar"></script>
+  <script src="reforger-recipes.js?v=20260813-sidebar"></script>
+  <script src="app.js?v=20260813-sidebar"></script>
 </body>
 </html>
