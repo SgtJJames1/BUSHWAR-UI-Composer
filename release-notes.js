@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.12",
+  version: "0.10.13",
   published: "13 August 2026",
-  title: "Runtime-contract parity pass",
-  summary: "Workbench handoffs now preserve the Composer font contract and one canonical player-row identity, while engine bindings declare their live source, empty-value policy, and snapshot-only preview boundary.",
+  title: "Source-backed Reforger handoff",
+  summary: "Palette widgets can now adopt their recommended registered WLib layout source without losing runtime bindings or callbacks, tightening the visual path from the Composer to Workbench.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -45,6 +45,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The GM admin template now includes a PlayerManager-backed connected-count badge and a Refresh live values button wired to the generated engine.context.refresh route.",
     "Generated controllers now apply each layer's Composer font size with TextWidget.SetExactFontSize when the native layout opens, reducing the visual gap between the website and Workbench.",
     "Connected-player controllers keep exactly one native row per valid PlayerManager ID; nested WLib/Text children resolve through the row's parent chain instead of becoming duplicate rows.",
-    "Runtime bindings now declare their live source of truth, empty-value policy, identity field, and snapshot-only browser preview policy in the handoff contract."
+    "Runtime bindings now declare their live source of truth, empty-value policy, identity field, and snapshot-only browser preview policy in the handoff contract.",
+    "Palette layers can adopt their recommended registered WLib layout source from the inspector; source/sourceBacked metadata travels with the Workbench plan while existing engine bindings and callbacks stay attached.",
+    "Source-backed runtime lists are flagged for named-child verification in Workbench instead of silently pretending a prefab's internal hierarchy matches the Composer scaffold."
   ]
 };

@@ -126,6 +126,23 @@
     return profile;
   }
 
+  function reforgerCatalogEntries() {
+    return window.BUSHWAR_REFORGER_CATALOG?.entries || [];
+  }
+
+  function recommendedSourceFor(layer) {
+    const recommendation = widgetProfileFor(layer).sourceRecommended;
+    if (!recommendation) return null;
+    const entries = reforgerCatalogEntries();
+    return entries.find(entry => entry.name.replace(/\.layout$/i, "") === recommendation)
+      || entries.find(entry => entry.name.toLowerCase().includes(recommendation.toLowerCase()))
+      || null;
+  }
+
+  function sourceBackedLayer(layer) {
+    return !!(layer?.resourcePath && /\.layout$/i.test(layer.resourcePath));
+  }
+
   function functionFor(layer) {
     return layer?.functionId ? functionCatalog().byId(layer.functionId) : null;
   }
@@ -416,6 +433,10 @@
 
   function renderLayerContent(layer, element) {
     const text = escapeHtml(layer.text);
+    if (sourceBackedLayer(layer) && !["table", "player"].includes(layer.type)) {
+      renderReforgerReference(layer, element, text);
+      return;
+    }
     if (layer.type === "text" || layer.type === "button" || layer.type === "badge") element.textContent = runtimeDisplayValue(layer);
     else if (layer.type === "icon") element.innerHTML = '<span class="icon-glyph"></span>';
     else if (layer.type === "image" || layer.type === "reference") {
@@ -457,7 +478,7 @@
       element.innerHTML = `<div class="slot-grid">${Array.from({ length: 12 }, (_, index) => `<span class="slot-cell${index === 0 ? " active" : ""}">${index === 0 ? "◆" : ""}</span>`).join("")}</div>`;
     } else if (layer.type === "categorybar") {
       element.innerHTML = `<div class="category-wrap"><span class="category-item active">${text}</span><span class="category-item">CHARACTERS</span><span class="category-item">VEHICLES</span><span class="category-item">GROUPS</span><span class="category-item">PROPS</span></div>`;
-    } else if (layer.type === "reforger") {
+    } else if (layer.type === "reforger" || sourceBackedLayer(layer)) {
       renderReforgerReference(layer, element, text);
     }
   }
@@ -536,20 +557,26 @@
     });
     $("#opacityOutput").textContent = `${Math.round(layer.opacity * 100)}%`;
     $("#imageControls").hidden = !["image", "reference"].includes(layer.type);
-    $("#resourceControls").hidden = layer.type !== "reforger";
-    if (layer.type === "reforger") $("#resourcePath").value = layer.resourcePath || "";
+    $("#resourceControls").hidden = !sourceBackedLayer(layer) && layer.type !== "reforger";
+    if (layer.type === "reforger" || sourceBackedLayer(layer)) $("#resourcePath").value = layer.resourcePath || "";
     const profile = widgetProfileFor(layer);
     const nativeControls = $("#nativeWidgetControls");
     nativeControls.hidden = layer.type === "reference";
     if (!nativeControls.hidden) {
       $("#nativeWidgetType").value = profile.runtimeClass || "FrameWidgetClass";
-      const sourceHint = layer.type === "reforger" && layer.resourcePath
+      const sourceHint = sourceBackedLayer(layer)
         ? `Source-backed layout: ${layer.resourcePath}. Keep this prefab as the visual authority in Workbench.`
         : profile.sourceRecommended
           ? `${profile.label}. Recommended vanilla source: ${profile.sourceRecommended}.`
           : `${profile.label}. The Composer will scaffold this native class; Workbench owns the final serialization.`;
       $("#nativeWidgetNote").textContent = sourceHint;
     }
+    const recommendedSource = recommendedSourceFor(layer);
+    const useRecommendedSource = $("#useRecommendedSourceBtn");
+    const clearSource = $("#clearSourceBtn");
+    useRecommendedSource.hidden = !recommendedSource || sourceBackedLayer(layer);
+    clearSource.hidden = !sourceBackedLayer(layer);
+    if (recommendedSource) useRecommendedSource.textContent = `Use ${recommendedSource.name.replace(/\.layout$/i, "")} source`;
     const bindingControls = $("#bindingControls");
     const bindingEntries = bindingsForLayer(layer);
     bindingControls.hidden = !bindingEntries.length;
@@ -725,7 +752,7 @@
 
   function workbenchWidgetFor(layer, index, allLayers = []) {
     const profile = widgetProfileFor(layer);
-    const source = layer.type === "reforger" && /\.layout$/i.test(layer.resourcePath || "") ? layer.resourcePath : "";
+    const source = sourceBackedLayer(layer) ? layer.resourcePath : "";
     const widgetType = source ? "Layout prefab" : (profile.runtimeClass || "FrameWidgetClass");
     const binding = bindingFor(layer);
     const callback = functionFor(layer);
@@ -758,13 +785,15 @@
         nativePreviewShape: binding?.id === "player.list.connected" ? "Frame > count Text + selection Text + ScrollLayout > VerticalLayout > Button Row > Text NameText" : undefined,
         valueWidgetName: binding && layer.type === "player" ? `${widgetName}Text` : widgetName,
         actualValuesOnly: binding ? true : undefined,
-        preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values"
+        preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values",
+        sourceBacked: sourceBackedLayer(layer),
+        sourcePath: source || undefined
       } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
       anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
       geometry: { mode: "pixel-fixed", rootWidth: state.canvas.width, rootHeight: state.canvas.height },
       properties: { text: layer.text, fill: layer.fill, color: layer.color, borderColor: layer.borderColor, accent: layer.accent, opacity: layer.opacity, fontSize: layer.fontSize, visible: layer.visible },
-      reforgerProfile: layer.type === "reforger" ? (layer.reforgerVisual || reforgerVisualFor(layer)) : undefined,
+      reforgerProfile: source ? (layer.reforgerVisual || reforgerVisualFor({ ...layer, name: layer.catalogName || layer.name, catalogCategory: layer.catalogCategory || "Widgets" })) : undefined,
       resourceReference: layer.resourcePath || undefined,
       sourceChildHint: layer.catalogNativeChildHint || undefined,
       resourceWorkbenchAction: layer.catalogWorkbenchAction || undefined
@@ -865,6 +894,8 @@
     return {
       type: profile.layoutType || "Frame",
       name: widget.name,
+      source: widget.source || undefined,
+      sourceBacked: !!widget.source,
       props: nativeLayoutPropsFor(layer, profile),
       slot: pixelSlot,
       children: nativeLayoutChildrenFor(layer, widget)
@@ -1334,7 +1365,7 @@
         description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
         rootSize: { width: state.canvas.width, height: state.canvas.height, source: "Composer canvas; set the same root size in Layout Editor before judging pixel bounds." },
         root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
-        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container). Pixel-authored widgets use PositionX/PositionY/SizeX/SizeY with point anchors, matching the shipped BUSHWAR GM layouts and preserving the Composer canvas at the exported root size. Open and resave in Workbench Layout Editor before production. For any widget with a source path, replace the native scaffold with the listed vanilla/WLib layout in Layout Editor."
+        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container). Pixel-authored widgets use PositionX/PositionY/SizeX/SizeY with point anchors, matching the shipped BUSHWAR GM layouts and preserving the Composer canvas at the exported root size. Source-backed widgets also carry source/sourceBacked metadata; drag that registered WLib/vanilla layout into the target in Layout Editor and preserve its named children. Open and resave in Workbench Layout Editor before production."
       },
       safety: {
         layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",
@@ -1724,6 +1755,7 @@
     if (references.some(layer => !layer.locked)) warnings.push("One or more visual-reference layers are unlocked and can be moved accidentally.");
     if (references.some(layer => !layer.image)) warnings.push("One or more visual-reference layers have no embedded image.");
     if (state.layers.some(layer => layer.type === "reforger" && !layer.resourcePath)) warnings.push("A Reforger reference card is missing its resource path.");
+    if (state.layers.some(layer => layer.resourcePath && !sourceBackedLayer(layer))) warnings.push("A source reference is not a .layout resource; choose a registered Workbench layout prefab or keep the layer as a design reference.");
     if (state.layers.some(layer => layer.type === "player" && !layer.binding)) warnings.push("One or more player rows are design-only; assign Connected players (engine) to read actual PlayerManager values at runtime.");
     const widgetNameCounts = new Map();
     importableLayers.forEach((layer, index) => {
@@ -1741,6 +1773,7 @@
       if (layer.binding && !bindingFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown engine binding.`);
       const binding = bindingFor(layer);
       if (layer.binding && binding && binding.targetKinds && !binding.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses ${binding.label} on a ${layer.type} widget; choose a compatible widget type before handoff.`);
+      if (sourceBackedLayer(layer) && !layer.catalogNativeChildHint && ["player", "table"].includes(layer.type)) warnings.push(`${layer.name || "A runtime list"} uses a source-backed layout without a known child hint; confirm the required named children in Workbench before compiling the controller.`);
       if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
       const callback = functionFor(layer);
       if (layer.functionId && callback && !callback.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);
@@ -1994,6 +2027,39 @@
     const layer = selectedLayer(); if (!layer || !layer.resourcePath) return;
     try { await navigator.clipboard.writeText(layer.resourcePath); setStatus("Reforger resource path copied"); }
     catch { setStatus("Clipboard unavailable; select and copy the resource path manually"); }
+  });
+  $("#useRecommendedSourceBtn").addEventListener("click", () => {
+    const layer = selectedLayer();
+    const entry = layer && recommendedSourceFor(layer);
+    if (!layer || !entry) return;
+    checkpoint();
+    layer.resourcePath = entry.path;
+    layer.catalogName = entry.name;
+    layer.catalogCategory = entry.category;
+    layer.catalogKind = entry.kind;
+    layer.catalogPreview = entry.preview;
+    layer.catalogNativeWidgetClass = entry.nativeWidgetClass || "LayoutResource";
+    layer.catalogNativeChildHint = entry.nativeChildHint || "";
+    layer.catalogWorkbenchAction = entry.workbenchAction || "Drag this registered layout prefab into the target layout";
+    layer.reforgerVisual = reforgerVisualFor({ ...layer, name: entry.name, catalogCategory: entry.category, catalogKind: entry.kind });
+    render();
+    setStatus(`Source-backed layer: ${entry.name}. Workbench remains the final visual authority.`);
+  });
+  $("#clearSourceBtn").addEventListener("click", () => {
+    const layer = selectedLayer();
+    if (!layer || !sourceBackedLayer(layer)) return;
+    checkpoint();
+    delete layer.resourcePath;
+    delete layer.catalogName;
+    delete layer.catalogCategory;
+    delete layer.catalogKind;
+    delete layer.catalogPreview;
+    delete layer.catalogNativeWidgetClass;
+    delete layer.catalogNativeChildHint;
+    delete layer.catalogWorkbenchAction;
+    delete layer.reforgerVisual;
+    render();
+    setStatus("Generated native scaffold restored; no WLib source is attached.");
   });
 
   function readImageFile(file, callback) { if (!file) return; const reader = new FileReader(); reader.onload = () => callback(reader.result, file.name); reader.readAsDataURL(file); }
