@@ -61,6 +61,7 @@ const layer = {
   binding: admin.defaultBinding,
   functionId: admin.defaultFunction,
   functionTargetWidgetName: admin.defaultFunctionTarget,
+  nativeGeometry: admin.geometry,
   functionHints: admin.functionHints,
   reforgerVisual: admin.visual
 };
@@ -68,19 +69,26 @@ const layer = {
 const widget = sandbox.workbenchWidgetFor(layer, 0, [layer]);
 assert.strictEqual(widget.source, admin.resourceReference, "Core widget must retain its GUID-qualified source");
 assert.strictEqual(widget.rowLayoutPath, admin.rowLayoutPath, "Core widget must retain its GUID-qualified row resource");
+assert.strictEqual(widget.nativeGeometry.width, 360, "Core widget must retain the registered native width contract");
 assert.strictEqual(widget.requiredNamedChildren.list, "m_wPlayerList", "Core widget must expose the actual list child");
 assert.strictEqual(widget.requiredNamedChildren.selection, "m_wPlayerSelection", "Core widget must expose the actual selection child");
 
 const node = sandbox.layoutCreateNodeFor(layer, 0, [layer]);
 assert.strictEqual(node.source, admin.resourceReference, "Core native scaffold must preserve the registered source");
-assert.strictEqual(node.children[0].name, "m_wPlayerCount", "native scaffold count child must match Core");
-assert.strictEqual(node.children[1].name, "m_wPlayerSelection", "native scaffold selection child must match Core");
-assert.strictEqual(node.children[2].name, "m_wPlayerScroll", "native scaffold scroll child must match Core");
-assert.strictEqual(node.children[0].slot.anchor, "0 0 0 0", "connected count child must use a point-anchored pixel slot");
-assert.strictEqual(node.children[1].slot.anchor, "0 0 0 0", "connected selection child must use a point-anchored pixel slot");
-assert.strictEqual(node.children[2].slot.anchor, "0 0 0 0", "connected scroll child must use a point-anchored pixel slot");
-assert(node.children[2].slot.offsetRight < 0 && node.children[2].slot.offsetBottom < 0, "connected scroll child must use signed pixel insets instead of fractional anchors");
-assert.strictEqual(node.children[2].children[0].name, "m_wPlayerList", "native scaffold list child must match Core");
+const countNode = node.children.find(child => child.name === "m_wPlayerCount");
+const selectionNode = node.children.find(child => child.name === "m_wPlayerSelection");
+const scrollNode = node.children.find(child => child.name === "m_wPlayerScroll");
+assert(countNode && selectionNode && scrollNode, "native scaffold must include the canonical Core count/selection/scroll children");
+assert.strictEqual(countNode.slot.anchor, "0 0 0 0", "connected count child must use a point-anchored pixel slot");
+assert.strictEqual(selectionNode.slot.anchor, "0 0 0 0", "connected selection child must use a point-anchored pixel slot");
+assert.strictEqual(scrollNode.slot.anchor, "0 0 1 1", "connected scroll child must fill the Core panel with anchored insets");
+assert.strictEqual(scrollNode.slot.positionX, 12, "connected scroll child must preserve the native left inset");
+assert.strictEqual(scrollNode.slot.positionY, 158, "connected scroll child must preserve the native top inset");
+assert.strictEqual(scrollNode.slot.sizeX, -24, "connected scroll child must preserve the native horizontal inset");
+assert.strictEqual(scrollNode.slot.sizeY, -12, "connected scroll child must preserve the native bottom inset");
+assert.strictEqual(scrollNode.children[0].name, "m_wPlayerList", "native scaffold list child must match Core");
+assert.strictEqual(node.children.find(child => child.name === "m_wRefresh")?.slot.sizeX, 96, "Core scaffold must preserve the native refresh button width");
+assert.strictEqual(node.children.find(child => child.name === "m_wAdminPanelTitle")?.slot.positionX, 18, "Core scaffold must preserve the native title position");
 
 const catalogAdminBounds = sandbox.reforgerPlacementFor({ id: "core.admin-panel" }, "core-admin-panel");
 assert.strictEqual(catalogAdminBounds.x, 24, "catalog-added Core admin must start 24px from the left");

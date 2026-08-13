@@ -78,6 +78,11 @@ The **What's new** toolbar button remains available to reopen it.
 - The GM admin-panel template starts with a real connected-player table,
   PlayerManager-backed count badge, row-selection callback, and Refresh live
   values button so new projects demonstrate the runtime workflow immediately.
+- The **BUSHWAR Core** admin-panel source and generated scaffold share the same
+  native child tree (`m_wAdminPanelTitle`, `m_wRefresh`, `m_wPlayerCount`,
+  `m_wPlayerSelection`, `m_wPlayerScroll`, `m_wPlayerList`, `Row`, and
+  `NameText`). Validation warns if the registered Core panel is resized away
+  from its native 24 px / 360 px / 15%-80% geometry.
 - Portable `.bwui.json` project and `.bwui-template.json` template bundles:
   they embed imported reference images and record a layer/asset manifest so a
   recipient can verify that an import did not lose a reference
@@ -90,7 +95,7 @@ The **What's new** toolbar button remains available to reopen it.
   root/widget instructions, resource sources, anchors, and reusable widget
   names. It also carries a `layoutCreateRequest` for a native-widget scaffold
   in the Enfusion `layout_create` tool. Its scaffold slots use
-  `OffsetLeft`/`OffsetTop` plus signed `OffsetRight`/`OffsetBottom` with point anchors,
+  `PositionX`/`PositionY` plus `SizeX`/`SizeY` with point anchors,
   matching the Workbench serializer so fixed bounds such as 24 px / 360 px do
   not collapse to the origin when Workbench reserializes a point anchor. Palette
   elements map to native Button/Text/Image/ProgressBar/

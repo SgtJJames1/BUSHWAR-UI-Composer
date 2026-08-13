@@ -119,6 +119,7 @@
     layer.coreLibraryEntryId = coreSource.id;
     layer.reforgerVisual = coreSource.visual || layer.reforgerVisual;
     layer.nativeTree = coreSource.nativeTree || layer.nativeTree;
+    layer.nativeGeometry = layer.nativeGeometry || (coreSource.geometry ? clone(coreSource.geometry) : undefined);
     layer.rowLayoutPath = coreSource.rowLayoutPath || layer.rowLayoutPath;
     layer.requiredChildren = layer.requiredChildren || (coreSource.requiredChildren ? clone(coreSource.requiredChildren) : undefined);
     layer.runtimeContracts = layer.runtimeContracts || (coreSource.runtimeContracts ? clone(coreSource.runtimeContracts) : undefined);
@@ -914,6 +915,7 @@
       bindingContract: binding || undefined,
       coreLibraryId: layer.coreLibraryId || undefined,
       coreLibraryEntryId: layer.coreLibraryEntryId || undefined,
+      nativeGeometry: layer.nativeGeometry || undefined,
       runtimeContracts: layer.runtimeContracts || undefined,
       functionHints: layer.functionHints || undefined,
       functionId: layer.functionId || "",
@@ -945,6 +947,7 @@
         recipeId: layer.engineRecipeId || undefined,
         workbenchRecipe: layer.workbenchRecipe || undefined,
         nativeTree: layer.nativeTree || undefined,
+        nativeGeometry: layer.nativeGeometry || undefined,
         rowLayoutPath: binding?.id === "player.list.connected" ? connectedRowResourceFor(layer) : (layer.rowLayoutPath || undefined),
         recipeCallbacks: layer.recipeCallbacks || undefined,
         functionTargetWidgetName: layer.functionTargetWidgetName || undefined,
@@ -1020,21 +1023,61 @@
     // The Composer canvas is pixel-authored. Keep the generated Workbench
     // scaffold pixel-accurate instead of silently converting a 360 px panel
     // into a proportionally resizing anchor-only widget. The plan still
-    // carries normalized anchors for responsive handoff review. Workbench's
-    // FrameWidgetSlot serializer expresses a point-anchored pixel rectangle
-    // with Offset* fields; PositionX/SizeX shorthand can parse yet collapse
-    // to the origin when the layout is opened in a fresh resource database.
-    // Enfusion's right/bottom offsets are measured from the anchored edge,
-    // so a point-anchored rectangle uses negative right/bottom values.
+    // carries normalized anchors for responsive handoff review. Frame slots
+    // in the current Reforger Layout Editor serialize fixed rectangles with
+    // PositionX/PositionY/SizeX/SizeY; Offset* values are legacy-looking
+    // syntax that can produce a very different rectangle in-game.
     const left = Math.round(layer.x);
     const top = Math.round(layer.y);
     const pixelSlot = {
       anchor: "0 0 0 0",
-      offsetLeft: left,
-      offsetTop: top,
-      offsetRight: -(left + Math.round(layer.w)),
-      offsetBottom: -(top + Math.round(layer.h))
+      positionX: left,
+      positionY: top,
+      sizeX: Math.round(layer.w),
+      sizeY: Math.round(layer.h)
     };
+    const framePixelSlot = (x, y, width, height, anchor = "0 0 0 0") => ({
+      anchor,
+      positionX: Math.round(x),
+      positionY: Math.round(y),
+      sizeX: Math.round(width),
+      sizeY: Math.round(height)
+    });
+    const coreAdminChildren = () => {
+      const panelWidth = Math.round(layer.w);
+      const buttonText = (name, value) => ({
+        type: "Text",
+        name,
+        props: { Text: value, Color: "1 1 1 1" },
+        slot: { sizeMode: "FILL", padding: "0 0 0 0" }
+      });
+      return [
+        { type: "Frame", name: "m_wOrangeHeaderRule", props: { Color: reforgerColor(layer.accent, layer.opacity) }, slot: framePixelSlot(0, 0, panelWidth, 6) },
+        { type: "Text", name: "m_wAdminPanelTitle", props: { Text: "BUSHWAR ADMIN TOOLS", Color: "1 1 1 1" }, slot: framePixelSlot(18, 20, 180, 34) },
+        { type: "Button", name: "m_wClose", children: [buttonText("m_wCloseText", "X")], slot: framePixelSlot(306, 16, 36, 36) },
+        { type: "Button", name: "m_wRefresh", children: [buttonText("m_wRefreshText", "REFRESH")], slot: framePixelSlot(198, 16, 96, 36) },
+        { type: "Text", name: "m_wConnectedLabel", props: { Text: "CONNECTED PLAYERS", Color: "0.62 0.671 0.69 1" }, slot: framePixelSlot(18, 86, 160, 24) },
+        { type: "Text", name: "m_wPlayerCount", props: { Text: "PLAYER DATA UNAVAILABLE", Color: reforgerColor(layer.accent) }, slot: framePixelSlot(198, 86, 144, 24) },
+        { type: "Text", name: "m_wPlayerSelection", props: { Text: "SELECTED: NONE", Color: reforgerColor(layer.color) }, slot: framePixelSlot(18, 118, Math.max(1, panelWidth - 36), 24) },
+        {
+          type: "ScrollLayout",
+          name: "m_wPlayerScroll",
+          slot: { anchor: "0 0 1 1", positionX: 12, positionY: 158, sizeX: -24, sizeY: -12 },
+          children: [{ type: "VerticalLayout", name: "m_wPlayerList", slot: { sizeMode: "FILL" } }]
+        }
+      ];
+    };
+    if (widget.coreLibraryEntryId === "core.admin-panel" || layer.reforgerVisual === "core-admin-panel") {
+      return {
+        type: "Frame",
+        name: widget.name,
+        source: widget.source || undefined,
+        sourceBacked: !!widget.source,
+        props: { Color: reforgerColor(layer.fill, layer.opacity) },
+        slot: pixelSlot,
+        children: coreAdminChildren()
+      };
+    }
     if (widget.binding === "player.list.connected") {
       const names = connectedChildNamesFor(widget);
       const inset = 14;
@@ -1045,10 +1088,10 @@
       const listHeight = Math.max(1, Math.round(layer.h) - listTop - inset);
       const childPixelSlot = (left, top, width, height) => ({
         anchor: "0 0 0 0",
-        offsetLeft: left,
-        offsetTop: top,
-        offsetRight: -(left + width),
-        offsetBottom: -(top + height)
+        positionX: left,
+        positionY: top,
+        sizeX: width,
+        sizeY: height
       });
       return {
         type: "Frame",
@@ -1752,7 +1795,7 @@
         description: "Generated UI Composer scaffold. Open and resave in Workbench Layout Editor before production use.",
         rootSize: { width: state.canvas.width, height: state.canvas.height, source: "Composer canvas; set the same root size in Layout Editor before judging pixel bounds." },
         root: { type: "Frame", name: "m_wRoot", props: { Color: "0 0 0 0" }, children: visibleLayers.map(layoutCreateNodeFor) },
-        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container). Pixel-authored widgets use point anchors with OffsetLeft/OffsetTop and negative OffsetRight/OffsetBottom bounds, matching the shipped BUSHWAR GM layouts and preserving the Composer canvas at the exported root size. Source-backed widgets also carry source/sourceBacked metadata; drag that registered WLib/vanilla layout into the target in Layout Editor and preserve its named children. Open and resave in Workbench Layout Editor before production."
+        note: "This is a safe native-widget scaffold for the Enfusion layout_create tool. Each palette element carries its mapped Enfusion widget class (ButtonWidgetClass, TextWidgetClass, ImageWidgetClass, ProgressBarWidgetClass, EditBoxWidgetClass, CheckBoxWidgetClass, or layout container). Pixel-authored widgets use point anchors with PositionX/PositionY/SizeX/SizeY FrameWidgetSlot bounds, matching the current Reforger Layout Editor serialization and preserving the Composer canvas at the exported root size. Source-backed widgets also carry source/sourceBacked metadata; drag that registered WLib/vanilla layout into the target in Layout Editor and preserve its named children. Open and resave in Workbench Layout Editor before production."
       },
       safety: {
         layoutAuthoring: "Open the new layout in Workbench Layout Editor. Do not hand-edit .layout XML; Workbench owns widget GUIDs and serialization.",
@@ -2224,6 +2267,13 @@
     if (state.layers.some(layer => layer.type === "reforger" && !layer.resourcePath)) warnings.push("A Reforger reference card is missing its resource path.");
     if (state.layers.some(layer => layer.resourcePath && !sourceBackedLayer(layer))) warnings.push("A source reference is not a .layout resource; choose a registered Workbench layout prefab or keep the layer as a design reference.");
     if (state.layers.some(layer => layer.type === "player" && !layer.binding)) warnings.push("One or more player rows are design-only; assign Connected players (engine) to read actual PlayerManager values at runtime.");
+    state.layers.filter(layer => layer.coreLibraryEntryId === "core.admin-panel").forEach(layer => {
+      const expectedY = Math.round(state.canvas.height * 0.15);
+      const expectedH = Math.round(state.canvas.height * 0.65);
+      if (Math.round(layer.x) !== 24 || Math.round(layer.y) !== expectedY || Math.round(layer.w) !== 360 || Math.round(layer.h) !== expectedH) {
+        warnings.push(`${layer.name || "Core admin panel"} no longer matches the registered native geometry (left 24 px, top 15%, width 360 px, bottom 80%); resize it only if you intend to generate a custom scaffold.`);
+      }
+    });
     const widgetNameCounts = new Map();
     importableLayers.forEach((layer, index) => {
       const baseName = nativeWidgetBaseName(layer, index);

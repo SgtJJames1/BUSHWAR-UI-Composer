@@ -26,12 +26,13 @@ assert(source.includes("functionTargetWidgetName: widget.functionTargetWidgetNam
 assert(source.includes("widgets.filter(widget => widget.binding || widget.functionId)"), "callback-only controls must survive into the Workbench controller scaffold");
 assert(source.includes("functionTargetWidgetName: layer.functionTargetWidgetName || undefined"), "runtime contracts must retain action target metadata");
 assert(source.includes("workbenchRecipe: widget.runtimeContract?.workbenchRecipe"), "runtime scaffolds must preserve the proven Workbench recipe id");
-assert(source.includes("offsetRight: -(left + Math.round(layer.w))"), "pixel-authored layout slots must emit signed Workbench Offset* bounds");
-assert(source.includes("offsetBottom: -(top + Math.round(layer.h))"), "pixel-authored layout slots must sign the Workbench bottom edge");
+assert(source.includes("positionX: left"), "pixel-authored layout slots must emit Workbench PositionX bounds");
+assert(source.includes("positionY: top"), "pixel-authored layout slots must emit Workbench PositionY bounds");
+assert(source.includes("sizeX: Math.round(layer.w)"), "pixel-authored layout slots must emit Workbench SizeX bounds");
+assert(source.includes("sizeY: Math.round(layer.h)"), "pixel-authored layout slots must emit Workbench SizeY bounds");
 assert(source.includes("function connectedChildNamesFor(widget)"), "connected-player scaffolds must resolve their named children from the runtime contract");
 assert(source.includes("const names = connectedChildNamesFor(widget)"), "connected-player layout scaffolds must use the resolved Core child names");
 assert(source.includes("source: widget.source || undefined"), "connected-player source-backed scaffolds must preserve the registered native layout source");
 assert(source.includes("addFontTarget(connectedNames.count"), "generated font routes must target the actual connected-count child name");
-assert(!source.includes("positionX: left"), "layout handoff must not rely on PositionX/SizeX shorthand that can collapse to the origin");
 
 console.log("source-backed.test.js: PASS");

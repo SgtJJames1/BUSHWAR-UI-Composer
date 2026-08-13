@@ -22,11 +22,13 @@ for (const entry of website.entries) {
   assert(entry.path.endsWith(".layout"), `${entry.id} must point at a registered layout resource`);
   assert(/^[0-9A-F]{16}$/.test(entry.resourceGuid || ""), `${entry.id} must carry the Workbench-generated resource GUID`);
   assert(entry.resourceReference === `{${entry.resourceGuid}}${entry.path}`, `${entry.id} must carry a GUID-qualified resource reference`);
+  assert(entry.geometry && entry.geometry.coordinateSpace, `${entry.id} must declare its native geometry contract`);
   assert(entry.coreLibraryId === website.projectId, `${entry.id} must identify the companion Core addon`);
   assert(Object.keys(entry.requiredChildren || {}).length > 0, `${entry.id} must preserve named-child contracts`);
   assert(Array.isArray(entry.runtimeContracts) && entry.runtimeContracts.length > 0, `${entry.id} must declare runtime contracts`);
   assert(Array.isArray(entry.functionHints) && entry.functionHints.length > 0, `${entry.id} must declare supported callback hints`);
   assert.strictEqual(JSON.stringify(entry.functionHints), JSON.stringify(addonEntry.functionHints), `${entry.id} callback hints must match between website and addon manifests`);
+  assert.strictEqual(JSON.stringify(entry.geometry), JSON.stringify(addonEntry.geometry), `${entry.id} native geometry must match between website and addon manifests`);
   const coreResourcePath = path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", entry.path);
   assert(fs.existsSync(coreResourcePath), `${entry.path} must exist in the Core addon`);
   const metaPath = `${coreResourcePath}.meta`;
