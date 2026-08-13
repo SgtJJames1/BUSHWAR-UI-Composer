@@ -187,11 +187,12 @@ This is a design/prototyping tool, not a replacement for the Reforger Layout Edi
    paired with `player.row.select`; the exported controller must carry the
    engine player ID alongside each row instead of inferring identity from row
    order or display text.
-   For closer visual parity, use **Use recommended Reforger source** in the
-   native-widget inspector on buttons, panels, tables, and other palette
-   layers. This attaches the registered WLib layout path without removing the
-   data binding or callback; Workbench Layout Editor still owns the final
-   prefab tree and named-child verification.
+   Palette and template layers with a registered Reforger/WLib equivalent now
+   adopt that source automatically. The native-widget inspector can still use
+   **Use recommended Reforger source** or switch back to a generated native
+   scaffold when a custom widget is intentional. Source paths attach without
+   removing the data binding or callback; Workbench Layout Editor still owns
+   the final prefab tree and named-child verification.
 6. Use **Validate Workbench handoff** and fix any warnings. Then copy the
    specification or use the exported PNG as a visual brief.
 7. If your addon includes the optional BUSHWAR validation plug-in, run

@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.14",
+  version: "0.10.15",
   published: "13 August 2026",
-  title: "Runtime child-contract guard",
-  summary: "Connected-player bindings are now table-only, and source-backed runtime widgets carry explicit named-child verification requirements before Workbench compilation.",
+  title: "Source-backed visual handoff",
+  summary: "Palette and template widgets now adopt their registered Reforger/WLib source by default, reducing the visual gap between the Composer and Workbench while keeping runtime player tables explicit.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -49,6 +49,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Palette layers can adopt their recommended registered WLib layout source from the inspector; source/sourceBacked metadata travels with the Workbench plan while existing engine bindings and callbacks stay attached.",
     "Source-backed runtime lists are flagged for named-child verification in Workbench instead of silently pretending a prefab's internal hierarchy matches the Composer scaffold.",
     "The connected-player binding is table-only; standalone Player rows must use the Player display-name binding so generated controllers cannot target a missing list scaffold.",
-    "Schema-3 plans summarize source-backed widget counts and required named-child verification for the disposable Workbench review plugin."
+    "Schema-3 plans summarize source-backed widget counts and required named-child verification for the disposable Workbench review plugin.",
+    "New palette and template layers adopt a registered vanilla/WLib source by default when one exists; use the inspector's generated-native action when a custom scaffold is intentional.",
+    "Connected-player tables remain native runtime scaffolds until their Count/Selection/Scroll/List/NameText child names are verified against the selected Reforger source.",
+    "Any source-backed runtime binding now carries a manual child-name verification gate, and scalar bindings can override the exact runtime TextWidget child name in the inspector."
   ]
 };

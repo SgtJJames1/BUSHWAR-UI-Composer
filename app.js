@@ -83,7 +83,30 @@
   }
 
   function makeLayer(type, overrides = {}) {
-    return { id: uid(), type, opacity: 1, visible: true, locked: false, image: "", binding: "", bindingMode: "engine", functionId: "", ...clone(defaults[type]), ...overrides };
+    const layerOverrides = { ...overrides };
+    const useNativeSource = layerOverrides.useNativeSource !== false;
+    delete layerOverrides.useNativeSource;
+    const layer = { id: uid(), type, opacity: 1, visible: true, locked: false, image: "", binding: "", bindingMode: "engine", functionId: "", ...clone(defaults[type]), ...layerOverrides };
+    // The browser cannot load Bohemia's packaged assets, so a generic CSS
+    // mock is only a design approximation. Prefer the registered vanilla/WLib
+    // source for palette/template layers so the Workbench handoff has the same
+    // visual authority as the runtime. Runtime connected-player tables stay
+    // native scaffolds because their required named children must be verified
+    // against the chosen prefab instead of being guessed here.
+    if (useNativeSource && !layer.resourcePath && layer.type !== "table" && layer.type !== "reference" && layer.type !== "text" && layer.type !== "badge" && layer.type !== "divider" && layer.type !== "image" && layer.type !== "icon") {
+      const source = recommendedSourceFor(layer);
+      if (source) {
+        layer.resourcePath = source.path;
+        layer.catalogCategory = source.category;
+        layer.catalogKind = source.kind;
+        layer.catalogPreview = source.preview;
+        layer.catalogNativeWidgetClass = source.nativeWidgetClass || "LayoutResource";
+        layer.catalogNativeChildHint = source.nativeChildHint || "";
+        layer.catalogWorkbenchAction = source.workbenchAction || "Use this source in Workbench Layout Editor";
+        layer.reforgerVisual = reforgerVisualFor(source);
+      }
+    }
+    return layer;
   }
 
   function normalizeState(value) {
@@ -597,6 +620,9 @@
       const callback = functionFor(layer);
       $("#functionContract").textContent = callback ? `${callback.callback} · ${callback.authority}. ${callback.runtime}${callback.implementation ? ` Implementation: ${callback.implementation.status} via ${callback.implementation.method}.` : ""}` : "Choose a callback contract to tell Workbench what this widget should do when used.";
     }
+    const runtimeValueControls = $("#runtimeValueControls");
+    runtimeValueControls.hidden = !layer.binding || layer.binding === "player.list.connected";
+    if (!runtimeValueControls.hidden) $("#runtimeValueWidgetName").value = layer.runtimeValueWidgetName || "";
   }
 
   function select(id) {
@@ -769,6 +795,7 @@
           rowName: "NameText"
         }
       : undefined;
+    const sourceChildVerification = source && binding ? "manual-required" : undefined;
     return {
       id: layer.id,
       name: widgetName,
@@ -793,13 +820,13 @@
         previewPolicy: binding?.previewPolicy || (binding ? "snapshot-only" : "not-applicable"),
         rowIdentity: binding?.id === "player.list.connected" ? "PlayerManager playerId carried beside each native row" : undefined,
         nativePreviewShape: binding?.id === "player.list.connected" ? "Frame > count Text + selection Text + ScrollLayout > VerticalLayout > Button Row > Text NameText" : undefined,
-        valueWidgetName: binding && layer.type === "player" ? `${widgetName}Text` : widgetName,
+        valueWidgetName: binding ? (layer.runtimeValueWidgetName || (layer.type === "player" ? `${widgetName}Text` : widgetName)) : undefined,
         actualValuesOnly: binding ? true : undefined,
         preview: enginePlayers().length ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values",
         sourceBacked: sourceBackedLayer(layer),
         sourcePath: source || undefined,
         requiredNamedChildren: runtimeChildNames,
-        sourceChildVerification: source && runtimeChildNames ? "manual-required" : undefined
+        sourceChildVerification
       } : undefined,
       boundsPx: { left: Math.round(layer.x), top: Math.round(layer.y), width: Math.round(layer.w), height: Math.round(layer.h), right: Math.round(layer.x + layer.w), bottom: Math.round(layer.y + layer.h) },
       anchors: [layer.x / state.canvas.width, layer.y / state.canvas.height, (layer.x + layer.w) / state.canvas.width, (layer.y + layer.h) / state.canvas.height].map(value => Number(value.toFixed(4))),
@@ -810,7 +837,7 @@
       sourceChildHint: layer.catalogNativeChildHint || undefined,
       resourceWorkbenchAction: layer.catalogWorkbenchAction || undefined,
       requiredNamedChildren: runtimeChildNames,
-      sourceChildVerification: source && runtimeChildNames ? "manual-required" : undefined
+      sourceChildVerification
     };
   }
 
@@ -1207,7 +1234,7 @@
         (needsPlayerName || needsPlayerCount) ? "\t\t\t}" : "",
         (needsPlayerName || needsPlayerCount) ? "\t\t}" : "",
         ...scalarBindings.map(widget => {
-          const valueWidgetName = widget.layerType === "player" ? `${widget.name}Text` : widget.name;
+          const valueWidgetName = widget.runtimeContract?.valueWidgetName || (widget.layerType === "player" ? `${widget.name}Text` : widget.name);
           if (widget.binding === "player.name") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerName.IsEmpty() ? "PLAYER UNAVAILABLE" : runtimePlayerName);`;
           if (widget.binding === "player.count") return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(runtimePlayerCount.ToString());`;
           return `\t\tTextWidget ${widget.name}Text = TextWidget.Cast(m_wRoot.FindAnyWidget("${valueWidgetName}"));\n\t\tif (${widget.name}Text) ${widget.name}Text.SetText(SCR_EditorManagerEntity.IsOpenedInstance() ? "GM EDITOR OPEN" : "GM EDITOR CLOSED");`;
@@ -1786,6 +1813,7 @@
       const binding = bindingFor(layer);
       if (layer.binding && binding && binding.targetKinds && !binding.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses ${binding.label} on a ${layer.type} widget; choose a compatible widget type before handoff.`);
       if (sourceBackedLayer(layer) && layer.binding === "player.list.connected") warnings.push(`${layer.name || "A connected-player table"} uses a source-backed layout; confirm Count/Selection/Scroll/List and row NameText names in Workbench before compiling the generated controller.`);
+      else if (sourceBackedLayer(layer) && layer.binding) warnings.push(`${layer.name || "A runtime layer"} uses a source-backed layout; confirm the bound value child name and widget type in Workbench${layer.runtimeValueWidgetName ? ` (plan override: ${layer.runtimeValueWidgetName})` : " or enter it in the Runtime value child name field"} before compiling the generated controller.`);
       if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
       const callback = functionFor(layer);
       if (layer.functionId && callback && !callback.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);
@@ -2016,6 +2044,14 @@
     render();
     const callback = functionFor(layer);
     setStatus(callback ? "Engine callback assigned: " + callback.label : "Engine callback removed; layer is visual-only");
+  });
+  $("#runtimeValueWidgetName").addEventListener("change", event => {
+    const layer = selectedLayer();
+    if (!layer) return;
+    checkpoint();
+    layer.runtimeValueWidgetName = event.target.value.trim();
+    render();
+    setStatus(layer.runtimeValueWidgetName ? `Runtime value child set to ${layer.runtimeValueWidgetName}` : "Runtime value child cleared; generated widget name will be used");
   });
 
   $("#backgroundBtn").addEventListener("click", () => $("#backgroundInput").click());
