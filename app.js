@@ -1760,7 +1760,8 @@
       const button = document.createElement("button");
       button.className = "recipe-entry";
       button.title = `${recipe.description} Native tree: ${recipe.nativeTree}`;
-      button.innerHTML = `<span class="recipe-icon">⌘</span><span class="catalog-copy"><strong>${escapeHtml(recipe.label)}</strong><small>${escapeHtml(recipe.category)} · ${escapeHtml(recipe.workbenchRecipe || "custom")}</small><small>${escapeHtml(recipe.nativeTree)}</small></span>`;
+      const callbacks = (recipe.callbacks || []).join(" · ") || "no callback selected";
+      button.innerHTML = `<span class="recipe-icon">⌘</span><span class="catalog-copy"><strong>${escapeHtml(recipe.label)}</strong><small>${escapeHtml(recipe.category)} · ${escapeHtml(recipe.workbenchRecipe || "custom")}</small><small>${escapeHtml(recipe.nativeTree)}</small><small>Callbacks: ${escapeHtml(callbacks)}</small></span>`;
       button.addEventListener("click", () => applyEngineRecipe(recipe.id));
       root.append(button);
     });
