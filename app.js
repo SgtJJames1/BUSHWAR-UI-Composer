@@ -284,17 +284,18 @@
       const row = players[0];
       element.innerHTML = row
         ? `<button type="button" class="engine-scaffold-row${selected && Number(selected.id) === Number(row.id) ? " selected" : ""}" data-player-id="${escapeHtml(row.id)}"><span class="engine-row-name">${escapeHtml(row.name)}</span></button>`
-        : `<div class="engine-scaffold-empty">No imported Workbench player row.</div>`;
+        : `<div class="engine-scaffold-empty">${hasEngineContextSnapshot() ? "Workbench reports 0 valid connected players." : "No imported Workbench player row: engine snapshot required."}</div>`;
       return;
     }
-    element.innerHTML = `<div class="engine-scaffold"><div class="engine-scaffold-count">${players.length} CONNECTED</div><div class="engine-scaffold-selection">SELECTED: ${selected ? escapeHtml(selected.name) : "NONE"}</div><div class="engine-scaffold-scroll"><div class="engine-scaffold-list">${rows}${empty}</div></div></div>`;
+    const countLabel = hasEngineContextSnapshot() ? `${players.length} CONNECTED` : "ENGINE SNAPSHOT REQUIRED";
+    element.innerHTML = `<div class="engine-scaffold"><div class="engine-scaffold-count">${countLabel}</div><div class="engine-scaffold-selection">SELECTED: ${selected ? escapeHtml(selected.name) : "NONE"}</div><div class="engine-scaffold-scroll"><div class="engine-scaffold-list">${rows}${empty}</div></div></div>`;
   }
 
   function updateEngineContextStatus() {
     const status = $("#engineContextStatus");
     if (!status) return;
     status.textContent = engineContextLabel();
-    status.className = `engine-context-status${enginePlayers().length ? " loaded" : " warn"}`;
+    status.className = `engine-context-status${hasEngineContextSnapshot() ? " loaded" : " warn"}`;
   }
 
   function portableSnapshot() {
@@ -1865,7 +1866,7 @@
         ctx.fillStyle = "#8fa0a7";
         ctx.font = `italic ${Math.max(10, layer.fontSize * .72)}px Bahnschrift, Segoe UI, sans-serif`;
         ctx.textAlign = "center";
-        ctx.fillText("NO WORKBENCH PLAYER SNAPSHOT", x + w / 2, y + h / 2, w - 20);
+        ctx.fillText(hasEngineContextSnapshot() ? "WORKBENCH REPORTS 0 PLAYERS" : "NO WORKBENCH PLAYER SNAPSHOT", x + w / 2, y + h / 2, w - 20);
       }
       return;
     }
@@ -1873,7 +1874,7 @@
     const selectionHeight = Math.max(22, Math.round(h * .12));
     ctx.fillStyle = layer.accent || "#18bce8";
     ctx.font = `700 ${Math.max(10, layer.fontSize * .72)}px Bahnschrift, Segoe UI, sans-serif`;
-    ctx.fillText(`${players.length} CONNECTED`, x + 14, y + countHeight / 2, w - 28);
+    ctx.fillText(hasEngineContextSnapshot() ? `${players.length} CONNECTED` : "ENGINE SNAPSHOT REQUIRED", x + 14, y + countHeight / 2, w - 28);
     ctx.fillStyle = layer.color || "#9eabb0";
     ctx.fillText(`SELECTED: ${selected ? selected.name : "NONE"}`, x + 14, y + countHeight + selectionHeight / 2, w - 28);
     ctx.strokeStyle = "#344249";
