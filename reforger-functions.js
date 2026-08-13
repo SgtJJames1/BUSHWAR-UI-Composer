@@ -29,7 +29,8 @@
       callback: "ScriptedWidgetEventHandler.OnUpdate(Widget w)",
       authority: "client-local",
       runtime: "Use a throttled refresh or state comparison; do not rebuild widgets every frame.",
-      implementation: { status: "generated-route", method: "OnUpdate", notes: "Connected-player scaffolds compare a PlayerManager signature every 30 updates." }
+      requiresTarget: true,
+      implementation: { status: "generated-route", method: "OnUpdate", notes: "The controller attaches to the exact named target widget, throttles the route to 30 ticks, refreshes linked engine bindings when present, and exposes a target-addon seam for custom behavior." }
     },
     {
       id: "ui.widget.toggle-visibility",

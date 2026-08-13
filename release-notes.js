@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.49",
+  version: "0.10.50",
   published: "13 August 2026",
-  title: "Match fixed-pixel layouts to Workbench",
-  summary: "The Composer now emits the current Position/Size FrameWidgetSlot form and the Core GM panel uses the real 24 px / 360 px / 15%-80% geometry, removing the top-left collapse seen in older imports.",
+  title: "Make widget update callbacks executable",
+  summary: "Assigning Widget update (OnUpdate) now produces a real throttled Workbench route attached to the named widget, instead of being treated as a click-only review hook.",
   changes: [
     "Generic Connected players (engine) tables now use the registered BUSHWAR Core Button Row > NameText prefab by default, so PlayerManager rows can actually instantiate in Reforger instead of silently failing on a bare path.",
     "Schema-3 handoffs now list runtime row resources and the required BUSHWAR-UIComposer-Core dependency; validation warns when a custom row layout is not GUID-qualified.",
@@ -100,6 +100,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "The validation admin menu now routes nested row clicks through their canonical row, exposes the native refresh button, and clears/imports zero-player context without confusing it with an unavailable engine snapshot.",
     "Handoff settings now accept the target layout's registered 16-character Workbench GUID; the generated controller and plan use the qualified ResourceName, while validation warns before compiling a bare relative path.",
     "The disposable Workbench import-plan plugin now rejects schema-3 plans missing layoutResourceReference, preventing a visually correct browser design from being treated as a compiled runtime handoff without a registered layout.",
-    "Handoff can now load a local .layout.meta file, extract its non-null GUID and resource path, and populate the layout name/GUID fields without uploading the metadata."
+    "Handoff can now load a local .layout.meta file, extract its non-null GUID and resource path, and populate the layout name/GUID fields without uploading the metadata.",
+    "Widget update callbacks now attach the generated controller to the exact target widget, throttle OnUpdate to 30 ticks, refresh linked engine-backed values when available, and expose a compile-safe target-addon seam without misrouting the callback through OnClick.",
+    "Handoff validation and controller-source tests now fail when a Widget update assignment loses its target-widget route."
   ]
 };

@@ -25,9 +25,13 @@ const source = sandbox.controllerSourceFor("TestLayout", "TestLayout", [
   { name: "Refresh", functionId: "engine.context.refresh" },
   { name: "ToggleDetails", functionId: "ui.widget.toggle-visibility", functionTargetWidgetName: "DetailsPanel" },
   { name: "StatusButton", layerType: "button", properties: { text: "READY" }, functionId: "ui.widget.set-text", functionTargetWidgetName: "StatusText" },
-  { name: "ExportContext", layerType: "button", functionId: "engine.context.export" }
+  { name: "ExportContext", layerType: "button", functionId: "engine.context.export" },
+  { name: "RuntimePanel", layerType: "panel", functionId: "ui.widget.update", functionTargetWidgetName: "RuntimePanel" }
 ]);
 const qualifiedSource = sandbox.controllerSourceFor("TestLayout", "TestLayout", [], "92829430ae6ead05", "UI/layouts/Sub/TestLayout.layout");
+const updateOnlySource = sandbox.controllerSourceFor("UpdateOnly", "UpdateOnly", [
+  { name: "RuntimePanel", layerType: "panel", functionId: "ui.widget.update", functionTargetWidgetName: "RuntimePanel" }
+]);
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "generated source must use compile-valid GetPlayers call syntax");
 assert(qualifiedSource.includes('{92829430AE6EAD05}UI/layouts/Sub/TestLayout.layout'), "a registered layout GUID must preserve the qualified layout ResourceName path");
@@ -44,6 +48,13 @@ assert(source.includes('ToggleWidgetVisibility("DetailsPanel", w);'), "targeted 
 assert(source.includes("target.SetVisible(!target.IsVisible());"), "visibility action must generate a concrete native widget operation");
 assert(source.includes('SetWidgetText("StatusText", "READY");'), "set-text action must generate a concrete TextWidget operation");
 assert(source.includes("ExportRuntimeContext();"), "engine context export must generate a concrete snapshot route");
+assert(source.includes('FindAnyWidget("RuntimePanel")'), "widget update must resolve its exact target widget");
+assert(source.includes("m_aWidgetUpdateTargets.Insert(updateTarget_"), "widget update must attach the controller to its target widget");
+assert(source.includes("m_aWidgetUpdateTargets.Find(w)"), "widget update must route OnUpdate only from registered target widgets");
+assert(source.includes("OnWidgetUpdateContract(w)"), "widget update must expose a compile-safe generated callback seam");
+assert(source.includes("m_iWidgetUpdateCounter < 30"), "widget update must be throttled instead of rebuilding every frame");
+assert(updateOnlySource.includes("override bool OnUpdate(Widget w)"), "update-only designs must still generate the native OnUpdate override");
+assert(!updateOnlySource.includes('OnReviewRequiredCallback("ui.widget.update"'), "generated widget update must not be misrouted through the review-only click hook");
 assert(source.includes('PackToFile("$profile:BUSHWAR-UIComposer/runtime-context.json")'), "engine context export must write the documented local snapshot path");
 assert(source.includes('snapshot.players.Insert(player);'), "engine context export must append only filtered runtime player records");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");

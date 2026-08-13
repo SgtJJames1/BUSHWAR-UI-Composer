@@ -1171,6 +1171,9 @@
     })() : null;
     const connectedRowFontSize = Math.max(10, Math.round(Number(connected?.properties?.fontSize) || 17));
     const scalarBindings = widgets.filter(widget => ["player.name", "player.count", "editor.gm.open"].includes(widget.binding));
+    const updateWidgets = widgets.filter(widget => widget.functionId === "ui.widget.update");
+    const updateWidgetNames = [...new Set(updateWidgets.map(widget => widget.functionTargetWidgetName?.trim() || widget.name).filter(Boolean))];
+    const needsWidgetUpdateHook = updateWidgetNames.length > 0;
     const callbackIds = [...new Set(widgets.map(widget => widget.functionId).filter(Boolean))];
     const needsContextExport = callbackIds.includes("engine.context.export");
     const fontTargets = new Map();
@@ -1196,7 +1199,7 @@
     const callbackRoutes = [];
     let needsWidgetClickHook = false;
     let needsReviewHook = false;
-    widgets.filter(widget => widget.functionId && widget.functionId !== "player.row.select").forEach(widget => {
+    widgets.filter(widget => widget.functionId && !["player.row.select", "ui.widget.update"].includes(widget.functionId)).forEach(widget => {
       const callbackTarget = widget.functionTargetWidgetName?.trim() || widget.name;
       callbackRoutes.push(`\t\tif (IsWidgetNamedOrChild(w, "${callbackTarget}"))`);
       callbackRoutes.push("\t\t{");
@@ -1279,6 +1282,8 @@
       "\tprotected ref Widget m_wRoot;",
       "\tprotected int m_iSelectedPlayerId = -1;",
       scalarBindings.length ? "\tprotected int m_iRuntimeBindingUpdateCounter;" : "",
+      needsWidgetUpdateHook ? "\tprotected ref array<Widget> m_aWidgetUpdateTargets = {};" : "",
+      needsWidgetUpdateHook ? "\tprotected int m_iWidgetUpdateCounter;" : "",
       "",
       "\tvoid Open()",
       "\t{",
@@ -1290,6 +1295,15 @@
       "\t\t\treturn;",
       "",
       "\t\tm_wRoot.AddHandler(this);",
+      ...updateWidgetNames.flatMap(name => [
+        `\t\tWidget updateTarget_${updateWidgetNames.indexOf(name)} = m_wRoot.FindAnyWidget(${JSON.stringify(name)});`,
+        `\t\tif (updateTarget_${updateWidgetNames.indexOf(name)} && updateTarget_${updateWidgetNames.indexOf(name)} != m_wRoot)`,
+        "\t\t{",
+        `\t\t\tupdateTarget_${updateWidgetNames.indexOf(name)}.AddHandler(this);`,
+        `\t\t\tm_aWidgetUpdateTargets.Insert(updateTarget_${updateWidgetNames.indexOf(name)});`,
+        "\t\t}",
+        ""
+      ]),
       ...fontLines,
       "\t\tInputManager inputManager = GetGame().GetInputManager();",
       "\t\tif (inputManager)",
@@ -1307,6 +1321,15 @@
       "\t\tInputManager inputManager = GetGame().GetInputManager();",
       "\t\tif (inputManager)",
       "\t\t\tinputManager.RemoveActionListener(\"MenuBack\", EActionTrigger.DOWN, Close);",
+      ...(needsWidgetUpdateHook ? [
+        "\t\tfor (int updateIndex = 0; updateIndex < m_aWidgetUpdateTargets.Count(); updateIndex++)",
+        "\t\t{",
+        "\t\t\tWidget updateTarget = m_aWidgetUpdateTargets[updateIndex];",
+        "\t\t\tif (updateTarget)",
+        "\t\t\t\tupdateTarget.RemoveHandler(this);",
+        "\t\t}",
+        "\t\tm_aWidgetUpdateTargets.Clear();"
+      ] : []),
       "\t\tm_wRoot.RemoveHandler(this);",
       "\t\tdelete m_wRoot;",
       "\t\tm_wRoot = null;",
@@ -1517,9 +1540,27 @@
         "",
         "\toverride bool OnUpdate(Widget w)",
         "\t{",
-        "\t\tif (w != m_wRoot)",
-        "\t\t\treturn false;",
-        "",
+        ...(needsWidgetUpdateHook ? [
+          "\t\tbool isWidgetUpdateTarget = m_aWidgetUpdateTargets.Find(w) >= 0;",
+          "\t\tif (w != m_wRoot && !isWidgetUpdateTarget)",
+          "\t\t\treturn false;",
+          "",
+          "\t\tif (isWidgetUpdateTarget)",
+          "\t\t{",
+          "\t\t\tm_iWidgetUpdateCounter++;",
+          "\t\t\tif (m_iWidgetUpdateCounter < 30)",
+          "\t\t\t\treturn false;",
+          "\t\t\tm_iWidgetUpdateCounter = 0;",
+          connected ? "\t\t\tRefreshConnectedPlayers();" : "",
+          scalarBindings.length ? "\t\t\tRefreshRuntimeBindings();" : "",
+          "\t\t\treturn OnWidgetUpdateContract(w);",
+          "\t\t}",
+          ""
+        ] : [
+          "\t\tif (w != m_wRoot)",
+          "\t\t\treturn false;",
+          ""
+        ]),
         "\t\tm_iConnectedPlayerUpdateCounter++;",
         "\t\tif (m_iConnectedPlayerUpdateCounter >= 30)",
         "\t\t{",
@@ -1608,8 +1649,25 @@
         lines.push(
           "\toverride bool OnUpdate(Widget w)",
           "\t{",
-          "\t\tif (w != m_wRoot)",
-          "\t\t\treturn false;",
+          ...(needsWidgetUpdateHook ? [
+            "\t\tbool isWidgetUpdateTarget = m_aWidgetUpdateTargets.Find(w) >= 0;",
+            "\t\tif (w != m_wRoot && !isWidgetUpdateTarget)",
+            "\t\t\treturn false;",
+            "",
+            "\t\tif (isWidgetUpdateTarget)",
+            "\t\t{",
+            "\t\t\tm_iWidgetUpdateCounter++;",
+            "\t\t\tif (m_iWidgetUpdateCounter < 30)",
+            "\t\t\t\treturn false;",
+            "\t\t\tm_iWidgetUpdateCounter = 0;",
+            "\t\t\treturn OnWidgetUpdateContract(w);",
+            "\t\t}",
+            ""
+          ] : [
+            "\t\tif (w != m_wRoot)",
+            "\t\t\treturn false;",
+            ""
+          ]),
           "\t\tm_iRuntimeBindingUpdateCounter++;",
           "\t\tif (m_iRuntimeBindingUpdateCounter >= 30)",
           "\t\t{",
@@ -1621,6 +1679,33 @@
           ""
         );
       }
+    }
+    if (needsWidgetUpdateHook && !connected && !scalarBindings.length) {
+      lines.push(
+        "\toverride bool OnUpdate(Widget w)",
+        "\t{",
+        "\t\tif (m_aWidgetUpdateTargets.Find(w) < 0)",
+        "\t\t\treturn false;",
+        "\t\tm_iWidgetUpdateCounter++;",
+        "\t\tif (m_iWidgetUpdateCounter < 30)",
+        "\t\t\treturn false;",
+        "\t\tm_iWidgetUpdateCounter = 0;",
+        "\t\treturn OnWidgetUpdateContract(w);",
+        "\t}",
+        ""
+      );
+    }
+    if (needsWidgetUpdateHook) {
+      lines.push(
+        "\tprotected bool OnWidgetUpdateContract(Widget w)",
+        "\t{",
+        "\t\t// Generated OnUpdate seam. Keep the default non-consuming so",
+        "\t\t// vanilla widget propagation remains unchanged; add reviewed",
+        "\t\t// target-addon work here when this callback needs custom behavior.",
+        "\t\treturn false;",
+        "\t}",
+        ""
+      );
     }
     if (needsWidgetClickHook) {
       lines.push(
@@ -2317,6 +2402,9 @@
       if (state.layers.some(layer => layer.functionId === "engine.context.export") && !generatedSource.includes("PackToFile(\"$profile:BUSHWAR-UIComposer/runtime-context.json\")")) {
         warnings.push("Engine context export is assigned, but the generated controller does not contain its local snapshot writer.");
       }
+      if (state.layers.some(layer => layer.functionId === "ui.widget.update") && !generatedSource.includes("m_aWidgetUpdateTargets")) {
+        warnings.push("Widget update is assigned, but the generated controller does not contain its throttled target-widget route; re-export before opening this plan in Workbench.");
+      }
     }
     if (!state.layers.length) warnings.push("Project has no UI layers.");
     if (!state.handoff.layoutName.trim()) warnings.push("Give the Workbench layout a name before exporting its import plan.");
@@ -2437,6 +2525,11 @@
       target.text = layer.text || "";
       render();
       setStatus(`${prefix} · browser preview set ${target.name}; Workbench will call TextWidget.SetText at runtime`);
+      return true;
+    }
+    if (layer.functionId === "ui.widget.update") {
+      render();
+      setStatus(`${prefix} · browser re-rendered this design; Workbench will attach OnUpdate to the named widget and throttle the generated route`);
       return true;
     }
     if (layer.functionId === "ui.widget.click" || layer.functionId === "gm.context-action.perform") {
