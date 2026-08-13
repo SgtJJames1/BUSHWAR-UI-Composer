@@ -131,6 +131,16 @@ The **What's new** toolbar button remains available to reopen it.
 - A one-click **Copy layout scaffold request** helper for handing that native
   scaffold request to a Workbench/Codex import task; always target a disposable
   addon first, then inspect and resave the result in Layout Editor.
+- A guided **Workbench workflow tracker** in the Handoff panel walks the
+  eight-step Composer → Workbench pipeline (design, export, validate, Layout
+  Editor, register, GUID, controller, smoke) with live readiness status, and a
+  **Workbench workflow guide** dialog documents the fidelity contract (native
+  widgets only, registered textures, Workbench-owned `.layout` XML,
+  GUID-qualified ResourceNames, `PlayerManager`-authoritative bindings).
+- Exported schema-3 plans embed a **handoff readiness block**
+  (`ready`, `issues`, `layoutGuidSet`, `controllerGuidQualified`, row-resource
+  GUID checks) so Workbench-side validation can reject not-ready handoffs
+  programmatically instead of guessing from geometry alone.
 - A Workbench handoff check that flags undersized canvases, unlocked or missing
   visual references, missing Reforger resource paths, and empty projects
 - The handoff check includes a per-layer runtime contract audit: it shows the

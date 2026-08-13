@@ -1,12 +1,12 @@
 {
   "name": "bushwar-ui-composer",
-  "version": "0.10.54",
+  "version": "0.10.55",
   "description": "Visual Arma Reforger UI prototyping studio by Sgt.James",
   "author": "Sgt.James",
   "private": true,
   "main": "desktop-main.js",
   "scripts": {
-    "test": "node tests/controller-source.test.js && node tests/layout-guid.test.js && node tests/row-layout-contract.test.js && node tests/validation-controller.test.js && node tests/contract-audit.test.js && node tests/template-runtime.test.js && node tests/binding-contract.test.js && node tests/source-backed.test.js && node tests/recipe-contract.test.js && node tests/function-contract.test.js && node tests/layout-contract.test.js && node tests/startup.test.js && node tests/engine-context.test.js && node tests/core-library.test.js && node tests/core-scaffold.test.js && node tests/catalog-callbacks.test.js",
+    "test": "node tests/controller-source.test.js && node tests/layout-guid.test.js && node tests/row-layout-contract.test.js && node tests/validation-controller.test.js && node tests/contract-audit.test.js && node tests/template-runtime.test.js && node tests/binding-contract.test.js && node tests/source-backed.test.js && node tests/recipe-contract.test.js && node tests/function-contract.test.js && node tests/layout-contract.test.js && node tests/startup.test.js && node tests/engine-context.test.js && node tests/core-library.test.js && node tests/core-scaffold.test.js && node tests/catalog-callbacks.test.js && node tests/workflow-steps.test.js",
     "start": "electron .",
     "package:dir": "electron-builder --dir --win x64",
     "dist": "electron-builder --win nsis portable --x64 --publish never",

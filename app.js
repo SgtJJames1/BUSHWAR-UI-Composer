@@ -513,6 +513,7 @@
     updateStageScale();
     $("#canvasLabel").textContent = `${state.canvas.width} × ${state.canvas.height}`;
     updateEngineContextStatus();
+    renderWorkbenchWorkflow();
     persist();
   }
 
@@ -786,6 +787,7 @@
     $("#gridToggle").checked = state.settings.grid;
     $("#snapToggle").checked = state.settings.snap;
     updateSceneUI();
+    renderWorkbenchWorkflow();
   }
 
   function updateSceneUI() {
@@ -1904,6 +1906,19 @@
       runtimeScaffolds,
       resources: [...new Set([...visibleLayers.map(layer => layer.resourcePath), ...runtimeResourceReferences].filter(Boolean))],
       dependencies: usesCoreRowResource ? [{ projectId: "BUSHWAR-UIComposer-Core", reason: "Connected-player rows use the registered Core Button Row > NameText prefab." }] : [],
+      handoff: {
+        ...handoffReadiness({
+          hasLayers: widgets.length > 0,
+          canvasWidth: state.canvas.width,
+          canvasHeight: state.canvas.height,
+          layoutName,
+          layoutGuid,
+          rowResources: runtimeResourceReferences
+        }),
+        schema: workbenchPlanSchema,
+        layoutGuidSet: !!layoutGuid,
+        controllerGuidQualified: /^\{[0-9A-F]{16}\}/i.test(layoutResourceReference)
+      },
       layoutCreateRequest: {
         name: layoutName,
         resourceReference: layoutResourceReference,
@@ -1968,6 +1983,12 @@
       download(`${safeName(state.title)}-layout-scaffold-request.json`, JSON.stringify(request, null, 2), "application/json");
       setStatus("Clipboard unavailable; layout scaffold request downloaded");
     }
+  }
+
+  function downloadLayoutCreateRequest() {
+    const request = makeWorkbenchPlan().layoutCreateRequest;
+    download(`${safeName(state.title)}-layout-scaffold-request.json`, JSON.stringify(request, null, 2), "application/json");
+    setStatus("Layout scaffold request downloaded · open it in Workbench Layout Editor or feed it to layout_create in an isolated addon");
   }
 
   async function copySpec() {
@@ -2373,6 +2394,55 @@
     if (!rows.length) return `<div class="contract-audit empty"><b>Runtime contract audit</b><span>No engine binding or callback assigned; this design remains visual-only.</span></div>`;
     const body = rows.map(row => `<div class="contract-row"><span class="contract-status ${row.status}">${row.status.toUpperCase()}</span><span><b>${escapeHtml(row.layer)}</b><small>target: ${escapeHtml(row.target)}</small></span><span><b>Data</b><small>${escapeHtml(row.source)}</small></span><span><b>Action</b><small>${escapeHtml(row.callback)}</small></span><span><b>Authority</b><small>${escapeHtml(row.authority)} · ${escapeHtml(row.detail)}</small></span></div>`).join("");
     return `<div class="contract-audit"><b>Runtime contract audit</b><span class="hint">This is the exact route the schema-3 handoff describes. READY means the Composer generated a route; REVIEW means the target addon still owns the implementation or authority decision.</span><div class="contract-rows">${body}</div></div>`;
+  }
+
+  // --- Workbench workflow readiness -----------------------------------------
+  // Pure helpers so the step tracker and the exported plan agree on what a
+  // handoff needs before Workbench can compile it. The Composer never touches
+  // Workbench itself; these describe the browser-side contract only.
+  function handoffReadiness({ hasLayers, canvasWidth, canvasHeight, layoutName, layoutGuid, rowResources = [] }) {
+    const issues = [];
+    if (!hasLayers) issues.push("Project has no importable UI layers.");
+    if (canvasWidth < 1920 || canvasHeight < 1080) issues.push("Canvas is below Workbench's documented 1920 × 1080 minimum root size.");
+    if (!String(layoutName || "").trim()) issues.push("Give the Workbench layout a name.");
+    const guid = normalizeLayoutGuid(layoutGuid);
+    if (!guid) issues.push("Registered layout GUID is not set (register the target .layout in Workbench, then load its .meta or paste the GUID).");
+    const badRowResources = (rowResources || []).filter(resource => resource && !/^\{[0-9A-F]{16}\}/i.test(resource));
+    if (badRowResources.length) issues.push(`Row layout resource${badRowResources.length === 1 ? " is" : "s are"} not GUID-qualified (${badRowResources.join(", ")}).`);
+    return { ready: issues.length === 0, issues };
+  }
+
+  function workbenchWorkflowSteps(input) {
+    const readiness = handoffReadiness(input);
+    const layoutGuidReady = readiness.issues.every(issue => !/layout GUID/i.test(issue));
+    const canvasOk = input.canvasWidth >= 1920 && input.canvasHeight >= 1080;
+    return [
+      { id: "design", label: "Design at the Workbench root size", detail: canvasOk ? "Canvas is 1920 × 1080 or larger." : "Canvas is below the documented 1920 × 1080 minimum root size.", state: canvasOk ? "done" : "todo" },
+      { id: "export", label: "Export the schema-3 Workbench import plan", detail: input.hasLayers ? "The plan carries widgets, anchors, controller source, and the layout scaffold request." : "Add at least one UI layer before exporting.", state: input.hasLayers ? "done" : "todo" },
+      { id: "validate", label: "Validate the plan in Workbench", detail: "Use the import-plan plugin in the BUSHWAR-UIComposer-Validation addon; schema 1/2 plans are rejected.", state: "manual" },
+      { id: "create", label: "Create the layout in Layout Editor", detail: "Use the copied or downloaded layout scaffold request, or author the tree manually; Workbench owns .layout serialization and widget GUIDs.", state: "manual" },
+      { id: "register", label: "Register the layout and copy its GUID", detail: "Workbench generates the .layout.meta; never hand-edit GUIDs or copy metadata from another addon.", state: "manual" },
+      { id: "guid", label: "Load the .layout.meta into Handoff", detail: layoutGuidReady ? "Target layout GUID is set; the controller will use a GUID-qualified ResourceName." : "Register the layout, then load its .meta or paste the 16-character GUID.", state: layoutGuidReady ? "done" : "todo" },
+      { id: "controller", label: "Export the controller scaffold", detail: layoutGuidReady ? "Controller source uses the registered GUID-qualified ResourceName." : "Set the layout GUID first so the controller compiles against the registered resource.", state: layoutGuidReady ? "done" : "todo" },
+      { id: "smoke", label: "Compile and run the in-game smoke test", detail: "Compile in Workbench, open the target world, and verify the layout renders and its bindings behave. The browser snapshot is preview evidence only.", state: "manual" }
+    ];
+  }
+
+  function renderWorkbenchWorkflow() {
+    const container = $("#workbenchWorkflow");
+    if (!container) return;
+    const steps = workbenchWorkflowSteps({
+      hasLayers: state.layers.some(layer => layer.type !== "reference"),
+      canvasWidth: state.canvas.width,
+      canvasHeight: state.canvas.height,
+      layoutName: state.handoff.layoutName,
+      layoutGuid: state.handoff.layoutGuid,
+      rowResources: state.layers.filter(layer => layer.binding === "player.list.connected").map(layer => connectedRowResourceFor(layer))
+    });
+    const count = { done: 0, todo: 0, manual: 0 };
+    steps.forEach(step => { count[step.state]++; });
+    const automatic = steps.length - count.manual;
+    container.innerHTML = `<div class="workflow-heading"><b>Workbench workflow</b><span class="workflow-count">${count.done}/${automatic} automatic steps ready</span></div><ol class="workflow-steps">${steps.map((step, index) => `<li class="workflow-step ${step.state}" data-step="${step.id}"><span class="workflow-marker">${step.state === "done" ? "✓" : step.state === "manual" ? "●" : index + 1}</span><span class="workflow-copy"><b>${escapeHtml(step.label)}</b><small>${escapeHtml(step.detail)}</small></span></li>`).join("")}</ol>`;
   }
 
   function validateHandoff() {
@@ -2830,9 +2900,9 @@
   $("#exportWorkbenchBundleBtn").addEventListener("click", exportWorkbenchBundle);
   $("#exportControllerBtn").addEventListener("click", exportControllerScaffold);
   $("#copyLayoutCreateBtn").addEventListener("click", copyLayoutCreateRequest);
-  $("#workbenchTarget").addEventListener("change", event => { state.handoff.target = event.target.value; persist(); });
-  $("#workbenchLayoutName").addEventListener("change", event => { state.handoff.layoutName = event.target.value; state.handoff.layoutPath = ""; persist(); });
-  $("#workbenchLayoutGuid").addEventListener("change", event => { state.handoff.layoutGuid = normalizeLayoutGuid(event.target.value); event.target.value = state.handoff.layoutGuid; persist(); });
+  $("#workbenchTarget").addEventListener("change", event => { state.handoff.target = event.target.value; persist(); renderWorkbenchWorkflow(); });
+  $("#workbenchLayoutName").addEventListener("change", event => { state.handoff.layoutName = event.target.value; state.handoff.layoutPath = ""; persist(); renderWorkbenchWorkflow(); });
+  $("#workbenchLayoutGuid").addEventListener("change", event => { state.handoff.layoutGuid = normalizeLayoutGuid(event.target.value); event.target.value = state.handoff.layoutGuid; persist(); renderWorkbenchWorkflow(); });
   $("#workbenchMetaInput").addEventListener("change", event => {
     const file = event.target.files[0];
     event.target.value = "";
@@ -2849,6 +2919,7 @@
         $("#workbenchLayoutGuid").value = meta.guid;
         $("#workbenchLayoutName").value = state.handoff.layoutName;
         persist();
+        renderWorkbenchWorkflow();
         setStatus(`Registered Workbench layout loaded: ${meta.path}`);
       } catch (error) {
         alert(`Could not read layout metadata: ${error.message}`);
@@ -2856,6 +2927,8 @@
     };
     reader.readAsText(file);
   });
+  $("#downloadLayoutCreateBtn").addEventListener("click", downloadLayoutCreateRequest);
+  $("#workflowHelpBtn").addEventListener("click", () => $("#workflowDialog").showModal());
   $("#whatsNewBtn").addEventListener("click", () => {
     const dialog = $("#updateDialog");
     dialog.dataset.autoNotice = "";

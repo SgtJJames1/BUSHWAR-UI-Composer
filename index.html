@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-table-count">
+    <link rel="stylesheet" href="styles.css?v=20260813-workflow">
 </head>
 <body>
   <header class="topbar">
@@ -231,8 +231,11 @@
         <button id="exportWorkbenchBundleBtn" class="wide ghost">Export complete Workbench handoff</button>
         <button id="exportControllerBtn" class="wide ghost">Export EnforceScript controller scaffold</button>
         <button id="copyLayoutCreateBtn" class="wide ghost">Copy layout scaffold request</button>
+        <button id="downloadLayoutCreateBtn" class="wide ghost">Download layout scaffold request</button>
         <button id="copySpecBtn" class="wide">Copy design specification</button>
         <button id="validateBtn" class="wide handoff-validate">Validate Workbench handoff</button>
+        <div id="workbenchWorkflow" class="workbench-workflow" aria-label="Workbench workflow"></div>
+        <button id="workflowHelpBtn" class="wide ghost">Workbench workflow guide</button>
       </section>
 
       <section>
@@ -278,6 +281,24 @@
       <div class="dialog-actions"><button class="accent" value="close">Continue composing</button></div>
     </form>
   </dialog>
+  <dialog id="workflowDialog" class="template-dialog workflow-dialog" aria-labelledby="workflowTitle">
+    <form method="dialog">
+      <div class="update-heading"><span class="update-badge">WR WORKFLOW</span><span class="update-version">schema 3</span></div>
+      <h2 id="workflowTitle">Composer → Workbench workflow</h2>
+      <ol class="guide-steps">
+        <li><b>Design</b> at the root size you will set in Layout Editor (1920 × 1080 or your target). Anchors, not pixels, carry the layout to other resolutions.</li>
+        <li><b>Export the Workbench import plan</b> (schema 3). It carries widgets, anchors/bounds, controller source, and a layout scaffold request.</li>
+        <li><b>Validate the plan</b> in Workbench with the import-plan plugin (BUSHWAR-UIComposer-Validation). Schema 1/2 plans are rejected.</li>
+        <li><b>Create the layout</b> in Workbench Layout Editor from the scaffold request, or author the tree manually. Workbench owns <code>.layout</code> serialization and widget GUIDs — never hand-edit <code>.layout</code> XML.</li>
+        <li><b>Register the layout</b>; Workbench generates its <code>.layout.meta</code> GUID. Never copy metadata from another addon.</li>
+        <li><b>Load the .meta into Handoff</b> (or paste the GUID). The generated controller uses a GUID-qualified ResourceName; a bare path or <code>{0000000000000000}</code> resolves to null.</li>
+        <li><b>Export the controller scaffold</b> and copy <code>controllerSource</code> into your addon's <code>controllerPath</code>.</li>
+        <li><b>Compile and smoke-test</b> in-game. Verify the layout renders at your target resolutions (Layout Editor Live Preview) and that engine bindings read <code>PlayerManager</code> — the browser snapshot is preview evidence only.</li>
+      </ol>
+      <p class="hint">Fidelity contract: only native widgets (Frame, Text, Button, Image, ProgressBar, Scroll, layouts, EditBox, CheckBox) survive the handoff. Gradients, shadows, rounded corners, and web typography have no Reforger equivalent. Custom images must become registered textures in your mod. The UI Composer mod owns UI resources and named-child contracts; your mod owns authority, permissions, and replication.</p>
+      <div class="dialog-actions"><button class="accent" value="close">Got it</button></div>
+    </form>
+  </dialog>
   <dialog id="templateDialog" class="template-dialog">
     <form method="dialog">
       <h2>Save as template</h2>
@@ -287,13 +308,13 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-table-count"></script>
-  <script src="reforger-catalog.js?v=20260813-meta-import"></script>
-  <script src="reforger-core-library.js?v=20260813-table-count"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-meta-import"></script>
-  <script src="reforger-bindings.js?v=20260813-meta-import"></script>
-  <script src="reforger-functions.js?v=20260813-table-count"></script>
-  <script src="reforger-recipes.js?v=20260813-meta-import"></script>
-  <script src="app.js?v=20260813-table-count"></script>
+  <script src="release-notes.js?v=20260813-workflow"></script>
+  <script src="reforger-catalog.js?v=20260813-workflow"></script>
+  <script src="reforger-core-library.js?v=20260813-workflow"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-workflow"></script>
+  <script src="reforger-bindings.js?v=20260813-workflow"></script>
+  <script src="reforger-functions.js?v=20260813-workflow"></script>
+  <script src="reforger-recipes.js?v=20260813-workflow"></script>
+  <script src="app.js?v=20260813-workflow"></script>
 </body>
 </html>

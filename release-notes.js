@@ -1,9 +1,13 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.54",
+  version: "0.10.55",
   published: "13 August 2026",
-  title: "Dedicated UI Composer runtime mod, admin-free",
-  summary: "The BUSHWAR UI Composer runtime mod now ships only generic base resources and scripts; the GM admin panel was removed from it and the validation addon's admin menu uses its own registered layout.",
+  title: "Guided Workbench workflow for Composer handoffs",
+  summary: "The Composer now walks you through the WR pipeline (design, export, validate, Layout Editor, register, GUID, controller, smoke), exports a self-describing handoff-readiness contract, and can download the layout scaffold request.",
   changes: [
+    "A Workbench workflow tracker in the Handoff panel shows the eight-step WR pipeline with live status; the four automatic steps turn green as your design and Handoff fields are ready, and the four Workbench-side steps stay marked manual.",
+    "Exported schema-3 plans now embed a handoff readiness block (ready, issues, layoutGuidSet, controllerGuidQualified, and GUID-qualified row resources) so the Workbench import-plan plugin can reject not-ready handoffs programmatically.",
+    "New Download layout scaffold request button saves the layoutCreateRequest JSON as a file next to the existing clipboard copy.",
+    "New Workbench workflow guide dialog documents the full Composer → Workbench pipeline and the fidelity contract: native widgets only, registered textures, Workbench-owned .layout XML, GUID-qualified ResourceNames, and PlayerManager-authoritative bindings.",
     "The dedicated Reforger runtime mod (BUSHWAR-UIComposer-Core) now owns the registered player-row layout plus generic runtime scripts (layout controller base and a safe PlayerManager list helper); the GM admin panel is deliberately not part of it and stays with the GM tools side.",
     "The website Core library manifest exposes only the registered player-row resource; saved projects containing legacy admin-panel layers still import through the preserved app.js path.",
     "The validation addon's admin menu now uses its own registered admin-menu layout ({1D2CEED7BB782E8D}) instead of the Core admin panel.",

@@ -338,3 +338,42 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent-2); }
   .contract-row { grid-template-columns: auto 1fr; }
   .contract-row > span:not(.contract-status) { grid-column: 2; }
 }
+
+.workbench-workflow {
+  margin: 10px 0 4px;
+  border: 1px solid rgba(127, 169, 183, 0.25);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(127, 169, 183, 0.06);
+}
+.workflow-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.workflow-count { text-transform: none; letter-spacing: 0; }
+.workflow-steps { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.workflow-step { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: baseline; }
+.workflow-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  border: 1px solid rgba(127, 169, 183, 0.4);
+  color: var(--muted);
+}
+.workflow-step.done .workflow-marker { background: #2e6b4f; border-color: #2e6b4f; color: #fff; }
+.workflow-step.todo .workflow-marker { color: #b98a4a; }
+.workflow-step.manual .workflow-marker { border-style: dashed; }
+.workflow-step .workflow-copy { display: grid; gap: 1px; }
+.workflow-step b { font-size: 12px; font-weight: 600; }
+.workflow-step small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.guide-steps { margin: 0; padding-left: 18px; display: grid; gap: 7px; }
+.guide-steps li { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.guide-steps b { color: var(--text); }
