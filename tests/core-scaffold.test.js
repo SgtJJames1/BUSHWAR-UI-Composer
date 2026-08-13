@@ -31,6 +31,7 @@ const sandbox = {
   } : null,
   functionFor: layer => layer?.functionId ? { id: layer.functionId, label: layer.functionId, authority: "client-local", updateEvents: [] } : null,
   enginePlayers: () => [],
+  hasEngineContextSnapshot: () => false,
   reforgerVisualFor: () => "core-admin-panel"
 };
 vm.createContext(sandbox);

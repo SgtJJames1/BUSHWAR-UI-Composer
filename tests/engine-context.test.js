@@ -30,5 +30,7 @@ assert(source.includes('return state.engineContext?.source === "workbench"'), "b
 assert(source.includes('hasEngineContextSnapshot() ? String(enginePlayers().length) : "NO WORKBENCH PLAYER SNAPSHOT"'), "player count preview must show zero for an imported empty roster and unknown only without a snapshot");
 assert(source.includes('const countLabel = hasEngineContextSnapshot() ? `${players.length} CONNECTED` : "ENGINE SNAPSHOT REQUIRED";'), "connected-player canvas preview must not claim zero without an imported engine snapshot");
 assert(source.includes('status.className = `engine-context-status${hasEngineContextSnapshot() ? " loaded" : " warn"}`'), "engine context status must report loaded even when the imported roster is empty");
+assert(source.includes('preview: hasEngineContextSnapshot() ? "Imported Workbench snapshot" : "Runtime fetch required; browser does not invent values"'), "Workbench plans must mark snapshot provenance independently of player count");
+assert(source.includes('snapshotLoaded: hasEngineContextSnapshot(),'), "Workbench plans must carry explicit snapshot provenance");
 
 console.log("engine-context.test.js: PASS");
