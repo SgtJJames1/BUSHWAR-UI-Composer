@@ -17,6 +17,8 @@ assert.strictEqual(website.version, addon.version, "website and addon Core versi
 assert.strictEqual(website.entries.length, addon.entries.length, "website and addon Core entry counts must match");
 assert(website.entries.length >= 2, "Core library must expose the admin panel and player row resources");
 for (const entry of website.entries) {
+  const addonEntry = addon.entries.find(candidate => candidate.id === entry.id);
+  assert(addonEntry, `${entry.id} must exist in the addon manifest`);
   assert(entry.path.endsWith(".layout"), `${entry.id} must point at a registered layout resource`);
   assert(/^[0-9A-F]{16}$/.test(entry.resourceGuid || ""), `${entry.id} must carry the Workbench-generated resource GUID`);
   assert(entry.resourceReference === `{${entry.resourceGuid}}${entry.path}`, `${entry.id} must carry a GUID-qualified resource reference`);
@@ -24,6 +26,7 @@ for (const entry of website.entries) {
   assert(Object.keys(entry.requiredChildren || {}).length > 0, `${entry.id} must preserve named-child contracts`);
   assert(Array.isArray(entry.runtimeContracts) && entry.runtimeContracts.length > 0, `${entry.id} must declare runtime contracts`);
   assert(Array.isArray(entry.functionHints) && entry.functionHints.length > 0, `${entry.id} must declare supported callback hints`);
+  assert.strictEqual(JSON.stringify(entry.functionHints), JSON.stringify(addonEntry.functionHints), `${entry.id} callback hints must match between website and addon manifests`);
   assert(fs.existsSync(path.resolve(root, "..", "..", "Reforger-Workbench-Mods", "BUSHWAR-UIComposer-Core", entry.path)), `${entry.path} must exist in the Core addon`);
 }
 
