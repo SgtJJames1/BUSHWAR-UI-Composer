@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.17",
+  version: "0.10.18",
   published: "13 August 2026",
-  title: "Native Reforger recipes and runtime contracts",
-  summary: "The Composer now offers proven Reforger layout recipes with named child trees and callback contracts, while keeping connected-player values engine-backed and empty-name safe.",
+  title: "Workbench offset geometry handoff repair",
+  summary: "Workbench exports now describe the supported Offset* geometry explicitly, preventing legacy Position/Size scaffolds from collapsing the admin panel into a cramped top-left cluster.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -24,8 +24,8 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Player-row callback scaffolds retain the actual PlayerManager ID and emit a compile-safe review hook for server-authoritative actions such as teleport.",
     "Export complete Workbench handoff packages the design bundle, schema-3 plan, controller source, and context contract into one transferable JSON file.",
     "The validation addon compiles the exported controller pattern and uses local InputManager variables, matching the engine's private-destructor contract.",
-    "Generated FrameWidgetSlot geometry now uses PositionX/PositionY/SizeX/SizeY with point anchors, matching the shipped BUSHWAR GM menu and preventing the cramped top-left import seen with older handoff files.",
-    "The disposable admin-menu fixtures use the same Position/Size bounds: left 24 px, top 15%, width 360 px, bottom 80%.",
+    "Generated FrameWidgetSlot geometry uses OffsetLeft/OffsetTop/OffsetRight/OffsetBottom with point anchors, matching the shipped BUSHWAR GM menu and preventing the cramped top-left import seen with older handoff files.",
+    "The disposable admin-menu fixtures use the same Offset* bounds: left 24 px, top 15%, width 360 px, bottom 80%.",
     "Browser and PNG previews for Connected players now mirror the native count / selection / scroll / Button row / NameText scaffold; empty context shows zero rows rather than invented player entries.",
     "Imported engine context is normalized to positive, unique player IDs with non-empty names, and clicking a preview row records the real PlayerManager ID used by the generated callback contract.",
     "Generated native widget names are deterministic and duplicate-safe across the layout scaffold, plan, and controller source; callback routes now expose explicit review hooks instead of silently pretending an action is implemented.",
