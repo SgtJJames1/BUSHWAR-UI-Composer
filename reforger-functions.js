@@ -56,18 +56,6 @@
       implementation: { status: "generated", method: "SetWidgetText", notes: "The controller casts the exact target to TextWidget and leaves the action as a local UI change." }
     },
     {
-      id: "ui.widget.set-text",
-      label: "Set text on widget",
-      category: "UI actions",
-      kind: "engine-api",
-      targetKinds: ["button", "player", "text", "badge", "input", "prompt", "toast", "context", "window", "dialog"],
-      callback: "TextWidget.SetText(string)",
-      authority: "client-local",
-      runtime: "Set a named TextWidget child to the configured layer text. The target must be the actual TextWidget name from Workbench Layout Editor.",
-      requiresTarget: true,
-      implementation: { status: "generated", method: "SetWidgetText", notes: "The controller casts the exact target to TextWidget and leaves the action as a local UI change." }
-    },
-    {
       id: "ui.layout.open",
       label: "Open native layout",
       category: "UI actions",
@@ -108,6 +96,17 @@
       authority: "client-local",
       runtime: "Re-query the current local engine state and repaint bound widgets in memory; no browser snapshot or file export is treated as runtime authority.",
       implementation: { status: "generated", method: "RefreshRuntimeBindings", notes: "The generated controller refreshes connected rows and scalar bindings when this route is invoked." }
+    },
+    {
+      id: "engine.context.export",
+      label: "Export engine context snapshot",
+      category: "Engine diagnostics",
+      kind: "engine-api",
+      targetKinds: ["button", "panel", "context", "window", "table"],
+      callback: "JsonApiStruct.PackToFile($profile:BUSHWAR-UIComposer/runtime-context.json)",
+      authority: "client-local",
+      runtime: "Capture the current PlayerManager IDs/names and local GM editor state into a schema-1 context file for browser preview. This is diagnostic evidence only; live UI still re-queries the engine.",
+      implementation: { status: "generated", method: "ExportRuntimeContext", notes: "Writes only to the local $profile:BUSHWAR-UIComposer directory and filters empty player names before serialization." }
     },
     {
       id: "player.row.select",

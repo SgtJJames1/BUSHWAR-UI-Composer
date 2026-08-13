@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>BUSHWAR UI Composer by Sgt.James</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-signed-bounds">
+    <link rel="stylesheet" href="styles.css?v=20260813-context-export">
 </head>
 <body>
   <header class="topbar">
@@ -234,7 +234,7 @@
 
       <section>
         <div class="section-title">Engine context</div>
-        <p class="hint">Import a small runtime snapshot exported from Workbench to preview real connected players and other engine-backed values. Without a snapshot, the Composer shows an explicit runtime placeholder and never invents rows.</p>
+        <p class="hint">Import a small runtime snapshot exported from the generated Reforger controller to preview real connected players and other engine-backed values. The controller writes <code>$profile:BUSHWAR-UIComposer/runtime-context.json</code>; without a snapshot, the Composer shows an explicit runtime placeholder and never invents rows.</p>
         <button id="engineContextBtn" class="wide ghost">Import Workbench context</button>
         <button id="clearEngineContextBtn" class="wide ghost">Clear engine context</button>
         <div id="engineContextStatus" class="engine-context-status">No Workbench context loaded</div>
@@ -272,12 +272,12 @@
       <div class="dialog-actions"><button value="cancel">Cancel</button><button id="confirmTemplateBtn" class="accent" value="save">Save template</button></div>
     </form>
   </dialog>
-  <script src="release-notes.js?v=20260813-signed-bounds"></script>
-  <script src="reforger-catalog.js?v=20260813-signed-bounds"></script>
-  <script src="reforger-widget-profiles.js?v=20260813-signed-bounds"></script>
-  <script src="reforger-bindings.js?v=20260813-signed-bounds"></script>
-  <script src="reforger-functions.js?v=20260813-signed-bounds"></script>
-  <script src="reforger-recipes.js?v=20260813-signed-bounds"></script>
-  <script src="app.js?v=20260813-signed-bounds"></script>
+  <script src="release-notes.js?v=20260813-context-export"></script>
+  <script src="reforger-catalog.js?v=20260813-context-export"></script>
+  <script src="reforger-widget-profiles.js?v=20260813-context-export"></script>
+  <script src="reforger-bindings.js?v=20260813-context-export"></script>
+  <script src="reforger-functions.js?v=20260813-context-export"></script>
+  <script src="reforger-recipes.js?v=20260813-context-export"></script>
+  <script src="app.js?v=20260813-context-export"></script>
 </body>
 </html>

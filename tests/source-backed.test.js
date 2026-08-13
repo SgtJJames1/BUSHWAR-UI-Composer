@@ -23,6 +23,7 @@ assert(source.includes("runtimeContract: widget.runtimeContract"), "runtime scaf
 assert(source.includes("valueWidgetName: widget.runtimeContract?.valueWidgetName"), "runtime scaffolds must preserve the verified value child name");
 assert(source.includes("recipeCallbacks: widget.recipeCallbacks"), "runtime scaffolds must preserve native recipe callback metadata");
 assert(source.includes("functionTargetWidgetName: widget.functionTargetWidgetName"), "runtime scaffolds must preserve exact action target widget names");
+assert(source.includes("widgets.filter(widget => widget.binding || widget.functionId)"), "callback-only controls must survive into the Workbench controller scaffold");
 assert(source.includes("functionTargetWidgetName: layer.functionTargetWidgetName || undefined"), "runtime contracts must retain action target metadata");
 assert(source.includes("workbenchRecipe: widget.runtimeContract?.workbenchRecipe"), "runtime scaffolds must preserve the proven Workbench recipe id");
 assert(source.includes("offsetRight: -(left + Math.round(layer.w))"), "pixel-authored layout slots must emit signed Workbench Offset* bounds");

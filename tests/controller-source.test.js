@@ -24,7 +24,8 @@ const source = sandbox.controllerSourceFor("TestLayout", "TestLayout", [
   { name: "GmState", layerType: "text", binding: "editor.gm.open" },
   { name: "Refresh", functionId: "engine.context.refresh" },
   { name: "ToggleDetails", functionId: "ui.widget.toggle-visibility", functionTargetWidgetName: "DetailsPanel" },
-  { name: "StatusButton", layerType: "button", properties: { text: "READY" }, functionId: "ui.widget.set-text", functionTargetWidgetName: "StatusText" }
+  { name: "StatusButton", layerType: "button", properties: { text: "READY" }, functionId: "ui.widget.set-text", functionTargetWidgetName: "StatusText" },
+  { name: "ExportContext", layerType: "button", functionId: "engine.context.export" }
 ]);
 
 assert(source.includes("playerManager.GetPlayers(playerIds);"), "generated source must use compile-valid GetPlayers call syntax");
@@ -40,6 +41,9 @@ assert(source.includes("SCR_EditorManagerEntity.IsOpenedInstance(true)"), "GM ed
 assert(source.includes('ToggleWidgetVisibility("DetailsPanel", w);'), "targeted visibility actions must carry the exact Workbench widget name into generated source");
 assert(source.includes("target.SetVisible(!target.IsVisible());"), "visibility action must generate a concrete native widget operation");
 assert(source.includes('SetWidgetText("StatusText", "READY");'), "set-text action must generate a concrete TextWidget operation");
+assert(source.includes("ExportRuntimeContext();"), "engine context export must generate a concrete snapshot route");
+assert(source.includes('PackToFile("$profile:BUSHWAR-UIComposer/runtime-context.json")'), "engine context export must write the documented local snapshot path");
+assert(source.includes('snapshot.players.Insert(player);'), "engine context export must append only filtered runtime player records");
 assert(source.includes("current = current.GetParent();"), "callback routing must handle nested WLib child widgets");
 assert(source.includes("RefreshConnectedPlayers();"), "refresh route must rebuild the connected-player rows");
 assert(source.includes("if (playerName.IsEmpty())"), "row selection must reject a stale or unnamed PlayerManager ID");

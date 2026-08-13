@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.22",
+  version: "0.10.23",
   published: "13 August 2026",
-  title: "Fix signed Workbench panel bounds",
-  summary: "Workbench handoffs now emit signed right/bottom offsets, fixing the cramped top-left admin menu while preserving the 24 px / 360 px / 15%-80% GM panel geometry.",
+  title: "Engine context export and callback-only handoff routes",
+  summary: "Composer actions now survive into the generated controller even without a data binding, and a concrete engine-context export action captures filtered PlayerManager data for browser preview.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -60,6 +60,9 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Toggle widget visibility is a generated client-local action: choose an exact Workbench widget name or leave the target blank to toggle the clicked widget, with the same behavior represented in browser preview.",
     "Connected-player refresh now resets the count and selection labels when PlayerManager is unavailable, and row selection rejects stale IDs or empty names instead of showing an invalid player.",
     "Set text on widget is a generated client-local action: choose an exact TextWidget name and the controller emits TextWidget.SetText with the designed value; browser preview updates the same target layer.",
-    "Pixel-authored Workbench layout slots now negate OffsetRight/OffsetBottom for point anchors; positive right/bottom values collapse a rectangle past the top-left origin."
+    "Pixel-authored Workbench layout slots now negate OffsetRight/OffsetBottom for point anchors; positive right/bottom values collapse a rectangle past the top-left origin.",
+    "Engine context export generates a JsonApiStruct snapshot at $profile:BUSHWAR-UIComposer/runtime-context.json, filtering empty PlayerManager names before writing; import that file in the website to preview real engine evidence.",
+    "Callback-only controls are now retained in schema-3 runtimeScaffolds, so actions such as visibility, text, refresh, and context export cannot disappear simply because the layer has no data binding.",
+    "The function catalogue no longer publishes duplicate Set text entries."
   ]
 };

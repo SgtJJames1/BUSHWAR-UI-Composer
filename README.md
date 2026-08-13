@@ -57,6 +57,7 @@ The **What's new** toolbar button remains available to reopen it.
 - A native Reforger recipe database alongside the path catalogue: GM connected players, info panels, status/progress/timer HUDs, and icon overlays carry the proven Workbench recipe ID, named child tree, and callback metadata. Applying a recipe creates editable Composer layers; it does not pretend that a browser mock is a compiled layout.
 - Any palette layer can adopt its profile's recommended registered `.layout` source from the inspector. This keeps the layer's existing binding/callback while exporting `source`/`sourceBacked` metadata, so the final Workbench layout uses the same WLib prefab rather than a generic scaffold.
 - An optional Workbench engine-context import (`bushwar-ui-composer-engine-context`, schema 1) for previewing a captured connected-player roster. Imported names/IDs are evidence for the browser preview only; generated controllers always re-query `PlayerManager` in Reforger.
+- The `Export engine context snapshot` callback generates a local `$profile:BUSHWAR-UIComposer/runtime-context.json` file from the live controller. Import that file with **Import Workbench context** to preview the exact filtered PlayerManager rows and GM editor state observed by Reforger; the file remains diagnostic evidence and never becomes runtime authority.
 - The same context contract can carry the local GM editor state (`editorOpen`); scalar bindings display that captured value or an explicit unknown-state label instead of guessing.
 - Connected player count is available as a PlayerManager-backed scalar binding,
   and the callback catalogue includes **Refresh live engine values** for a
@@ -101,6 +102,9 @@ The **What's new** toolbar button remains available to reopen it.
   `playerId`, and updates a named `SELECTED:` label on row selection. It is
   intentionally reviewable source, not an automatically trusted or privileged
   mod.
+- Callback-only layers are retained in `runtimeScaffolds`, so a button with an
+  engine action but no data binding still receives a generated `OnClick` route
+  in the controller.
 - Schema 3 also records `nativeProfileSchema` and the native widget classes used
   by the scaffold. The disposable validation plug-in rejects a plan that omits
   this mapping, preventing an apparently valid visual handoff from silently
