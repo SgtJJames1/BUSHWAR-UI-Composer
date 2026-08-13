@@ -53,5 +53,7 @@ assert(app.indexOf("const declaredChildren = normalizeRequiredChildren(layer.req
 assert(app.includes("${names.list}"), "generated connected-player controllers must use the canonical connected-list child name");
 assert(app.includes('const coreVerified = Boolean(layer.coreLibraryId && layer.coreLibraryId === window.BUSHWAR_REFORGER_CORE_LIBRARY?.projectId)'), "Core source-backed runtime layers must be recognized as manifest-verified");
 assert(app.includes('sourceChildVerification = source && binding ? (coreVerified ? "manifest-verified" : "manual-required")'), "Core runtime contracts must preserve manifest verification while vanilla sources retain manual checks");
+assert(app.includes("function hydrateCoreLayer(value)"), "saved Core layers must be able to hydrate current manifest metadata");
+assert(app.includes("value.layers.map(layer => hydrateCoreLayer"), "project/template restore must hydrate Core layers before rendering or export");
 
 console.log("core-library.test.js: PASS");

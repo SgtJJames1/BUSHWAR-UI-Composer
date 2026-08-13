@@ -108,21 +108,25 @@
         layer.reforgerVisual = reforgerVisualFor(source);
       }
     }
+    return hydrateCoreLayer(layer);
+  }
+
+  function hydrateCoreLayer(value) {
+    const layer = { ...value };
     const coreSource = layer.resourcePath && window.BUSHWAR_REFORGER_CORE_LIBRARY?.entries?.find(entry => entry.path === layer.resourcePath || entry.resourceReference === layer.resourcePath);
-    if (coreSource) {
-      layer.coreLibraryId = coreSource.coreLibraryId || window.BUSHWAR_REFORGER_CORE_LIBRARY.projectId;
-      layer.coreLibraryEntryId = coreSource.id;
-      layer.reforgerVisual = coreSource.visual || layer.reforgerVisual;
-      layer.nativeTree = coreSource.nativeTree || layer.nativeTree;
-      layer.rowLayoutPath = coreSource.rowLayoutPath || layer.rowLayoutPath;
-      layer.requiredChildren = layer.requiredChildren || (coreSource.requiredChildren ? clone(coreSource.requiredChildren) : undefined);
-      layer.runtimeContracts = layer.runtimeContracts || (coreSource.runtimeContracts ? clone(coreSource.runtimeContracts) : undefined);
-      layer.functionHints = layer.functionHints || (coreSource.functionHints ? clone(coreSource.functionHints) : undefined);
-      if (!layer.binding && coreSource.defaultBinding) layer.binding = coreSource.defaultBinding;
-      if (!layer.functionId && coreSource.defaultFunction) layer.functionId = coreSource.defaultFunction;
-      if (!layer.functionTargetWidgetName && coreSource.defaultFunctionTarget) layer.functionTargetWidgetName = coreSource.defaultFunctionTarget;
-      if (!layer.runtimeValueWidgetName && coreSource.runtimeValueWidgetName) layer.runtimeValueWidgetName = coreSource.runtimeValueWidgetName;
-    }
+    if (!coreSource) return layer;
+    layer.coreLibraryId = coreSource.coreLibraryId || window.BUSHWAR_REFORGER_CORE_LIBRARY.projectId;
+    layer.coreLibraryEntryId = coreSource.id;
+    layer.reforgerVisual = coreSource.visual || layer.reforgerVisual;
+    layer.nativeTree = coreSource.nativeTree || layer.nativeTree;
+    layer.rowLayoutPath = coreSource.rowLayoutPath || layer.rowLayoutPath;
+    layer.requiredChildren = layer.requiredChildren || (coreSource.requiredChildren ? clone(coreSource.requiredChildren) : undefined);
+    layer.runtimeContracts = layer.runtimeContracts || (coreSource.runtimeContracts ? clone(coreSource.runtimeContracts) : undefined);
+    layer.functionHints = layer.functionHints || (coreSource.functionHints ? clone(coreSource.functionHints) : undefined);
+    if (!layer.binding && coreSource.defaultBinding) layer.binding = coreSource.defaultBinding;
+    if (!layer.functionId && coreSource.defaultFunction) layer.functionId = coreSource.defaultFunction;
+    if (!layer.functionTargetWidgetName && coreSource.defaultFunctionTarget) layer.functionTargetWidgetName = coreSource.defaultFunctionTarget;
+    if (!layer.runtimeValueWidgetName && coreSource.runtimeValueWidgetName) layer.runtimeValueWidgetName = coreSource.runtimeValueWidgetName;
     return layer;
   }
 
@@ -133,7 +137,7 @@
     clean.handoff = { ...freshState().handoff, ...(value.handoff || {}) };
     clean.engineContext = { ...freshState().engineContext, ...(value.engineContext || {}) };
     clean.engineContext.players = normalizeEnginePlayers(clean.engineContext.players);
-    clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => ({ binding: "", bindingMode: "engine", functionId: "", functionTargetWidgetName: "", ...layer })) : [];
+    clean.layers = Array.isArray(value.layers) ? value.layers.map(layer => hydrateCoreLayer({ binding: "", bindingMode: "engine", functionId: "", functionTargetWidgetName: "", ...layer })) : [];
     return clean;
   }
 

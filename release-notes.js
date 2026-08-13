@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.32",
+  version: "0.10.33",
   published: "13 August 2026",
-  title: "Core source verification parity",
-  summary: "WCA now distinguishes manifest-verified BUSHWAR Core child contracts from vanilla/source-backed layouts that still require manual Workbench hierarchy verification.",
+  title: "Persistent Core contract hydration",
+  summary: "WCA now rehydrates saved projects and templates with the current BUSHWAR Core resource, child, row-layout, and callback metadata before rendering or exporting.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -79,6 +79,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Connected-player layoutCreateRequest scaffolds and generated font routes now use the resolved named-child contract (including Core m_wPlayerCount/m_wPlayerList) and preserve the registered source-backed layout reference.",
     "Controller generation now accepts both requiredWidgetNames and requiredNamedChildren contracts; regression coverage proves Core m_wPlayerList and m_wPlayerSelection reach the final EnforceScript source.",
     "Core connected-player panels now carry {F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout into the generated ResourceName, avoiding ambiguous bare-path row creation.",
-    "Validate Workbench handoff now treats the registered BUSHWAR Core child tree as manifest-verified while preserving manual child-name warnings for unverified vanilla/source-backed runtime layouts."
+    "Validate Workbench handoff now treats the registered BUSHWAR Core child tree as manifest-verified while preserving manual child-name warnings for unverified vanilla/source-backed runtime layouts.",
+    "Opening or restoring an older project/template now hydrates matching Core layers from the current manifest, including the GUID-qualified player-row ResourceName and runtime callback contracts."
   ]
 };
