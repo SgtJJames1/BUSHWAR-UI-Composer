@@ -864,7 +864,8 @@
           rowName: "NameText"
         }
       : undefined);
-    const sourceChildVerification = source && binding ? "manual-required" : undefined;
+    const coreVerified = Boolean(layer.coreLibraryId && layer.coreLibraryId === window.BUSHWAR_REFORGER_CORE_LIBRARY?.projectId);
+    const sourceChildVerification = source && binding ? (coreVerified ? "manifest-verified" : "manual-required") : undefined;
     return {
       id: layer.id,
       name: widgetName,
@@ -2128,8 +2129,8 @@
       if (layer.binding && !bindingFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown engine binding.`);
       const binding = bindingFor(layer);
       if (layer.binding && binding && binding.targetKinds && !binding.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses ${binding.label} on a ${layer.type} widget; choose a compatible widget type before handoff.`);
-      if (sourceBackedLayer(layer) && layer.binding === "player.list.connected") warnings.push(`${layer.name || "A connected-player table"} uses a source-backed layout; confirm Count/Selection/Scroll/List and row NameText names in Workbench before compiling the generated controller.`);
-      else if (sourceBackedLayer(layer) && layer.binding) warnings.push(`${layer.name || "A runtime layer"} uses a source-backed layout; confirm the bound value child name and widget type in Workbench${layer.runtimeValueWidgetName ? ` (plan override: ${layer.runtimeValueWidgetName})` : " or enter it in the Runtime value child name field"} before compiling the generated controller.`);
+      if (sourceBackedLayer(layer) && layer.binding === "player.list.connected" && layer.coreLibraryId !== window.BUSHWAR_REFORGER_CORE_LIBRARY?.projectId) warnings.push(`${layer.name || "A connected-player table"} uses a source-backed layout; confirm Count/Selection/Scroll/List and row NameText names in Workbench before compiling the generated controller.`);
+      else if (sourceBackedLayer(layer) && layer.binding && layer.coreLibraryId !== window.BUSHWAR_REFORGER_CORE_LIBRARY?.projectId) warnings.push(`${layer.name || "A runtime layer"} uses a source-backed layout; confirm the bound value child name and widget type in Workbench${layer.runtimeValueWidgetName ? ` (plan override: ${layer.runtimeValueWidgetName})` : " or enter it in the Runtime value child name field"} before compiling the generated controller.`);
       if (layer.functionId && !functionFor(layer)) warnings.push(`${layer.name || "A layer"} references an unknown callback contract.`);
       const callback = functionFor(layer);
       if (layer.functionId && callback && !callback.targetKinds.includes(layer.type)) warnings.push(`${layer.name || "A layer"} uses a callback that is not defined for its widget type.`);

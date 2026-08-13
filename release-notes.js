@@ -1,8 +1,8 @@
 window.BUSHWAR_COMPOSER_RELEASE = {
-  version: "0.10.31",
+  version: "0.10.32",
   published: "13 August 2026",
-  title: "Registered Core row resource handoff",
-  summary: "WCA now exports the registered GUID-qualified Core player-row ResourceName, keeping runtime row creation on the same resource Workbench registered for the Core addon.",
+  title: "Core source verification parity",
+  summary: "WCA now distinguishes manifest-verified BUSHWAR Core child contracts from vanilla/source-backed layouts that still require manual Workbench hierarchy verification.",
   changes: [
     "Connected players uses PlayerManager.GetPlayers(playerIds) + GetPlayerName(playerId) (the API marks the array out, but EnforceScript call syntax omits the keyword), with empty-name filtering and no guessed ID range.",
     "The inspector now separates Engine data / function bindings from Engine callback / action contracts.",
@@ -78,6 +78,7 @@ window.BUSHWAR_COMPOSER_RELEASE = {
     "Core admin panels now expose canonical count/selection/scroll/list/row child keys while retaining legacy aliases, so imported older projects still generate valid FindAnyWidget targets instead of undefined names.",
     "Connected-player layoutCreateRequest scaffolds and generated font routes now use the resolved named-child contract (including Core m_wPlayerCount/m_wPlayerList) and preserve the registered source-backed layout reference.",
     "Controller generation now accepts both requiredWidgetNames and requiredNamedChildren contracts; regression coverage proves Core m_wPlayerList and m_wPlayerSelection reach the final EnforceScript source.",
-    "Core connected-player panels now carry {F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout into the generated ResourceName, avoiding ambiguous bare-path row creation."
+    "Core connected-player panels now carry {F487371808027463}UI/layouts/BWUIC_CorePlayerRow.layout into the generated ResourceName, avoiding ambiguous bare-path row creation.",
+    "Validate Workbench handoff now treats the registered BUSHWAR Core child tree as manifest-verified while preserving manual child-name warnings for unverified vanilla/source-backed runtime layouts."
   ]
 };

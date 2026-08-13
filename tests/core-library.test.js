@@ -51,5 +51,7 @@ assert.strictEqual(adminChildren.rowName, "NameText", "Core admin panel must exp
 assert(app.includes("normalizeRequiredChildren"), "app must normalize legacy Core named-child aliases before generating controller contracts");
 assert(app.indexOf("const declaredChildren = normalizeRequiredChildren(layer.requiredChildren)") < app.indexOf("const runtimeChildNames = declaredChildren"), "Core child normalization must happen before controller child-name selection");
 assert(app.includes("${names.list}"), "generated connected-player controllers must use the canonical connected-list child name");
+assert(app.includes('const coreVerified = Boolean(layer.coreLibraryId && layer.coreLibraryId === window.BUSHWAR_REFORGER_CORE_LIBRARY?.projectId)'), "Core source-backed runtime layers must be recognized as manifest-verified");
+assert(app.includes('sourceChildVerification = source && binding ? (coreVerified ? "manifest-verified" : "manual-required")'), "Core runtime contracts must preserve manifest verification while vanilla sources retain manual checks");
 
 console.log("core-library.test.js: PASS");
